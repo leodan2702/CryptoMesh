@@ -17,7 +17,7 @@ You must install the following software:
     ```bash
     pip3 install poetry
     ```
-- [pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#linuxunix)
+- [pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#linuxunix) (Optional)
     ```bash
     curl -fsSL https://pyenv.run | bash
     ```
@@ -28,41 +28,7 @@ Once you get all the software, please execute the following command to install t
 ```bash
 poetry install
 ```
-
-## Running the CryptoMesh Server with Poetry
-
-Follow these steps to run the CryptoMesh server:
-
-1. **Install Poetry (if not already installed):**
-   - Follow the instructions at [Poetry Installation](https://python-poetry.org/docs/#installation).
-
-2. **Install Project Dependencies:**
-   - Open your terminal and navigate to the project directory (where your `pyproject.toml` file is located).
-   - Run the following command to install all required dependencies:
-     ```bash
-     poetry install
-     ```
-
-3. **Run the Server:**
-   - Start the server using Poetry's virtual environment with this command:
-     ```bash
-     poetry run python3 ./cryptomesh/server.py
-     ```
-   - This ensures that the server runs with the correct dependencies specified in your project.
-
-4. **Access the API Endpoints:**
-   - Once the server is running, you can access the API endpoints in your browser or via a tool like cURL/Postman:
-     - `http://localhost:8000/api/v1/service`
-     - `http://localhost:8000/api/v1/microservices`
-     - `http://localhost:8000/api/v1/functions`
-
-5. **Stopping the Server:**
-   - To stop the server, press `Ctrl+C` in the terminal.
-
-**Note:**  
-Ensure that any other required services (like MongoDB) are running before starting the server.
-
-# How to deploy database and broker
+### How to deploy database and broker
 
 **Install docker and docker Compose:**
 
@@ -84,6 +50,42 @@ docker compose up -d
 ```bash
 docker compose down
 ```
+
+
+## Running the CryptoMesh Server with Poetry
+
+Follow these steps to run the CryptoMesh server:
+
+1. **Install Poetry (if not already installed):**
+   - Follow the instructions at [Poetry Installation](https://python-poetry.org/docs/#installation).
+
+2. **Install Project Dependencies(If not already installed):**
+   - Open your terminal and navigate to the project directory (where your `pyproject.toml` file is located).
+   - Run the following command to install all required dependencies:
+     ```bash
+     poetry install
+     ```
+
+3. **Run the Server:**
+   - Start the server using Poetry's virtual environment with this command:
+     ```bash
+     poetry run python3 ./cryptomesh/server.py
+     ```
+   - This ensures that the server runs with the correct dependencies specified in your project.
+
+4. **Access the API Endpoints:**
+   - Once the server is running, you can access the API endpoints in your browser or via a tool like cURL/Postman:
+     - `http://localhost:19000/api/v1/services`
+     - `http://localhost:19000/api/v1/microservices`
+     - `http://localhost:19000/api/v1/functions`
+
+5. **Stopping the Server:**
+   - To stop the server, press `Ctrl+C` in the terminal.
+
+**Note:**  
+Ensure that any other required services (like MongoDB) are running before starting the server.
+
+
 
 
 ## Running Tests
