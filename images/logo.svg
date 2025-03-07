@@ -1,0 +1,29 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer circle representing the network boundary -->
+  <circle cx="100" cy="100" r="80" fill="none" stroke="#FF6347" stroke-width="4"/>
+  
+  <!-- Nodes placed on the circumference -->
+  <circle cx="100" cy="20" r="5" fill="#FF6347"/>
+  <circle cx="172" cy="60" r="5" fill="#FF6347"/>
+  <circle cx="172" cy="140" r="5" fill="#FF6347"/>
+  <circle cx="100" cy="180" r="5" fill="#FF6347"/>
+  <circle cx="28" cy="140" r="5" fill="#FF6347"/>
+  <circle cx="28" cy="60" r="5" fill="#FF6347"/>
+  
+  <!-- Connecting lines to create the mesh effect -->
+  <line x1="100" y1="20" x2="172" y2="60" stroke="#FF6347" stroke-width="2"/>
+  <line x1="172" y1="60" x2="172" y2="140" stroke="#FF6347" stroke-width="2"/>
+  <line x1="172" y1="140" x2="100" y2="180" stroke="#FF6347" stroke-width="2"/>
+  <line x1="100" y1="180" x2="28" y2="140" stroke="#FF6347" stroke-width="2"/>
+  <line x1="28" y1="140" x2="28" y2="60" stroke="#FF6347" stroke-width="2"/>
+  <line x1="28" y1="60" x2="100" y2="20" stroke="#FF6347" stroke-width="2"/>
+  
+  <!-- Additional diagonal lines with a dashed pattern for extra complexity -->
+  <line x1="100" y1="20" x2="172" y2="140" stroke="#FF6347" stroke-width="2" stroke-dasharray="4,2"/>
+  <line x1="172" y1="60" x2="28" y2="140" stroke="#FF6347" stroke-width="2" stroke-dasharray="4,2"/>
+  
+  <!-- Logo text -->
+  <text x="100" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#333">
+    cryptomesh
+  </text>
+</svg>
