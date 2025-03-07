@@ -4,8 +4,9 @@ from models import ServiceModel
 from cryptomesh.services import ServicesService
 from cryptomesh.repositories import ServicesRepository
 from cryptomesh.db import get_collection
-router = APIRouter()
 
+
+router = APIRouter()
 
 def get_service_service()->ServicesService:
     service = ServicesService(
@@ -16,6 +17,7 @@ def get_service_service()->ServicesService:
     return service
 
 @router.get("/services", response_model=List[ServiceModel])
+
 async def get_services(
     services_service: ServicesService = Depends(get_service_service)
 ):
