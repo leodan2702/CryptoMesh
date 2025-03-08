@@ -8,6 +8,31 @@
 </div>
 Crypto Mesh is a platform engineered to build secure service meshes specifically tailored for machine learning applications. By leveraging advanced cryptographic protocols alongside a robust, distributed mesh architecture, it ensures that data exchanged between machine learning services remains confidential and tamper-proof.
 
+
+
+## ⚠️ Clone the repo and setup a remoto 🍴: 
+
+1. You must clone the remote from the organization of Muyal: 
+```bash
+git clone git@github.com:muyal-research-group/CryptoMesh.git
+```
+
+2. You must create a fork (please check it up in the [Contribution](#contribution) section)
+
+3. Add a new remote in your local git: 
+   ```bash
+   git remote add <remote_name> <ssh> 
+   ```
+You must select ```<remote_name>``` and you must copy the ```<ssh>``` uri in the github page of your 
+
+<div align="center">
+<img width=350 src="images/gitclone_ssh.png"/>
+</div>
+
+4. Remember to push all your commits to your ```<remote_name>``` to avoid github conflicts. 
+
+Thats it!  let's get started 🚀
+
 ## Getting started
 
 You must install the following software: 
@@ -107,7 +132,7 @@ All tests for this project are located in the `tests/` folder at the root of the
     pytest tests/test_policy_manager.py
     ```
 
-## Contributing
+## Contributing[](#contribution)
 
 Please follow these steps to help improve the project:
 
