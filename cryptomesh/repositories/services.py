@@ -1,9 +1,8 @@
-
 from motor.motor_asyncio import AsyncIOMotorCollection
 from cryptomesh.models import ServiceModel
 
-class ServicesRepository():
-    def __init__(self,collection:AsyncIOMotorCollection):
+class ServicesRepository:
+    def __init__(self, collection: AsyncIOMotorCollection):
         self.collection = collection
 
     async def find_all(self) -> list[ServiceModel]:
@@ -16,6 +15,11 @@ class ServicesRepository():
         async for document in cursor:
             # Convert MongoDB ObjectId to string for the Pydantic model
             document["id"] = str(document.get("_id"))
+
+            # Validación para asegurar que 'microservices' existe y no cause errores
+            if "microservices" not in document:
+                document["microservices"] = {}
+
             services.append(ServiceModel(**document))
         return services
 
