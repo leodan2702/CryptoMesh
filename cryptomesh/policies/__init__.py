@@ -1,77 +1,80 @@
-from typing import Any,Dict
-from cryptomesh.models import Policy
+# cryptomesh/policies/__init__.py
 
-class CMPolicyManager(object):
+import os
+import yaml
+from typing import Any, Dict
+
+from cryptomesh.models import (
+    PolicyModel,
+    ServiceModel,
+    MicroserviceModel,
+    FunctionModel,
+    SecurityPolicy,
+    Resource,
+    Storage,
+    StoragePath,
+    ConnectionModel 
+)
+
+
+class CMPolicyManager:
     """
     CMPolicyManager is responsible for managing the policy configuration
     for the CryptoMesh system.
-
-    This class provides methods to load and interpret policies defined
-    in a YAML file. It serves as the central component for reading,
-    parsing, and converting policy definitions into a structured Policy
-    object that can be utilized throughout the system.
-
-    Methods
-    -------
-    load_policy() -> Dict[str, Any]
-        Loads the policy YAML file and returns a dictionary containing
-        the policy configuration.
-
-    interpret() -> Policy
-        Interprets the loaded policy data and converts it into a Policy
-        object.
     """
 
-    def __init__(self):
-        """
-        Initialize a new instance of CMPolicyManager.
-
-        This constructor currently does not perform any heavy initialization.
-        The policy is expected to be loaded and interpreted using the
-        load_policy() and interpret() methods.
-        """
-        pass
+    def __init__(self, policy_file: str = "policies/example_1.yml"):
+        self.policy_file = policy_file
+        self._raw_data: Dict[str, Any] = {}
 
     def load_policy(self) -> Dict[str, Any]:
         """
         Load the policy configuration from a YAML file.
-
-        This method reads the YAML file that contains the policy definitions,
-        parses its contents, and returns the data as a dictionary. This
-        configuration dictionary serves as the basis for the policy interpretation.
-
-        Returns
-        -------
-        Dict[str, Any]
-            A dictionary containing the policy configuration loaded from the YAML file.
-
-        Raises
-        ------
-        FileNotFoundError
-            If the policy YAML file is not found.
-        YAMLError
-            If there is an error parsing the YAML file.
         """
-        pass
+        if not os.path.exists(self.policy_file):
+            raise FileNotFoundError(f"Policy not found: {self.policy_file}")
 
-    def interpret(self) -> 'Policy':
+        with open(self.policy_file, "r") as f:
+            self._raw_data = yaml.safe_load(f)
+
+        return self._raw_data
+
+    def interpret(self) -> PolicyModel:
         """
-        Interpret the loaded policy configuration and convert it into a Policy object.
-
-        This method processes the dictionary obtained from load_policy(), validates
-        the policy data, and translates the content into a structured Policy
-        object. This Policy object encapsulates all the security rules, service
-        definitions, and interactions as defined in the YAML file.
-
-        Returns
-        -------
-        Policy
-            A Policy object that represents the structured policy settings as
-            defined in the YAML file.
-
-        Raises
-        ------
-        ValueError
-            If the policy data is invalid or incomplete.
+        Interpret the loaded policy configuration and convert it into a PolicyModel object.
         """
-        pass
+        if not self._raw_data:
+            self.load_policy()
+
+        services_objs = {}
+
+        for service_id, service_data in self._raw_data["services"].items():
+            microservices_objs = {}
+
+            for ms_name, ms_data in service_data.get("microservices", {}).items():
+                functions_objs = {
+                    fn_name: FunctionModel(**fn_data)
+                    for fn_name, fn_data in ms_data.get("functions", {}).items()
+                }
+
+                microservices_objs[ms_name] = MicroserviceModel(
+                    security_policy=SecurityPolicy(**ms_data["security_policy"]),
+                    resources=ms_data["resources"],
+                    functions=functions_objs,
+                )
+
+            services_objs[service_id] = ServiceModel(
+                security_policy=SecurityPolicy(**service_data["security_policy"]),
+                microservices=microservices_objs,
+            )
+
+        connections_objs = [
+            ConnectionModel(**conn)
+            for conn in self._raw_data.get("connections", [])
+        ]
+
+        return PolicyModel(
+            cryptomesh=self._raw_data["cryptomesh"],
+            services=services_objs,
+            connections=connections_objs,
+        )
