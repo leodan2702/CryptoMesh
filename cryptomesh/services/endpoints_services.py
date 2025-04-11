@@ -19,18 +19,15 @@ class EndpointsService:
 
     async def list_endpoints(self):
         endpoints = await self.repository.get_all()
-        # Puedes, opcionalmente, resolver la política de seguridad para cada endpoint aquí
         return endpoints
 
     async def get_endpoint(self, endpoint_id: str):
         endpoint = await self.repository.get_by_id(endpoint_id)
         if not endpoint:
             raise HTTPException(status_code=404, detail="Endpoint not found")
-        # En lugar de enviar el ID de security_policy, obtenemos los roles mediante el SecurityPolicyService
-        sp = await self.security_policy_service.get_by_id(endpoint.security_policy)
+        sp = await self.security_policy_service.get_policy(endpoint.security_policy)
         endpoint_data = endpoint.dict()
-        # Si se encontró la política, reemplazamos el valor por los roles; si no, dejamos el ID
-        endpoint_data['security_policy'] = sp.roles if sp else endpoint.security_policy
+        endpoint_data['security_policy'] = sp.sp_id if sp else endpoint.security_policy
         return EndpointModel(**endpoint_data)
 
     async def update_endpoint(self, endpoint_id: str, updates: dict):
