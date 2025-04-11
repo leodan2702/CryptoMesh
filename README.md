@@ -166,3 +166,131 @@ Please follow these steps to help improve the project:
 
 7. **Review Process:**
    - Your pull request will be reviewed by the maintainers. Feedback and further changes may be requested.
+
+
+## 1. Models and Entities
+
+### a. ResourcesModel
+- **Description:** Represents the computational resources allocated to system components.
+- **Attributes:**
+  - `cpu` (int): Number of CPU cores allocated.
+  - `ram` (str): Amount of RAM allocated (e.g., `"2GB"`).
+
+### b. StorageModel
+- **Description:** Defines the storage configuration for a function.
+- **Attributes:**
+  - `storage_id` (str): Unique identifier.
+  - `capacity` (str): Allocated storage capacity (e.g., `"10GB"`).
+  - `source_path` (str): Source path.
+  - `sink_path` (str): Destination path.
+  - `created_at` (datetime): Creation timestamp (default: `datetime.utcnow`).
+
+### c. RoleModel
+- **Description:** Defines a role used in security policies.
+- **Attributes:**
+  - `role_id` (str): Unique identifier of the role.
+  - `name` (str): Descriptive name of the role.
+  - `description` (str): Description of the role.
+  - `permissions` (List[str]): List of associated permissions.
+  - `created_at` (datetime): Creation timestamp.
+
+### d. SecurityPolicyModel
+- **Description:** Establishes a security policy by referencing one or more roles.
+- **Attributes:**
+  - `sp_id` (str): Unique identifier for the policy.
+  - `roles` (List[str]): List of role IDs corresponding to `RoleModel` records.
+  - `requires_authentication` (bool): Indicates if authentication is required.
+  - `created_at` (datetime): Creation timestamp.
+
+### e. EndpointModel
+- **Description:** Represents a container or execution server that deploys functions.
+- **Attributes:**
+  - `endpoint_id` (str): Unique identifier.
+  - `name` (str): Descriptive name of the endpoint.
+  - `image` (str): Container image to be used.
+  - `resources` (ResourcesModel): Allocated resources.
+  - `security_policy` (str): Reference to a security policy (using the `sp_id` from SecurityPolicyModel).
+  - `created_at` (datetime): Creation timestamp.
+
+### f. EndpointStateModel
+- **Description:** Records the operational state of an endpoint (e.g., "warm", "cold") along with additional metadata.
+- **Attributes:**
+  - `state_id` (str): Unique state identifier.
+  - `endpoint_id` (str): Reference to the related EndpointModel.
+  - `state` (str): Current state of the endpoint.
+  - `metadata` (Dict[str, str]): Additional metadata.
+  - `timestamp` (datetime): Timestamp of the state record (default: `datetime.utcnow`).
+
+### g. ServiceModel
+- **Description:** Represents a service that groups microservices and has an associated security policy.
+- **Attributes:**
+  - `service_id` (str): Unique identifier.
+  - `security_policy` (str): Reference to the security policy (`sp_id` from SecurityPolicyModel).
+  - `microservices` (List[str]): List of microservice IDs that belong to this service.
+  - `resources` (ResourcesModel): Allocated resources.
+  - `created_at` (datetime): Creation timestamp.
+
+### h. MicroserviceModel
+- **Description:** Represents a microservice that belongs to a ServiceModel and groups multiple functions.
+- **Attributes:**
+  - `microservice_id` (str): Unique identifier.
+  - `service_id` (str): The ServiceModel ID to which it belongs.
+  - `functions` (List[str]): List of function IDs.
+  - `resources` (ResourcesModel): Allocated resources.
+  - `created_at` (datetime): Creation timestamp.
+
+### i. FunctionModel
+- **Description:** Represents a function (or task) that gets deployed and executed on an endpoint.
+- **Attributes:**
+  - `function_id` (str): Unique identifier.
+  - `microservice_id` (str): Reference to the parent MicroserviceModel.
+  - `image` (str): Container image used for the function.
+  - `resources` (ResourcesModel): Allocated resources.
+  - `storage` (str): Reference (ID) to a StorageModel.
+  - `endpoint_id` (str): Reference to the EndpointModel where it is deployed.
+  - `deployment_status` (str): Deployment status (e.g., "initiated", "completed", "failed").
+  - `created_at` (datetime): Creation timestamp.
+
+### j. FunctionStateModel
+- **Description:** Records the real-time execution state of a function.
+- **Attributes:**
+  - `state_id` (str): Unique state identifier.
+  - `function_id` (str): FunctionModel reference.
+  - `state` (str): Current execution state (e.g., "running", "completed", "failed").
+  - `metadata` (Dict[str, str]): Additional execution-related data.
+  - `timestamp` (datetime): Timestamp (default: `datetime.utcnow`).
+
+### k. FunctionResultModel
+- **Description:** Stores the final result (and/or metadata) of a function's execution.
+- **Attributes:**
+  - `state_id` (str): Identifier used to associate with a FunctionStateModel.
+  - `function_id` (str): Reference to the FunctionModel.
+  - `metadata` (Dict[str, str]): Execution result and additional data.
+  - `timestamp` (datetime): Timestamp (default: `datetime.utcnow`).
+
+---
+
+## 2. Entity Relationships
+
+- **Security Policy and Roles:**  
+  The `SecurityPolicyModel` contains a list of role IDs (in the `roles` field). These IDs refer to entries in the `RoleModel`, allowing policies to group multiple roles.
+
+- **Endpoints and Security Policy:**  
+  Each `EndpointModel` holds a `security_policy` field that contains the `sp_id` of a security policy. This links endpoints with specific security rules and restrictions.
+
+- **Services, Microservices, and Functions:**  
+  - A `ServiceModel` groups its microservices via the `microservices` field (a list of microservice IDs).
+  - A `MicroserviceModel` holds a list of functions (by their `function_id`), establishing a hierarchy where services contain microservices and microservices group functions.
+
+- **Functions and Endpoints:**  
+  Each `FunctionModel` includes an `endpoint_id` field that references the EndpointModel where it is deployed, creating a direct link between functions and their operational environment.
+
+- **State and Results Tracking:**  
+  - The `EndpointStateModel` logs the operational state of endpoints.
+  - The `FunctionStateModel` tracks the execution state of functions in real time.
+  - The `FunctionResultModel` stores the final outcomes of function executions and can be related back to the function’s state through the `state_id`.
+
+---
+
+
+

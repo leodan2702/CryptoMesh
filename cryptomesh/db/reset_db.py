@@ -1,17 +1,29 @@
-# cryptomesh/db/reset_db.py
-
 import asyncio
-from cryptomesh.db import connect_to_mongo, get_collection, close_mongo_connection
+from cryptomesh.db import connect_to_mongo, close_mongo_connection, get_database
 
-async def clear_all():
+async def clean_database():
     await connect_to_mongo()
 
-    for name in ["services", "microservices", "functions"]:
-        collection = get_collection(name)
-        result = await collection.delete_many({})
-        print(f"🧹 Colección '{name}' limpiada ({result.deleted_count} documentos eliminados)")
+    db = get_database()
+    if db is None:
+        print("❌ No se pudo conectar a la base de datos.")
+        return
+
+    # Obtener todas las colecciones de la base de datos
+    collections = await db.list_collection_names()
+
+    if not collections:
+        print("✅ No hay colecciones en la base de datos.")
+    else:
+        for collection_name in collections:
+            collection = db[collection_name]
+            result = await collection.delete_many({})
+            print(f"🗑 Colección '{collection_name}' limpiada: {result.deleted_count} documentos eliminados.")
 
     await close_mongo_connection()
 
 if __name__ == "__main__":
-    asyncio.run(clear_all())
+    asyncio.run(clean_database())
+
+
+
