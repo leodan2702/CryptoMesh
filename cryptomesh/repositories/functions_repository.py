@@ -1,5 +1,6 @@
 # cryptomesh/repositories/functions_repository.py
 from motor.motor_asyncio import AsyncIOMotorCollection
+from pymongo import ReturnDocument
 from pymongo.errors import PyMongoError
 from typing import List, Optional
 from cryptomesh.models import FunctionModel
@@ -37,7 +38,7 @@ class FunctionsRepository:
             updated = await self.collection.find_one_and_update(
                 {"function_id": function_id},
                 {"$set": updates},
-                return_document=True
+                return_document=ReturnDocument.AFTER
             )
             if updated:
                 return FunctionModel(**updated)
