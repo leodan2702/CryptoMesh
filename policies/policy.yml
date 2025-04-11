@@ -1,0 +1,129 @@
+cryptomesh: v1
+
+# Definición de Endpoints (Contenedores/Servidores de Ejecución)
+endpoints:
+  ep1:
+    name: "Unsafe-Endpoint 1"
+    image: "nachcodexx/axo:endpoint"
+    resources:
+      cpu: "2"
+      ram: "2GB"
+    security_policy:
+      roles: ["security_manager"]
+    requires_authentication: true
+
+  ep2:
+    name: "Safe-Endpoint"
+    image: "nachcodexx/axo:endpoint"
+    resources:
+      cpu: "2"
+      ram: "2GB"
+    security_policy:
+      roles: ["ml1"]
+    requires_authentication: true
+
+# Definición de Services (Cada service tiene múltiples microservices)
+services:
+  s_security:
+    security_policy:
+      roles: ["security_manager"]
+    requires_authentication: true
+    microservices:
+      - "ms_cipher_ops"
+
+  s_ml:
+    id: "s_ml"
+    security_policy:
+      roles: ["ml1_analyst"]
+    requires_authentication: true
+    microservices:
+      - "ms_ml_clustering"
+
+# Definición de Microservices (Cada microservice tiene múltiples functions)
+microservices:
+  ms_cipher_ops:
+    id: "ms_cipher_ops"
+    service_id: "s_security"
+    resources:
+      ram: "2GB"
+      cpu: 2
+    functions:
+      - "encrypt_data"
+      - "decrypt_data"
+
+  ms_ml_clustering:
+    id: "ms_ml_clustering"
+    service_id: "s_ml"
+    resources:
+      ram: "4GB"
+      cpu: 4
+    functions:
+      - "skmean"
+      - "consume_model"
+      - "plotting"
+
+# Definición de Functions (Unidad de despliegue)
+functions:
+  encrypt_data:
+    id: "encrypt_data"
+    microservice_id: "ms_cipher_ops"
+    image: "rory:liu-encrypt"
+    resources:
+      ram: "1GB"
+      cpu: 1
+    storage:
+      capacity: "10GB"
+      source:
+	bucket_id: "plain_bucket"
+	key: "optional"
+        path: "/mitclanx/local"
+      sink:
+        path: "/mitclanx/remote"
+	key:"OptionalKey"
+        bucket_id: "encrypt_data_bucket"
+    endpoint_id: "ep2"
+
+  decrypt_data:
+    id: "decrypt_data"
+    microservice_id: "ms_cipher_ops"
+    image: "rory:liu-decrypt"
+    resources:
+      ram: "1GB"
+      cpu: 1
+    storage:
+      capacity: "10GB"
+      source:
+        path: "/mitclanx/local"
+      sink:
+        path: "/mitclanx/remote"
+    endpoint_id: "ep1"
+
+  skmean:
+    id: "skmean"
+    microservice_id: "ms_ml_clustering"
+    image: "rory:skmean"
+    resources:
+      ram: "2GB"
+      cpu: 2
+    storage:
+      capacity: "15GB"
+      source:
+        path: "/ml/input"
+      sink:
+        path: "/ml/output"
+    endpoint_id: "ep1"
+
+  plotting:
+    id: "plotting"
+    microservice_id: "ms_ml_clustering"
+    image: "rory:plotting"
+    resources:
+      ram: "1GB"
+      cpu: 1
+    storage:
+      capacity: "5GB"
+      source:
+        path: "/ml/plot_input"
+      sink:
+        path: "/ml/plots"
+    endpoint_id: "ep2"
