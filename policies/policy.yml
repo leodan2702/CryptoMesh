@@ -10,7 +10,7 @@ endpoints:
       ram: "2GB"
     security_policy:
       roles: ["security_manager"]
-    requires_authentication: true
+      requires_authentication: true
 
   ep2:
     name: "Safe-Endpoint"
@@ -20,14 +20,14 @@ endpoints:
       ram: "2GB"
     security_policy:
       roles: ["ml1"]
-    requires_authentication: true
+      requires_authentication: true
 
 # Definición de Services (Cada service tiene múltiples microservices)
 services:
   s_security:
     security_policy:
       roles: ["security_manager"]
-    requires_authentication: true
+      requires_authentication: true
     microservices:
       - "ms_cipher_ops"
 
@@ -35,7 +35,7 @@ services:
     id: "s_ml"
     security_policy:
       roles: ["ml1_analyst"]
-    requires_authentication: true
+      requires_authentication: true
     microservices:
       - "ms_ml_clustering"
 
@@ -74,12 +74,12 @@ functions:
     storage:
       capacity: "10GB"
       source:
-	bucket_id: "plain_bucket"
-	key: "optional"
+	      bucket_id: "plain_bucket"
+	      key: "optional"
         path: "/mitclanx/local"
       sink:
         path: "/mitclanx/remote"
-	key:"OptionalKey"
+	      key:"OptionalKey"
         bucket_id: "encrypt_data_bucket"
     endpoint_id: "ep2"
 
