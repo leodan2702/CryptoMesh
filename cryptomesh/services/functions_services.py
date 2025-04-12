@@ -8,7 +8,7 @@ class FunctionsService:
         self.repository = repository
 
     async def create_function(self, data: FunctionModel):
-        if await self.repository.get_by_id(data.id):
+        if await self.repository.get_by_id(data.function_id):
             raise HTTPException(status_code=400, detail="Function already exists")
         function = await self.repository.create(data)
         if not function:
