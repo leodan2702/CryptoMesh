@@ -2,7 +2,9 @@ from fastapi import HTTPException
 from typing import List
 from cryptomesh.models import StorageModel
 from cryptomesh.repositories.storage_repository import StorageRepository
+from typing_extensions import deprecated
 
+@deprecated("It will go to be removed in future versions")
 class StorageService:
     def __init__(self, repository: StorageRepository):
         self.repository = repository
