@@ -1,4 +1,3 @@
-from cryptomesh.controllers.services import router as services_router
 from cryptomesh.controllers.services_controller import router as services_router
 from cryptomesh.controllers.microservices_controller import router as microservices_router
 from cryptomesh.controllers.functions_controller import router as functions_router
