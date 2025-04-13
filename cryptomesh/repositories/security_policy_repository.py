@@ -10,7 +10,7 @@ class SecurityPolicyRepository:
 
     async def create(self, policy: SecurityPolicyModel) -> Optional[SecurityPolicyModel]:
         try:
-            policy_dict = policy.dict(by_alias=True, exclude_unset=True)
+            policy_dict = policy.model_dump(by_alias=True, exclude_unset=True)
             result = await self.collection.insert_one(policy_dict)
             if result.inserted_id:
                 return policy

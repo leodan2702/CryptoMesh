@@ -50,7 +50,7 @@ async def update_policy(
     updated_policy: SecurityPolicyModel,
     service: SecurityPolicyService = Depends(get_security_policy_service)
 ):
-    updates = updated_policy.dict(by_alias=True, exclude_unset=True)
+    updates = updated_policy.model_dump(by_alias=True, exclude_unset=True)
     return await service.update_policy(sp_id, updates)
 
 @router.delete(

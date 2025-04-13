@@ -46,7 +46,7 @@ async def get_endpoint_state(state_id: str, service: EndpointStateService = Depe
     description="Actualiza completamente un registro de estado de endpoint existente."
 )
 async def update_endpoint_state(state_id: str, updated: EndpointStateModel, service: EndpointStateService = Depends(get_endpoint_state_service)):
-    update_data = updated.dict(by_alias=True, exclude_unset=True)
+    update_data = updated.model_dump(by_alias=True, exclude_unset=True)
     return await service.update_state(state_id, update_data)
 
 @router.delete(

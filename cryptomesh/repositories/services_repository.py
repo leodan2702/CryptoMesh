@@ -9,7 +9,7 @@ class ServicesRepository:
 
     async def create(self, service: ServiceModel) -> Optional[ServiceModel]:
         try:
-            service_dict = service.dict(by_alias=True, exclude_unset=True)
+            service_dict = service.model_dump(by_alias=True, exclude_unset=True)
             result = await self.collection.insert_one(service_dict)
             if result.inserted_id:
                 return service

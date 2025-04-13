@@ -11,7 +11,7 @@ class FunctionsRepository:
 
     async def create(self, function: FunctionModel) -> Optional[FunctionModel]:
         try:
-            function_dict = function.dict(by_alias=True, exclude_unset=True)
+            function_dict = function.model_dump(by_alias=True, exclude_unset=True)
             result = await self.collection.insert_one(function_dict)
             if result.inserted_id:
                 return function

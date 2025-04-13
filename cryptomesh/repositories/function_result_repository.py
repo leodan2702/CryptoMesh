@@ -9,7 +9,7 @@ class FunctionResultRepository:
 
     async def create(self, result: FunctionResultModel) -> Optional[FunctionResultModel]:
         try:
-            result_dict = result.dict(by_alias=True, exclude_unset=True)
+            result_dict = result.model_dump(by_alias=True, exclude_unset=True)
             res = await self.collection.insert_one(result_dict)
             if res.inserted_id:
                 return result

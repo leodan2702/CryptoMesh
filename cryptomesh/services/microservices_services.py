@@ -9,7 +9,7 @@ class MicroservicesService:
 
     async def create_microservice(self, microservice: MicroserviceModel) -> MicroserviceModel:
         # Se usa el campo "id" en la búsqueda (según tu repositorio)
-        if await self.repository.get_by_id(microservice.id):
+        if await self.repository.get_by_id(microservice.microservice_id):
             raise HTTPException(status_code=400, detail="Microservicio ya existe")
         created = await self.repository.create(microservice)
         if not created:

@@ -62,7 +62,7 @@ async def update_microservice(
     updated: MicroserviceModel, 
     ms_service: MicroservicesService = Depends(get_microservices_service)
 ):
-    update_data = updated.dict(by_alias=True, exclude_unset=True)
+    update_data = updated.model_dump(by_alias=True, exclude_unset=True)
     updated_ms = await ms_service.update_microservice(microservice_id, update_data)
     if not updated_ms:
         raise HTTPException(status_code=404, detail="Microservicio no encontrado o error al actualizar")
