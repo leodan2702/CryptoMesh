@@ -50,7 +50,7 @@ async def get_function(function_id: str, service: FunctionsService = Depends(get
     description="Actualiza completamente una función existente."
 )
 async def update_function(function_id: str, updated_function: FunctionModel, service: FunctionsService = Depends(get_functions_service)):
-    update_data = updated_function.dict(by_alias=True, exclude_unset=True)
+    update_data = updated_function.model_dump(by_alias=True, exclude_unset=True)
     return await service.update_function(function_id, update_data)
 
 @router.delete(

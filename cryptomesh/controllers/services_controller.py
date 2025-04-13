@@ -49,7 +49,7 @@ async def get_service(service_id: str, service_svc: ServicesService = Depends(ge
     description="Actualiza completamente un service existente."
 )
 async def update_service(service_id: str, updated: ServiceModel, service_svc: ServicesService = Depends(get_services_service)):
-    update_data = updated.dict(by_alias=True, exclude_unset=True)
+    update_data = updated.model_dump(by_alias=True, exclude_unset=True)
     return await service_svc.update_service(service_id, update_data)
 
 @router.delete(

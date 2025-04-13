@@ -26,11 +26,11 @@ class EndpointsService:
         if not endpoint:
             raise HTTPException(status_code=404, detail="Endpoint not found")
         sp = await self.security_policy_service.get_policy(endpoint.security_policy)
-        endpoint_data = endpoint.dict()
+        endpoint_data = endpoint.model_dump()
         endpoint_data['security_policy'] = sp.sp_id if sp else endpoint.security_policy
         return EndpointModel(**endpoint_data)
 
-    async def update_endpoint(self, endpoint_id: str, updates: dict):
+    async def update_endpoint(self, endpoint_id: str, updates: dict) -> EndpointModel:
         if not await self.repository.get_by_id(endpoint_id):
             raise HTTPException(status_code=404, detail="Endpoint not found")
         updated = await self.repository.update(endpoint_id, updates)

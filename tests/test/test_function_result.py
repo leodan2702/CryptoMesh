@@ -10,7 +10,6 @@ async def test_create_function_result():
     db = client.cryptomesh_test
     repo = FunctionResultRepository(collection=db.function_results)
     service = FunctionResultService(repo)
-    
     result_obj = FunctionResultModel(
         state_id="fr_test",
         function_id="fn_test",

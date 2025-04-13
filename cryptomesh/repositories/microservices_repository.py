@@ -9,7 +9,7 @@ class MicroservicesRepository:
 
     async def create(self, microservice: MicroserviceModel) -> Optional[MicroserviceModel]:
         try:
-            microservice_dict = microservice.dict(by_alias=True, exclude_unset=True)
+            microservice_dict = microservice.model_dump(by_alias=True, exclude_unset=True)
             result = await self.collection.insert_one(microservice_dict)
             if result.inserted_id:
                 return microservice

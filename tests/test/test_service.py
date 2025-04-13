@@ -3,7 +3,6 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from cryptomesh.repositories.services_repository import ServicesRepository
 from cryptomesh.models import ServiceModel
 
-
 @pytest.mark.asyncio
 async def test_insert_service():
     client = AsyncIOMotorClient("mongodb://localhost:27017")

@@ -46,7 +46,7 @@ async def get_function_result(result_id: str, service: FunctionResultService = D
     description="Actualiza un registro de resultado de función existente."
 )
 async def update_function_result(result_id: str, updated: FunctionResultModel, service: FunctionResultService = Depends(get_function_result_service)):
-    update_data = updated.dict(by_alias=True, exclude_unset=True)
+    update_data = updated.model_dump(by_alias=True, exclude_unset=True)
     return await service.update_result(result_id, update_data)
 
 @router.delete(

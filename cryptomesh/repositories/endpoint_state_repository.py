@@ -10,7 +10,7 @@ class EndpointStateRepository:
 
     async def create(self, state: EndpointStateModel) -> Optional[EndpointStateModel]:
         try:
-            state_dict = state.dict(by_alias=True, exclude_unset=True)
+            state_dict = state.model_dump(by_alias=True, exclude_unset=True)
             result = await self.collection.insert_one(state_dict)
             if result.inserted_id:
                 return state

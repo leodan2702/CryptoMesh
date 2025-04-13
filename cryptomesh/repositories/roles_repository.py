@@ -9,7 +9,7 @@ class RolesRepository:
 
     async def create(self, role: RoleModel) -> Optional[RoleModel]:
         try:
-            role_dict = role.dict(by_alias=True, exclude_unset=True)
+            role_dict = role.model_dump(by_alias=True, exclude_unset=True)
             result = await self.collection.insert_one(role_dict)
             if result.inserted_id:
                 return role

@@ -46,7 +46,7 @@ async def get_role(role_id: str, service: RolesService = Depends(get_roles_servi
     description="Actualiza un role existente."
 )
 async def update_role(role_id: str, updated: RoleModel, service: RolesService = Depends(get_roles_service)):
-    update_data = updated.dict(by_alias=True, exclude_unset=True)
+    update_data = updated.model_dump(by_alias=True, exclude_unset=True)
     return await service.update_role(role_id, update_data)
 
 @router.delete(

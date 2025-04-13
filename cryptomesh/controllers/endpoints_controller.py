@@ -1,5 +1,5 @@
 # cryptomesh/controllers/endpoints_controller.py
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import List
 from cryptomesh.models import EndpointModel
 from cryptomesh.services.endpoints_services import EndpointsService
@@ -54,9 +54,12 @@ async def get_endpoint(endpoint_id: str, service: EndpointsService = Depends(get
     summary="Actualizar un endpoint por ID",
     description="Actualiza completamente un endpoint existente."
 )
-async def update_endpoint(endpoint_id: str, updated_endpoint: EndpointModel, service: EndpointsService = Depends(get_endpoints_service)):
-    update_data = updated_endpoint.dict(by_alias=True, exclude_unset=True)
-    return await service.update_endpoint(endpoint_id, update_data)
+async def update_endpoint(endpoint_id: str, updated: EndpointModel, service: EndpointsService = Depends(get_endpoints_service)):
+    update_data = updated.model_dump(by_alias=True, exclude_unset=True)
+    updated_endpoint = await service.update_endpoint(endpoint_id, update_data)
+    if not updated_endpoint:
+        raise HTTPException(status_code=404, detail="Endpoint not found")
+    return updated_endpoint
 
 @router.delete(
     "/endpoints/{endpoint_id}",

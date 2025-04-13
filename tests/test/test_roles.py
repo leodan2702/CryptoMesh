@@ -5,20 +5,6 @@ from cryptomesh.repositories.roles_repository import RolesRepository
 from cryptomesh.services.roles_service import RolesService
 from fastapi import HTTPException
 
-@pytest.fixture
-async def client_db():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    yield db
-    await db.roles.delete_many({})
-
-@pytest.fixture
-async def roles_service(client_db):
-    collection = client_db.roles
-    repository = RolesRepository(collection)
-    service = RolesService(repository)
-    return service
-
 @pytest.mark.asyncio
 async def test_insert_role():
     client = AsyncIOMotorClient("mongodb://localhost:27017")

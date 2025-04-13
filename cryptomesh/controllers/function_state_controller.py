@@ -46,7 +46,7 @@ async def get_function_state(state_id: str, service: FunctionStateService = Depe
     description="Actualiza completamente un registro de estado de función existente."
 )
 async def update_function_state(state_id: str, updated: FunctionStateModel, service: FunctionStateService = Depends(get_function_state_service)):
-    update_data = updated.dict(by_alias=True, exclude_unset=True)
+    update_data = updated.model_dump(by_alias=True, exclude_unset=True)
     return await service.update_state(state_id, update_data)
 
 @router.delete(
