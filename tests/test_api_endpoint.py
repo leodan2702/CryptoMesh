@@ -1,18 +1,5 @@
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from cryptomesh.server import app
-from cryptomesh.db import connect_to_mongo
 
-@pytest_asyncio.fixture(autouse=True)
-async def setup_mongodb():
-    await connect_to_mongo()
-
-@pytest_asyncio.fixture
-async def client():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
 
 @pytest.mark.asyncio
 async def test_create_endpoint(client):
@@ -78,7 +65,6 @@ async def test_get_endpoint(client):
     assert create_res.status_code == 200
 
     response = await client.get(f"/api/v1/endpoints/{payload['endpoint_id']}")
-    print(response.json())
     assert response.status_code == 200
     data = response.json()
     assert data["endpoint_id"] == payload["endpoint_id"]

@@ -1,5 +1,4 @@
 import pytest
-from motor.motor_asyncio import AsyncIOMotorClient
 from cryptomesh.models import EndpointModel, ResourcesModel, SecurityPolicyModel
 from cryptomesh.repositories.endpoints_repository import EndpointsRepository
 from cryptomesh.services.endpoints_services import EndpointsService
@@ -7,10 +6,10 @@ from cryptomesh.repositories.security_policy_repository import SecurityPolicyRep
 from cryptomesh.services.security_policy_service import SecurityPolicyService
 from fastapi import HTTPException
 
+
 @pytest.mark.asyncio
-async def test_create_endpoint():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
+async def test_create_endpoint(get_db):
+    db = get_db
     sp_repo = SecurityPolicyRepository(db.security_policies)
     sp_service = SecurityPolicyService(sp_repo)
     policy = SecurityPolicyModel(
@@ -29,7 +28,7 @@ async def test_create_endpoint():
 
     # Prueba de creación
     endpoint = EndpointModel(
-         endpoint_id="ep_test",
+         endpoint_id="ep_test1",
          name="Test Endpoint",
          image="test_image",
          resources=ResourcesModel(cpu=2, ram="2GB"),
@@ -38,17 +37,12 @@ async def test_create_endpoint():
     )
     created = await endpoints_service.create_endpoint(endpoint)
     assert created is not None
-    assert created.endpoint_id == "ep_test"
-
-    # Limpieza
-    await db.endpoints.delete_many({})
-    await db.security_policies.delete_many({})
+    assert created.endpoint_id == "ep_test1"
 
 @pytest.mark.asyncio
-async def test_get_endpoint():
+async def test_get_endpoint(get_db):
     # Conexión y configuración
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
+    db =  get_db
 
     sp_repo = SecurityPolicyRepository(db.security_policies)
     sp_service = SecurityPolicyService(sp_repo)
@@ -68,7 +62,7 @@ async def test_get_endpoint():
 
     # Prueba de obtención
     endpoint = EndpointModel(
-         endpoint_id="ep_get",
+         endpoint_id="ep_get1",
          name="Get Endpoint",
          image="test_image",
          resources=ResourcesModel(cpu=2, ram="2GB"),
@@ -76,21 +70,17 @@ async def test_get_endpoint():
          policy_id="Leo_Policy"
     )
     await endpoints_service.create_endpoint(endpoint)
-    fetched = await endpoints_service.get_endpoint("ep_get")
+    fetched = await endpoints_service.get_endpoint("ep_get1")
     assert fetched is not None
-    assert fetched.endpoint_id == "ep_get"
+    assert fetched.endpoint_id == "ep_get1"
     assert isinstance(fetched.security_policy, str)
     assert fetched.security_policy == "security_manager"
 
-    # Limpieza
-    await db.endpoints.delete_many({})
-    await db.security_policies.delete_many({})
 
 @pytest.mark.asyncio
-async def test_update_endpoint():
+async def test_update_endpoint(get_db):
     # Conexión y configuración
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
+    db =  get_db
 
     sp_repo = SecurityPolicyRepository(db.security_policies)
     sp_service = SecurityPolicyService(sp_repo)
@@ -110,7 +100,7 @@ async def test_update_endpoint():
 
     # Crear y luego actualizar endpoint
     endpoint = EndpointModel(
-         endpoint_id="ep_update",
+         endpoint_id="ep_update1",
          name="Old Endpoint",
          image="old_image",
          resources=ResourcesModel(cpu=2, ram="2GB"),
@@ -119,20 +109,16 @@ async def test_update_endpoint():
     )
     await endpoints_service.create_endpoint(endpoint)
     updates = {"name": "Updated Endpoint", "image": "updated_image"}
-    updated = await endpoints_service.update_endpoint("ep_update", updates)
+    updated = await endpoints_service.update_endpoint("ep_update1", updates)
     assert updated is not None
     assert updated.name == "Updated Endpoint"
     assert updated.image == "updated_image"
 
-    # Limpieza
-    await db.endpoints.delete_many({})
-    await db.security_policies.delete_many({})
 
 @pytest.mark.asyncio
-async def test_delete_endpoint():
+async def test_delete_endpoint(get_db):
     # Conexión y configuración
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
+    db= get_db
 
     sp_repo = SecurityPolicyRepository(db.security_policies)
     sp_service = SecurityPolicyService(sp_repo)
@@ -152,7 +138,7 @@ async def test_delete_endpoint():
 
     # Crear y borrar endpoint
     endpoint = EndpointModel(
-         endpoint_id="ep_delete",
+         endpoint_id="ep_delete1",
          name="To Delete Endpoint",
          image="delete_image",
          resources=ResourcesModel(cpu=2, ram="2GB"),
@@ -160,11 +146,7 @@ async def test_delete_endpoint():
          policy_id="Leo_Policy"
     )
     await endpoints_service.create_endpoint(endpoint)
-    result = await endpoints_service.delete_endpoint("ep_delete")
+    result = await endpoints_service.delete_endpoint("ep_delete1")
     # Se asume que delete_endpoint devuelve un objeto o lanza una excepción
     with pytest.raises(HTTPException):
-        await endpoints_service.get_endpoint("ep_delete")
-
-    # Limpieza
-    await db.endpoints.delete_many({})
-    await db.security_policies.delete_many({})
+        await endpoints_service.get_endpoint("ep_delete1")
