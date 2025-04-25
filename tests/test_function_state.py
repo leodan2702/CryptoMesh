@@ -1,112 +1,106 @@
 import pytest
-from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi import HTTPException
 from cryptomesh.models import FunctionStateModel
 from cryptomesh.repositories.function_state_repository import FunctionStateRepository
 from cryptomesh.services.function_state_service import FunctionStateService
 
+# ✅ TEST: Crear un nuevo estado de función
 @pytest.mark.asyncio
-async def test_create_function_state():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    repo = FunctionStateRepository(collection=db.function_states)
+async def test_create_function_state(get_db):
+    db = get_db
+    repo = FunctionStateRepository(db.function_states)
     service = FunctionStateService(repo)
-    
+
     state = FunctionStateModel(
-        state_id="fs_create",
-        function_id="fn_create",
+        state_id="fs_unique_create",
+        function_id="fn_unique_create",
         state="running",
         metadata={"progress": "50%"}
     )
     created = await service.create_state(state)
     assert created is not None
-    assert created.state_id == "fs_create"
-    await db.function_states.delete_many({})
+    assert created.state_id == "fs_unique_create"
 
-    await db.function_states.delete_many({})
-
+# ✅ TEST: Listar todos los estados de función
 @pytest.mark.asyncio
-async def test_list_function_states():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    repo = FunctionStateRepository(collection=db.function_states)
+async def test_list_function_states(get_db):
+    db = get_db
+    repo = FunctionStateRepository(db.function_states)
     service = FunctionStateService(repo)
-    
-    state1 = FunctionStateModel(
-        state_id="fs_list1",
-        function_id="fn_list",
+
+    await service.create_state(FunctionStateModel(
+        state_id="fs_unique_list_1",
+        function_id="fn_unique_list",
         state="running",
         metadata={"progress": "60%"}
-    )
-    state2 = FunctionStateModel(
-        state_id="fs_list2",
-        function_id="fn_list",
+    ))
+    await service.create_state(FunctionStateModel(
+        state_id="fs_unique_list_2",
+        function_id="fn_unique_list",
         state="completed",
         metadata={"result": "success"}
-    )
-    await service.create_state(state1)
-    await service.create_state(state2)
-    states = await service.list_states()
-    state_ids = [s.state_id for s in states]
-    assert "fs_list1" in state_ids
-    assert "fs_list2" in state_ids
+    ))
 
+    states = await service.list_states()
+    ids = [s.state_id for s in states]
+    assert "fs_unique_list_1" in ids
+    assert "fs_unique_list_2" in ids
+
+# ✅ TEST: Obtener un estado por ID
 @pytest.mark.asyncio
-async def test_get_function_state():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    repo = FunctionStateRepository(collection=db.function_states)
+async def test_get_function_state(get_db):
+    db = get_db
+    repo = FunctionStateRepository(db.function_states)
     service = FunctionStateService(repo)
-    
-    state = FunctionStateModel(
-        state_id="fs_get",
-        function_id="fn_get",
+
+    await service.create_state(FunctionStateModel(
+        state_id="fs_unique_get",
+        function_id="fn_unique_get",
         state="completed",
         metadata={"result": "success"}
-    )
-    await service.create_state(state)
-    fetched = await service.get_state("fs_get")
+    ))
+
+    fetched = await service.get_state("fs_unique_get")
     assert fetched is not None
     assert fetched.state == "completed"
-    await db.function_states.delete_many({})
 
+# ✅ TEST: Actualizar un estado existente
 @pytest.mark.asyncio
-async def test_update_function_state():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    repo = FunctionStateRepository(collection=db.function_states)
+async def test_update_function_state(get_db):
+    db = get_db
+    repo = FunctionStateRepository(db.function_states)
     service = FunctionStateService(repo)
-    
-    state = FunctionStateModel(
-        state_id="fs_update",
-        function_id="fn_update",
+
+    await service.create_state(FunctionStateModel(
+        state_id="fs_unique_update",
+        function_id="fn_unique_update",
         state="pending",
         metadata={"info": "initial"}
-    )
-    await service.create_state(state)
+    ))
+
     updates = {"state": "running", "metadata": {"info": "in progress"}}
-    updated = await service.update_state("fs_update", updates)
+    updated = await service.update_state("fs_unique_update", updates)
     assert updated is not None
     assert updated.state == "running"
     assert updated.metadata["info"] == "in progress"
-    await db.function_states.delete_many({})
 
+# ✅ TEST: Eliminar un estado y confirmar su eliminación
 @pytest.mark.asyncio
-async def test_delete_function_state():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    repo = FunctionStateRepository(collection=db.function_states)
+async def test_delete_function_state(get_db):
+    db = get_db
+    repo = FunctionStateRepository(db.function_states)
     service = FunctionStateService(repo)
-    
-    state = FunctionStateModel(
-        state_id="fs_delete",
-        function_id="fn_delete",
+
+    await service.create_state(FunctionStateModel(
+        state_id="fs_unique_delete",
+        function_id="fn_unique_delete",
         state="failed",
         metadata={"error": "Timeout"}
-    )
-    await service.create_state(state)
-    result = await service.delete_state("fs_delete")
-    assert "detail" in result
-    with pytest.raises(Exception):
-        await service.get_state("fs_delete")
+    ))
 
-    await db.function_states.delete_many({})
+    result = await service.delete_state("fs_unique_delete")
+    assert "detail" in result
+
+    with pytest.raises(HTTPException):
+        await service.get_state("fs_unique_delete")
+

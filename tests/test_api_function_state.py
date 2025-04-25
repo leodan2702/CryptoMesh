@@ -1,103 +1,109 @@
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from cryptomesh.server import app
-from cryptomesh.db import connect_to_mongo
 
-@pytest_asyncio.fixture(autouse=True)
-async def setup_mongodb():
-    await connect_to_mongo()
-
-@pytest_asyncio.fixture
-async def client():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-
+# ✅ TEST: Crear un nuevo estado de función
 @pytest.mark.asyncio
 async def test_create_function_state(client):
     payload = {
-        "state_id": "fs_test",
-        "function_id": "fn_test",
+        "state_id": "fs_test_create",
+        "function_id": "fn_test_create",
         "state": "pending",
         "metadata": {"info": "initial"}
     }
     response = await client.post("/api/v1/function-states/", json=payload)
     assert response.status_code == 200
     data = response.json()
+    # Verifica que el estado fue creado correctamente
     assert data["state_id"] == payload["state_id"]
+    assert data["function_id"] == payload["function_id"]
+    assert data["state"] == payload["state"]
+    assert data["metadata"] == payload["metadata"]
 
-# Test: Create duplicate Function should return error
+# ✅ TEST: Intentar crear un estado duplicado debe fallar
 @pytest.mark.asyncio
 async def test_create_duplicate_function_state(client):
     payload = {
-        "state_id": "fs_tests",
-        "function_id": "fn_tests",
-        "state": "pendings",
+        "state_id": "fs_test_duplicate",
+        "function_id": "fn_test_duplicate",
+        "state": "pending",
         "metadata": {"info": "initial"}
     }
-    # Create initially
-    response = await client.post("/api/v1/function-states/", json=payload)
-    assert response.status_code == 200
-    # Try duplicate insert
-    response_dup = await client.post("/api/v1/function-states/", json=payload)
-    assert response_dup.status_code == 400
+    # Crear el estado una vez
+    res1 = await client.post("/api/v1/function-states/", json=payload)
+    assert res1.status_code == 200
+    # Intentar duplicar
+    res2 = await client.post("/api/v1/function-states/", json=payload)
+    assert res2.status_code == 400
 
+# ✅ TEST: Obtener un estado existente por ID
 @pytest.mark.asyncio
 async def test_get_function_state(client):
     payload = {
-        "state_id": "fs_get",
-        "function_id": "fn_get",
+        "state_id": "fs_test_get",
+        "function_id": "fn_test_get",
         "state": "completed",
         "metadata": {"result": "success"}
     }
-    create_res = await client.post("/api/v1/function-states/", json=payload)
-    assert create_res.status_code == 200
+    # Crear antes de obtener
+    await client.post("/api/v1/function-states/", json=payload)
 
     response = await client.get(f"/api/v1/function-states/{payload['state_id']}")
     assert response.status_code == 200
     data = response.json()
+    # Validar que se obtuvo correctamente
     assert data["state_id"] == payload["state_id"]
     assert data["function_id"] == payload["function_id"]
+    assert data["state"] == payload["state"]
+    assert data["metadata"] == payload["metadata"]
 
+# ✅ TEST: Actualizar un estado de función existente
 @pytest.mark.asyncio
 async def test_update_function_state(client):
+    state_id = "fs_test_update"
+
+    # Paso 1: Crear el estado inicial
     payload = {
-        "state_id": "fs_update",
-        "function_id": "fn_update",
+        "state_id": state_id,
+        "function_id": "fn_test_update",
         "state": "pending",
         "metadata": {"info": "initial", "detail": "none"}
     }
-    create_res = await client.post("/api/v1/function-states/", json=payload)
-    assert create_res.status_code == 200
+    await client.post("/api/v1/function-states/", json=payload)
 
+    # Paso 2: Actualizar con nuevos valores
     update_payload = {
-        "state_id": "fs_update",  # Mantiene el mismo ID
-        "function_id": "fn_update",
+        "state_id": state_id,
+        "function_id": "fn_test_update",
         "state": "running",
         "metadata": {"info": "in progress", "detail": "updated"}
     }
-    update_res = await client.put(f"/api/v1/function-states/{payload['state_id']}", json=update_payload)
-    assert update_res.status_code == 200
-    data = update_res.json()
+    response = await client.put(f"/api/v1/function-states/{state_id}", json=update_payload)
+    assert response.status_code == 200
+    data = response.json()
+
+    # Validar cambios
     assert data["state_id"] == update_payload["state_id"]
     assert data["function_id"] == update_payload["function_id"]
     assert data["state"] == update_payload["state"]
     assert data["metadata"] == update_payload["metadata"]
 
+# ✅ TEST: Eliminar un estado y confirmar que ya no existe
 @pytest.mark.asyncio
 async def test_delete_function_state(client):
+    state_id = "fs_test_delete"
     payload = {
-        "state_id": "fs_delete",
-        "function_id": "fn_delete",
+        "state_id": state_id,
+        "function_id": "fn_test_delete",
         "state": "failed",
         "metadata": {"error": "timeout"}
     }
-    create_res = await client.post("/api/v1/function-states/", json=payload)
-    assert create_res.status_code == 200
+    # Crear estado
+    await client.post("/api/v1/function-states/", json=payload)
 
-    delete_res = await client.delete(f"/api/v1/function-states/{payload['state_id']}")
-    assert delete_res.status_code == 200
+    # Eliminar estado
+    del_res = await client.delete(f"/api/v1/function-states/{state_id}")
+    assert del_res.status_code == 200
 
-    get_res = await client.get(f"/api/v1/function-states/{payload['state_id']}")
+    # Confirmar que ya no existe
+    get_res = await client.get(f"/api/v1/function-states/{state_id}")
     assert get_res.status_code == 404
+

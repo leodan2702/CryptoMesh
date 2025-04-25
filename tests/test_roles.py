@@ -1,114 +1,109 @@
 import pytest
-from motor.motor_asyncio import AsyncIOMotorClient
 from cryptomesh.models import RoleModel
 from cryptomesh.repositories.roles_repository import RolesRepository
-from cryptomesh.services.roles_service import RolesService
-from fastapi import HTTPException
 
+# ✅ TEST: Insertar un nuevo rol correctamente
 @pytest.mark.asyncio
-async def test_insert_role():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    repo = RolesRepository(collection=db.roles)
+async def test_insert_role(get_db):
+    db = get_db
+    repo = RolesRepository(db.roles)
 
     role = RoleModel(
-        role_id="role_test",
+        role_id="role_test_create",
         name="Test Role",
         description="Role for testing",
         permissions=["read", "write"]
     )
+
     created = await repo.create(role)
     assert created is not None
-    assert created.role_id == "role_test"
+    assert created.role_id == "role_test_create"
+    assert created.name == "Test Role"
+    assert "read" in created.permissions
 
-    await db.roles.delete_many({})
-
+# ✅ TEST: Obtener un rol por ID
 @pytest.mark.asyncio
-async def test_get_role_by_id():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    repo = RolesRepository(collection=db.roles)
+async def test_get_role_by_id(get_db):
+    db = get_db
+    repo = RolesRepository(db.roles)
 
     role = RoleModel(
-        role_id="role_get",
+        role_id="role_test_get",
         name="Get Role",
         description="Role to fetch",
         permissions=["read"]
     )
+
     await repo.create(role)
-    fetched = await repo.get_by_id("role_get")
+    fetched = await repo.get_by_id("role_test_get")
     assert fetched is not None
+    assert fetched.role_id == "role_test_get"
     assert fetched.name == "Get Role"
+    assert "read" in fetched.permissions
 
-    await db.roles.delete_many({})
-
+# ✅ TEST: Actualizar un rol existente
 @pytest.mark.asyncio
-async def test_update_role():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    repo = RolesRepository(collection=db.roles)
+async def test_update_role(get_db):
+    db = get_db
+    repo = RolesRepository(db.roles)
 
     role = RoleModel(
-        role_id="role_update",
+        role_id="role_test_update",
         name="Old Role",
         description="Role before update",
         permissions=["read"]
     )
-    await repo.create(role)
 
+    await repo.create(role)
     updates = {"name": "Updated Role", "permissions": ["read", "write"]}
-    updated = await repo.update("role_update", updates)
+    updated = await repo.update("role_test_update", updates)
     assert updated is not None
     assert updated.name == "Updated Role"
     assert "write" in updated.permissions
 
-    await db.roles.delete_many({})
-
+# ✅ TEST: Eliminar un rol y confirmar que ya no exista
 @pytest.mark.asyncio
-async def test_delete_role():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    repo = RolesRepository(collection=db.roles)
+async def test_delete_role(get_db):
+    db = get_db
+    repo = RolesRepository(db.roles)
 
     role = RoleModel(
-        role_id="role_delete",
+        role_id="role_test_delete",
         name="Role to Delete",
         description="Role for deletion test",
         permissions=["read"]
     )
+
     await repo.create(role)
-    deleted = await repo.delete("role_delete")
+    deleted = await repo.delete("role_test_delete")
     assert deleted is True
 
-    fetched = await repo.get_by_id("role_delete")
+    fetched = await repo.get_by_id("role_test_delete")
     assert fetched is None
 
-    await db.roles.delete_many({})
-
+# ✅ TEST: Listar todos los roles
 @pytest.mark.asyncio
-async def test_list_roles():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
-    repo = RolesRepository(collection=db.roles)
+async def test_list_roles(get_db):
+    db = get_db
+    repo = RolesRepository(db.roles)
 
     role1 = RoleModel(
-        role_id="role_list1",
+        role_id="role_test_list_1",
         name="Role List 1",
         description="First role",
         permissions=["read"]
     )
     role2 = RoleModel(
-        role_id="role_list2",
+        role_id="role_test_list_2",
         name="Role List 2",
         description="Second role",
         permissions=["write"]
     )
+
     await repo.create(role1)
     await repo.create(role2)
 
     roles = await repo.get_all()
     role_ids = [r.role_id for r in roles]
-    assert "role_list1" in role_ids
-    assert "role_list2" in role_ids
-
-    await db.roles.delete_many({})
+    assert "role_test_list_1" in role_ids
+    assert "role_test_list_2" in role_ids

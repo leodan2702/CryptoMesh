@@ -1,23 +1,10 @@
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from cryptomesh.server import app
-from cryptomesh.db import connect_to_mongo
 
-@pytest_asyncio.fixture(autouse=True)
-async def setup_mongodb():
-    await connect_to_mongo()
-
-@pytest_asyncio.fixture
-async def client():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-
+# ✅ TEST: Crear un nuevo resultado de función
 @pytest.mark.asyncio
 async def test_create_function_result(client):
     payload = {
-        "state_id": "fr_test",
+        "state_id": "fr_test_create",
         "function_id": "fn_test",
         "metadata": {"output": "value"}
     }
@@ -25,72 +12,76 @@ async def test_create_function_result(client):
     assert response.status_code == 200
     data = response.json()
     assert data["state_id"] == payload["state_id"]
+    assert data["function_id"] == payload["function_id"]
+    assert data["metadata"] == payload["metadata"]
 
-# Test: Create duplicate Function should return error
+# ✅ TEST: Crear resultado duplicado debe fallar
 @pytest.mark.asyncio
-async def test_create_duplicate_function_results(client):
+async def test_create_duplicate_function_result(client):
     payload = {
-        "state_id": "fr_tests",
-        "function_id": "fn_tests",
-        "metadata": {"output": "values"}
+        "state_id": "fr_duplicate",
+        "function_id": "fn_duplicate",
+        "metadata": {"output": "duplicate"}
     }
-    # Create initially
-    response = await client.post("/api/v1/function-results/", json=payload)
-    assert response.status_code == 200
-    # Try duplicate insert
-    response_dup = await client.post("/api/v1/function-results/", json=payload)
-    assert response_dup.status_code == 400
+    response_1 = await client.post("/api/v1/function-results/", json=payload)
+    assert response_1.status_code == 200
 
+    response_2 = await client.post("/api/v1/function-results/", json=payload)
+    assert response_2.status_code == 400
+
+# ✅ TEST: Obtener un resultado por su state_id
 @pytest.mark.asyncio
 async def test_get_function_result(client):
     payload = {
-        "state_id": "fr_get",
-        "function_id": "fn_get",
+        "state_id": "fr_get_test",
+        "function_id": "fn_get_test",
         "metadata": {"result": "success"}
     }
-    create_res = await client.post("/api/v1/function-results/", json=payload)
-    assert create_res.status_code == 200
+    await client.post("/api/v1/function-results/", json=payload)
 
     response = await client.get(f"/api/v1/function-results/{payload['state_id']}")
     assert response.status_code == 200
     data = response.json()
     assert data["state_id"] == payload["state_id"]
     assert data["function_id"] == payload["function_id"]
+    assert data["metadata"] == payload["metadata"]
 
+# ✅ TEST: Actualizar un resultado existente
 @pytest.mark.asyncio
 async def test_update_function_result(client):
     payload = {
-        "state_id": "fr_update",
-        "function_id": "fn_update",
+        "state_id": "fr_update_test",
+        "function_id": "fn_update_test",
         "metadata": {"status": "initial"}
     }
-    create_res = await client.post("/api/v1/function-results/", json=payload)
-    assert create_res.status_code == 200
+    await client.post("/api/v1/function-results/", json=payload)
 
     update_payload = {
-        "state_id": "fr_update",  # Mantiene el mismo ID
-        "function_id": "fn_update",
-        "metadata": {"status": "updated", "detail": "complete update"}
+        "state_id": payload["state_id"],
+        "function_id": payload["function_id"],
+        "metadata": {"status": "updated", "detail": "full update"}
     }
-    update_res = await client.put(f"/api/v1/function-results/{payload['state_id']}", json=update_payload)
-    assert update_res.status_code == 200
-    data = update_res.json()
+    response = await client.put(f"/api/v1/function-results/{payload['state_id']}", json=update_payload)
+    assert response.status_code == 200
+    data = response.json()
     assert data["state_id"] == update_payload["state_id"]
     assert data["function_id"] == update_payload["function_id"]
     assert data["metadata"] == update_payload["metadata"]
 
+# ✅ TEST: Eliminar un resultado y verificar su inexistencia
 @pytest.mark.asyncio
 async def test_delete_function_result(client):
     payload = {
-        "state_id": "fr_delete",
-        "function_id": "fn_delete",
+        "state_id": "fr_delete_test",
+        "function_id": "fn_delete_test",
         "metadata": {"error": "Timeout"}
     }
-    create_res = await client.post("/api/v1/function-results/", json=payload)
-    assert create_res.status_code == 200
+    await client.post("/api/v1/function-results/", json=payload)
 
     delete_res = await client.delete(f"/api/v1/function-results/{payload['state_id']}")
     assert delete_res.status_code == 200
 
     get_res = await client.get(f"/api/v1/function-results/{payload['state_id']}")
     assert get_res.status_code == 404
+
+

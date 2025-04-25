@@ -1,79 +1,70 @@
 import pytest
-from motor.motor_asyncio import AsyncIOMotorClient
 from cryptomesh.repositories.services_repository import ServicesRepository
 from cryptomesh.models import ServiceModel
 
+# ✅ TEST: Insertar un nuevo servicio correctamente
 @pytest.mark.asyncio
-async def test_insert_service():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
+async def test_insert_service(get_db):
+    db = get_db
     repo = ServicesRepository(collection=db.services)
 
     service = ServiceModel(
-        service_id="s_security",            
+        service_id="s_unique_create",
         security_policy="security_manager",
-        microservices=[],                  
+        microservices=[],
         resources={"cpu": 2, "ram": "2GB"},
         policy_id="Leo_Policy"
     )
     result = await repo.create(service)
-    # Compare string sp_id
+    assert result is not None
     assert result.security_policy == "security_manager"
 
-    await db.services.delete_many({})
-
+# ✅ TEST: Obtener un servicio por ID
 @pytest.mark.asyncio
-async def test_get_service_by_id():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
+async def test_get_service_by_id(get_db):
+    db = get_db
     repo = ServicesRepository(collection=db.services)
 
     service = ServiceModel(
-        service_id="s_ml",                
-        security_policy="ml1_analyst",       
-        microservices=[],                   
+        service_id="s_unique_get",
+        security_policy="ml1_analyst",  # ✅ asegurado para el assert
+        microservices=[],
         resources={"cpu": 2, "ram": "2GB"},
         policy_id="Leo_Policy"
     )
     await repo.create(service)
-    fetched = await repo.get_by_id("s_ml")
+    fetched = await repo.get_by_id("s_unique_get")
     assert fetched is not None
     assert fetched.security_policy == "ml1_analyst"
 
-    await db.services.delete_many({})
-
-
+# ✅ TEST: Actualizar un servicio existente
 @pytest.mark.asyncio
-async def test_update_service():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
+async def test_update_service(get_db):
+    db = get_db
     repo = ServicesRepository(collection=db.services)
 
     service = ServiceModel(
-        service_id="s_security",
+        service_id="s_unique_update",
         security_policy="security_manager",
-        microservices=[],  # Campo obligatorio
+        microservices=[],
         resources={"cpu": 2, "ram": "2GB"},
         policy_id="Leo_Policy"
     )
     await repo.create(service)
 
     new_policy = {"security_policy": "ml1_analyst"}
-    updated = await repo.update("s_security", new_policy)
+    updated = await repo.update("s_unique_update", new_policy)
     assert updated is not None
     assert updated.security_policy == "ml1_analyst"
 
-    await db.services.delete_many({})
-
-
+# ✅ TEST: Eliminar un servicio y confirmar que ya no exista
 @pytest.mark.asyncio
-async def test_delete_service():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
+async def test_delete_service(get_db):
+    db = get_db
     repo = ServicesRepository(collection=db.services)
 
     service = ServiceModel(
-        service_id="service_delete",
+        service_id="s_unique_delete",
         security_policy="security_manager",
         microservices=[],
         resources={"cpu": 2, "ram": "2GB"},
@@ -81,30 +72,27 @@ async def test_delete_service():
     )
     await repo.create(service)
 
-    deleted = await repo.delete("service_delete")
+    deleted = await repo.delete("s_unique_delete")
     assert deleted is True
 
-    fetched = await repo.get_by_id("service_delete")
+    fetched = await repo.get_by_id("s_unique_delete")
     assert fetched is None
 
-    await db.services.delete_many({})
-
-
+# ✅ TEST: Listar todos los servicios
 @pytest.mark.asyncio
-async def test_list_services():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.cryptomesh_test
+async def test_list_services(get_db):
+    db = get_db
     repo = ServicesRepository(collection=db.services)
 
     service1 = ServiceModel(
-        service_id="s_security",
+        service_id="s_unique_list_1",
         security_policy="security_manager",
         microservices=[],
         resources={"cpu": 2, "ram": "2GB"},
         policy_id="Leo_Policy"
     )
     service2 = ServiceModel(
-        service_id="s_ml",
+        service_id="s_unique_list_2",
         security_policy="ml1_analyst",
         microservices=[],
         resources={"cpu": 2, "ram": "2GB"},
@@ -115,7 +103,5 @@ async def test_list_services():
 
     services = await repo.get_all()
     service_ids = [s.service_id for s in services]
-    assert "s_security" in service_ids
-    assert "s_ml" in service_ids
-
-    await db.services.delete_many({})
+    assert "s_unique_list_1" in service_ids
+    assert "s_unique_list_2" in service_ids
