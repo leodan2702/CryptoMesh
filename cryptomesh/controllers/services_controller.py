@@ -4,6 +4,24 @@ from cryptomesh.models import ServiceModel
 from cryptomesh.services.services_services import ServicesService
 from cryptomesh.repositories.services_repository import ServicesRepository
 from cryptomesh.db import get_collection
+import os
+import logging
+from cryptomesh.log import Log
+import time as T
+
+CRYPTO_MESH_DEBUG = bool(int(os.environ.get("CRYPTO_MESH_DEBUG","1")))
+def console_handler_filter(lr:logging.LogRecord):
+    if CRYPTO_MESH_DEBUG:
+        return CRYPTO_MESH_DEBUG
+    
+    return lr.levelno == logging.INFO or lr.levelno == logging.ERROR or lr.levelno == logging.WARNING
+        
+
+L = Log(
+    name=__name__,
+    console_handler_filter= console_handler_filter,
+)
+
 
 router = APIRouter()
 
@@ -20,7 +38,15 @@ def get_services_service() -> ServicesService:
     description="Crea un nuevo service en la base de datos. El ID debe ser único."
 )
 async def create_service(service: ServiceModel, service_svc: ServicesService = Depends(get_services_service)):
-    return await service_svc.create_service(service)
+    t1 = T.time()
+    response = await service_svc.create_service(service)
+    service_time = T.time() - t1
+    L.info({
+        "event":"CREATED.SERVICES",
+        "service_id":service.service_id,
+        "time":service_time
+    })
+    return response
 
 @router.get(
     "/services/",
