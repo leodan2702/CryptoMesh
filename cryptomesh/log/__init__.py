@@ -5,6 +5,7 @@ from logging.handlers import TimedRotatingFileHandler
 import json
 import threading
 from option import NONE, Option
+from cryptomesh import config 
 
 
 class DumbLogger(object):
@@ -51,7 +52,7 @@ class JsonFormatter(logging.Formatter):
         Returns:
             str: A JSON-formatted log string.
         """
-        thread_id = threading.current_thread().getName()
+        thread_id = threading.current_thread().name()
         log_data = {
             'timestamp': self.formatTime(record),
             'level': record.levelname,
@@ -76,22 +77,22 @@ class Log(logging.Logger):
 
     def __init__(self,
                  formatter: logging.Formatter = JsonFormatter(),
-                 name: str = "shieldx",
-                 level: int = logging.DEBUG,
-                 path: str = "/log",
+                 name: str = "cryptomesh",
+                 level: int = getattr(logging, config.CRYPTO_MESH_LOG_LEVEL.upper(), logging.DEBUG),
+                 path: str = config.CRYPTO_MESH_LOG_PATH,
                  disabled: bool = False,
                  console_handler_filter=lambda record: record.levelno == logging.DEBUG,
                  file_handler_filter=lambda record: record.levelno == logging.INFO,
                  console_handler_level: int = logging.DEBUG,
                  file_handler_level: int = logging.INFO,
-                 error_log: bool = False,
+                 error_log: bool = config.CRYPTO_MESH_LOG_ERROR_FILE,
                  filename: Option[str] = NONE,
                  output_path: Option[str] = NONE,
                  error_output_path: Option[str] = NONE,
                  create_folder: bool = True,
-                 to_file: bool = True,
-                 when: str = "m",
-                 interval: int = 10,
+                 to_file: bool = config.CRYPTO_MESH_LOG_TO_FILE,
+                 when: str = config.CRYPTO_MESH_LOG_ROTATION_WHEN,
+                 interval: int = config.CRYPTO_MESH_LOG_ROTATION_INTERVAL,
                  ):
         """
         Initialize the logger with optional console and file handlers.
@@ -149,3 +150,4 @@ class Log(logging.Logger):
                 error_file_handler.setLevel(logging.ERROR)
                 error_file_handler.addFilter(lambda record: record.levelno == logging.ERROR)
                 self.addHandler(error_file_handler)
+
