@@ -10,7 +10,7 @@ async def test_create_role(client):
         "permissions": ["read", "write"]
     }
     response = await client.post("/api/v1/roles/", json=payload)
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     # Verificar que el ID del rol coincida
     assert data["role_id"] == payload["role_id"]
@@ -29,7 +29,7 @@ async def test_create_duplicate_role(client):
     }
     # Crear inicialmente
     res1 = await client.post("/api/v1/roles/", json=payload)
-    assert res1.status_code == 200
+    assert res1.status_code == 201
     # Intentar duplicar
     res2 = await client.post("/api/v1/roles/", json=payload)
     assert res2.status_code == 400
@@ -94,8 +94,9 @@ async def test_delete_role(client):
 
     # Eliminar rol
     delete_res = await client.delete(f"/api/v1/roles/{payload['role_id']}")
-    assert delete_res.status_code == 200
+    assert delete_res.status_code == 204
 
     # Confirmar que ya no existe
     get_res = await client.get(f"/api/v1/roles/{payload['role_id']}")
     assert get_res.status_code == 404
+

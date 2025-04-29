@@ -11,7 +11,7 @@ async def test_create_service(client):
         "policy_id": "Leo_Policy"
     }
     response = await client.post("/api/v1/services/", json=payload)
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     # Validar atributos clave
     assert data["service_id"] == payload["service_id"]
@@ -31,7 +31,7 @@ async def test_create_duplicate_service(client):
         "policy_id": "Leo_Policy"
     }
     res1 = await client.post("/api/v1/services/", json=payload)
-    assert res1.status_code == 200
+    assert res1.status_code == 201
     res2 = await client.post("/api/v1/services/", json=payload)
     assert res2.status_code == 400
 
@@ -99,7 +99,7 @@ async def test_delete_service(client):
     await client.post("/api/v1/services/", json=payload)
 
     del_res = await client.delete(f"/api/v1/services/{payload['service_id']}")
-    assert del_res.status_code == 200
+    assert del_res.status_code == 204
 
     get_res = await client.get(f"/api/v1/services/{payload['service_id']}")
     assert get_res.status_code == 404

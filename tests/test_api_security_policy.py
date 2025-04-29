@@ -9,7 +9,7 @@ async def test_create_security_policy(client):
         "requires_authentication": True
     }
     response = await client.post("/api/v1/security-policies/", json=payload)
-    assert response.status_code == 200, f"Error: {response.json()}"
+    assert response.status_code == 201, f"Error: {response.json()}"
     data = response.json()
     # Validar campos clave
     assert data["sp_id"] == payload["sp_id"]
@@ -25,7 +25,7 @@ async def test_create_duplicate_security_policy(client):
         "requires_authentication": True
     }
     res1 = await client.post("/api/v1/security-policies/", json=payload)
-    assert res1.status_code == 200
+    assert res1.status_code == 201
     res2 = await client.post("/api/v1/security-policies/", json=payload)
     assert res2.status_code == 400
 
@@ -80,7 +80,7 @@ async def test_delete_security_policy(client):
     await client.post("/api/v1/security-policies/", json=payload)
 
     delete_res = await client.delete(f"/api/v1/security-policies/{payload['sp_id']}")
-    assert delete_res.status_code == 200
+    assert delete_res.status_code == 204
 
     get_res = await client.get(f"/api/v1/security-policies/{payload['sp_id']}")
     assert get_res.status_code == 404

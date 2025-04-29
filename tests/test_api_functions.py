@@ -1,6 +1,5 @@
 import pytest
 
-# ✅ TEST: Crear una función correctamente
 @pytest.mark.asyncio
 async def test_create_function(client):
     payload = {
@@ -19,9 +18,8 @@ async def test_create_function(client):
         "policy_id": "Leo_Policy"
     }
     response = await client.post("/api/v1/functions/", json=payload)
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
-    # Verificamos que el ID coincida
     assert data["function_id"] == payload["function_id"]
     assert data["microservice_id"] == payload["microservice_id"]
     assert data["image"] == payload["image"]
@@ -31,7 +29,6 @@ async def test_create_function(client):
     assert data["deployment_status"] == payload["deployment_status"]
     assert data["policy_id"] == payload["policy_id"]
 
-# ✅ TEST: Intentar crear una función duplicada
 @pytest.mark.asyncio
 async def test_create_duplicate_function(client):
     payload = {
@@ -50,11 +47,10 @@ async def test_create_duplicate_function(client):
         "policy_id": "Leo_Policy"
     }
     res1 = await client.post("/api/v1/functions/", json=payload)
-    assert res1.status_code == 200
+    assert res1.status_code == 201
     res2 = await client.post("/api/v1/functions/", json=payload)
     assert res2.status_code == 400
 
-# ✅ TEST: Obtener una función existente
 @pytest.mark.asyncio
 async def test_get_function(client):
     payload = {
@@ -72,7 +68,8 @@ async def test_get_function(client):
         "deployment_status": "pending",
         "policy_id": "Leo_Policy"
     }
-    await client.post("/api/v1/functions/", json=payload)
+    create_res = await client.post("/api/v1/functions/", json=payload)
+    assert create_res.status_code == 201
 
     response = await client.get(f"/api/v1/functions/{payload['function_id']}")
     assert response.status_code == 200
@@ -86,7 +83,6 @@ async def test_get_function(client):
     assert data["deployment_status"] == payload["deployment_status"]
     assert data["policy_id"] == payload["policy_id"]
 
-# ✅ TEST: Actualizar una función existente
 @pytest.mark.asyncio
 async def test_update_function(client):
     function_id = "fn_test_update"
@@ -105,7 +101,8 @@ async def test_update_function(client):
         "deployment_status": "pending",
         "policy_id": "Old_Policy"
     }
-    await client.post("/api/v1/functions/", json=payload)
+    create_res = await client.post("/api/v1/functions/", json=payload)
+    assert create_res.status_code == 201
 
     updated_payload = {
         "function_id": function_id,
@@ -125,6 +122,7 @@ async def test_update_function(client):
     response = await client.put(f"/api/v1/functions/{function_id}", json=updated_payload)
     assert response.status_code == 200
     data = response.json()
+    assert data["function_id"] == updated_payload["function_id"]
     assert data["microservice_id"] == updated_payload["microservice_id"]
     assert data["image"] == updated_payload["image"]
     assert data["resources"] == updated_payload["resources"]
@@ -133,7 +131,6 @@ async def test_update_function(client):
     assert data["deployment_status"] == updated_payload["deployment_status"]
     assert data["policy_id"] == updated_payload["policy_id"]
 
-# ✅ TEST: Eliminar una función y verificar que ya no exista
 @pytest.mark.asyncio
 async def test_delete_function(client):
     function_id = "fn_test_delete"
@@ -152,10 +149,11 @@ async def test_delete_function(client):
         "deployment_status": "pending",
         "policy_id": "Delete_Policy"
     }
-    await client.post("/api/v1/functions/", json=payload)
+    create_res = await client.post("/api/v1/functions/", json=payload)
+    assert create_res.status_code == 201
 
     delete_res = await client.delete(f"/api/v1/functions/{function_id}")
-    assert delete_res.status_code == 200
+    assert delete_res.status_code == 204
 
     get_res = await client.get(f"/api/v1/functions/{function_id}")
     assert get_res.status_code == 404

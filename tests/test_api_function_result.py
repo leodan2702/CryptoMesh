@@ -9,7 +9,7 @@ async def test_create_function_result(client):
         "metadata": {"output": "value"}
     }
     response = await client.post("/api/v1/function-results/", json=payload)
-    assert response.status_code == 200
+    assert response.status_code == 201  
     data = response.json()
     assert data["state_id"] == payload["state_id"]
     assert data["function_id"] == payload["function_id"]
@@ -24,10 +24,10 @@ async def test_create_duplicate_function_result(client):
         "metadata": {"output": "duplicate"}
     }
     response_1 = await client.post("/api/v1/function-results/", json=payload)
-    assert response_1.status_code == 200
+    assert response_1.status_code == 201 
 
     response_2 = await client.post("/api/v1/function-results/", json=payload)
-    assert response_2.status_code == 400
+    assert response_2.status_code == 400  
 
 # ✅ TEST: Obtener un resultado por su state_id
 @pytest.mark.asyncio
@@ -37,10 +37,11 @@ async def test_get_function_result(client):
         "function_id": "fn_get_test",
         "metadata": {"result": "success"}
     }
-    await client.post("/api/v1/function-results/", json=payload)
+    create_res = await client.post("/api/v1/function-results/", json=payload)
+    assert create_res.status_code == 201
 
     response = await client.get(f"/api/v1/function-results/{payload['state_id']}")
-    assert response.status_code == 200
+    assert response.status_code == 200 
     data = response.json()
     assert data["state_id"] == payload["state_id"]
     assert data["function_id"] == payload["function_id"]
@@ -54,10 +55,11 @@ async def test_update_function_result(client):
         "function_id": "fn_update_test",
         "metadata": {"status": "initial"}
     }
-    await client.post("/api/v1/function-results/", json=payload)
+    create_res = await client.post("/api/v1/function-results/", json=payload)
+    assert create_res.status_code == 201
 
     update_payload = {
-        "state_id": payload["state_id"],
+        "state_id": payload["state_id"], 
         "function_id": payload["function_id"],
         "metadata": {"status": "updated", "detail": "full update"}
     }
@@ -76,12 +78,14 @@ async def test_delete_function_result(client):
         "function_id": "fn_delete_test",
         "metadata": {"error": "Timeout"}
     }
-    await client.post("/api/v1/function-results/", json=payload)
+    create_res = await client.post("/api/v1/function-results/", json=payload)
+    assert create_res.status_code == 201
 
     delete_res = await client.delete(f"/api/v1/function-results/{payload['state_id']}")
-    assert delete_res.status_code == 200
+    assert delete_res.status_code == 204  
 
     get_res = await client.get(f"/api/v1/function-results/{payload['state_id']}")
     assert get_res.status_code == 404
+
 
 

@@ -10,7 +10,7 @@ async def test_create_endpoint_state(client):
         "metadata": {"info": "Testing create endpoint state"}
     }
     response = await client.post("/api/v1/endpoint-states/", json=payload)
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     # Validar que el ID fue retornado correctamente
     assert data["state_id"] == payload["state_id"]
@@ -28,7 +28,7 @@ async def test_create_duplicate_endpoint_state(client):
         "metadata": {"info": "first insert"}
     }
     res1 = await client.post("/api/v1/endpoint-states/", json=payload)
-    assert res1.status_code == 200
+    assert res1.status_code == 201
     res2 = await client.post("/api/v1/endpoint-states/", json=payload)
     assert res2.status_code == 400
 
@@ -77,8 +77,7 @@ async def test_delete_endpoint_state(client):
     await client.post("/api/v1/endpoint-states/", json=payload)
 
     delete_res = await client.delete(f"/api/v1/endpoint-states/{payload['state_id']}")
-    assert delete_res.status_code == 200
+    assert delete_res.status_code == 204
 
     get_res = await client.get(f"/api/v1/endpoint-states/{payload['state_id']}")
     assert get_res.status_code == 404
-
