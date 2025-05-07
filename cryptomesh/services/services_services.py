@@ -2,10 +2,9 @@ import time as T
 from fastapi import HTTPException
 from cryptomesh.models import ServiceModel
 from cryptomesh.repositories.services_repository import ServicesRepository
-from cryptomesh.log import Log
+from cryptomesh.log.logger import get_logger
 
-# Logger configurado por nombre de archivo
-L = Log(name=__name__)
+L = get_logger(__name__)
 
 class ServicesService:
     def __init__(self, repository: ServicesRepository):

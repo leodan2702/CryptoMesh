@@ -3,10 +3,9 @@ from fastapi import HTTPException
 from typing import List
 from cryptomesh.models import EndpointStateModel
 from cryptomesh.repositories.endpoint_state_repository import EndpointStateRepository
-from cryptomesh.log import Log
+from cryptomesh.log.logger import get_logger
 
-# Logger configurado
-L = Log(name=__name__)
+L = get_logger(__name__)
 
 class EndpointStateService:
     """

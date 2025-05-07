@@ -2,10 +2,9 @@ import time as T
 from fastapi import HTTPException
 from cryptomesh.models import FunctionStateModel
 from cryptomesh.repositories.function_state_repository import FunctionStateRepository
-from cryptomesh.log import Log
+from cryptomesh.log.logger import get_logger
 
-# Logger configurado
-L = Log(name=__name__)
+L = get_logger(__name__)
 
 class FunctionStateService:
     """

@@ -3,10 +3,9 @@ from fastapi import HTTPException
 from typing import List
 from cryptomesh.models import FunctionResultModel
 from cryptomesh.repositories.function_result_repository import FunctionResultRepository
-from cryptomesh.log import Log
+from cryptomesh.log.logger import get_logger
 
-# Logger configurado
-L = Log(name=__name__)
+L = get_logger(__name__)
 
 class FunctionResultService:
     """
