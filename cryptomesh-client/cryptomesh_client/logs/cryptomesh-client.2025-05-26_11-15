@@ -1,0 +1,506 @@
+{
+    "timestamp": "2025-05-26 11:15:42,975",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/functions",
+    "status": 307,
+    "elapsed": 0.058
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,044",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/functions",
+    "status": 307,
+    "elapsed": 0.029
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,101",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/functions",
+    "status": 307,
+    "elapsed": 0.032
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,137",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/services",
+    "status": 307,
+    "elapsed": 0.033
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,192",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/services",
+    "status": 307,
+    "elapsed": 0.03
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,249",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/services",
+    "status": 307,
+    "elapsed": 0.032
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,286",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/microservices",
+    "status": 307,
+    "elapsed": 0.033
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,343",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/microservices",
+    "status": 307,
+    "elapsed": 0.031
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,427",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/microservices",
+    "status": 307,
+    "elapsed": 0.031
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,459",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoints",
+    "status": 307,
+    "elapsed": 0.029
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,514",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoints",
+    "status": 307,
+    "elapsed": 0.031
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,570",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoints",
+    "status": 307,
+    "elapsed": 0.032
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,605",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/security-policies",
+    "status": 307,
+    "elapsed": 0.032
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,663",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/security-policies",
+    "status": 307,
+    "elapsed": 0.03
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,722",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/security-policies",
+    "status": 307,
+    "elapsed": 0.033
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,761",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/roles",
+    "status": 307,
+    "elapsed": 0.036
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,822",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/roles",
+    "status": 307,
+    "elapsed": 0.034
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,905",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/roles",
+    "status": 307,
+    "elapsed": 0.03
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,939",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/function-states",
+    "status": 307,
+    "elapsed": 0.032
+}
+
+{
+    "timestamp": "2025-05-26 11:15:43,995",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/function-results",
+    "status": 307,
+    "elapsed": 0.031
+}
+
+{
+    "timestamp": "2025-05-26 11:15:44,051",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoint-states",
+    "status": 307,
+    "elapsed": 0.03
+}
+
+{
+    "timestamp": "2025-05-26 11:15:44,107",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoint-states",
+    "status": 307,
+    "elapsed": 0.03
+}
+
+{
+    "timestamp": "2025-05-26 11:15:44,160",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoint-states",
+    "status": 307,
+    "elapsed": 0.03
+}
+
+{
+    "timestamp": "2025-05-26 11:15:53,849",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/functions",
+    "status": 307,
+    "elapsed": 0.072
+}
+
+{
+    "timestamp": "2025-05-26 11:15:53,918",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/functions",
+    "status": 307,
+    "elapsed": 0.031
+}
+
+{
+    "timestamp": "2025-05-26 11:15:53,974",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/functions",
+    "status": 307,
+    "elapsed": 0.029
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,009",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/services",
+    "status": 307,
+    "elapsed": 0.033
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,066",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/services",
+    "status": 307,
+    "elapsed": 0.031
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,124",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/services",
+    "status": 307,
+    "elapsed": 0.031
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,161",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/microservices",
+    "status": 307,
+    "elapsed": 0.035
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,219",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/microservices",
+    "status": 307,
+    "elapsed": 0.032
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,298",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/microservices",
+    "status": 307,
+    "elapsed": 0.029
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,331",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoints",
+    "status": 307,
+    "elapsed": 0.029
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,388",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoints",
+    "status": 307,
+    "elapsed": 0.031
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,443",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoints",
+    "status": 307,
+    "elapsed": 0.03
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,479",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/security-policies",
+    "status": 307,
+    "elapsed": 0.034
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,537",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/security-policies",
+    "status": 307,
+    "elapsed": 0.03
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,591",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/security-policies",
+    "status": 307,
+    "elapsed": 0.03
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,626",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/roles",
+    "status": 307,
+    "elapsed": 0.033
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,681",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/roles",
+    "status": 307,
+    "elapsed": 0.029
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,767",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/roles",
+    "status": 307,
+    "elapsed": 0.032
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,800",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/function-states",
+    "status": 307,
+    "elapsed": 0.029
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,856",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/function-results",
+    "status": 307,
+    "elapsed": 0.031
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,914",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoint-states",
+    "status": 307,
+    "elapsed": 0.028
+}
+
+{
+    "timestamp": "2025-05-26 11:15:54,971",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoint-states",
+    "status": 307,
+    "elapsed": 0.03
+}
+
+{
+    "timestamp": "2025-05-26 11:15:55,024",
+    "level": "INFO",
+    "logger_name": "cryptomesh-client",
+    "thread_name": "MainThread",
+    "event": "GET",
+    "path": "/api/v1/endpoint-states",
+    "status": 307,
+    "elapsed": 0.03
+}
+
