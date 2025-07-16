@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status, Response, HTTPException
 from typing import List
 from cryptomesh.models import ServiceModel
 from cryptomesh.services.services_services import ServicesService
 from cryptomesh.repositories.services_repository import ServicesRepository
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import CryptoMeshError, NotFoundError, ValidationError
 import time as T
 
 router = APIRouter()
@@ -25,7 +26,12 @@ def get_services_service() -> ServicesService:
 )
 async def create_service(service: ServiceModel, svc: ServicesService = Depends(get_services_service)):
     t1 = T.time()
-    response = await svc.create_service(service)
+    try:
+        response = await svc.create_service(service)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SERVICE.CREATED",
@@ -44,7 +50,10 @@ async def create_service(service: ServiceModel, svc: ServicesService = Depends(g
 )
 async def list_services(svc: ServicesService = Depends(get_services_service)):
     t1 = T.time()
-    services = await svc.list_services()
+    try:
+        services = await svc.list_services()
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.debug({
         "event": "API.SERVICE.LISTED",
@@ -63,7 +72,22 @@ async def list_services(svc: ServicesService = Depends(get_services_service)):
 )
 async def get_service(service_id: str, svc: ServicesService = Depends(get_services_service)):
     t1 = T.time()
-    service = await svc.get_service(service_id)
+    try:
+        service = await svc.get_service(service_id)
+        if not service:
+            raise NotFoundError(service_id)
+    except NotFoundError as e:
+        elapsed = round(T.time() - t1, 4)
+        L.warning({
+            "event": "API.SERVICE.NOT_FOUND",
+            "service_id": service_id,
+            "time": elapsed
+        })
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SERVICE.FETCHED",
@@ -82,7 +106,22 @@ async def get_service(service_id: str, svc: ServicesService = Depends(get_servic
 async def update_service(service_id: str, updated: ServiceModel, svc: ServicesService = Depends(get_services_service)):
     update_data = updated.model_dump(by_alias=True, exclude_unset=True)
     t1 = T.time()
-    response = await svc.update_service(service_id, update_data)
+    try:
+        response = await svc.update_service(service_id, update_data)
+        if not response:
+            raise NotFoundError(service_id)
+    except NotFoundError as e:
+        elapsed = round(T.time() - t1, 4)
+        L.error({
+            "event": "API.SERVICE.UPDATE.FAIL",
+            "service_id": service_id,
+            "time": elapsed
+        })
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SERVICE.UPDATED",
@@ -100,7 +139,14 @@ async def update_service(service_id: str, updated: ServiceModel, svc: ServicesSe
 )
 async def delete_service(service_id: str, svc: ServicesService = Depends(get_services_service)):
     t1 = T.time()
-    await svc.delete_service(service_id)
+    try:
+        await svc.delete_service(service_id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SERVICE.DELETED",

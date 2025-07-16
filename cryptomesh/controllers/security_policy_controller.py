@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status, Response, HTTPException
 from typing import List
 from cryptomesh.models import SecurityPolicyModel
 from cryptomesh.services.security_policy_service import SecurityPolicyService
 from cryptomesh.repositories.security_policy_repository import SecurityPolicyRepository
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import CryptoMeshError, NotFoundError, ValidationError
 import time as T
 
 router = APIRouter()
@@ -25,7 +26,12 @@ def get_security_policy_service() -> SecurityPolicyService:
 )
 async def create_policy(policy: SecurityPolicyModel, svc: SecurityPolicyService = Depends(get_security_policy_service)):
     t1 = T.time()
-    result = await svc.create_policy(policy)
+    try:
+        result = await svc.create_policy(policy)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SECURITY_POLICY.CREATED",
@@ -44,7 +50,22 @@ async def create_policy(policy: SecurityPolicyModel, svc: SecurityPolicyService 
 )
 async def get_policy(sp_id: str, svc: SecurityPolicyService = Depends(get_security_policy_service)):
     t1 = T.time()
-    policy = await svc.get_policy(sp_id)
+    try:
+        policy = await svc.get_policy(sp_id)
+        if not policy:
+            raise NotFoundError(sp_id)
+    except NotFoundError as e:
+        elapsed = round(T.time() - t1, 4)
+        L.warning({
+            "event": "API.SECURITY_POLICY.NOT_FOUND",
+            "policy_id": sp_id,
+            "time": elapsed
+        })
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SECURITY_POLICY.FETCHED",
@@ -63,7 +84,10 @@ async def get_policy(sp_id: str, svc: SecurityPolicyService = Depends(get_securi
 )
 async def list_policies(svc: SecurityPolicyService = Depends(get_security_policy_service)):
     t1 = T.time()
-    policies = await svc.list_policies()
+    try:
+        policies = await svc.list_policies()
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.debug({
         "event": "API.SECURITY_POLICY.LISTED",
@@ -83,7 +107,22 @@ async def list_policies(svc: SecurityPolicyService = Depends(get_security_policy
 async def update_policy(sp_id: str, updated_policy: SecurityPolicyModel, svc: SecurityPolicyService = Depends(get_security_policy_service)):
     updates = updated_policy.model_dump(by_alias=True, exclude_unset=True)
     t1 = T.time()
-    result = await svc.update_policy(sp_id, updates)
+    try:
+        result = await svc.update_policy(sp_id, updates)
+        if not result:
+            raise NotFoundError(sp_id)
+    except NotFoundError as e:
+        elapsed = round(T.time() - t1, 4)
+        L.error({
+            "event": "API.SECURITY_POLICY.UPDATE.FAIL",
+            "policy_id": sp_id,
+            "time": elapsed
+        })
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SECURITY_POLICY.UPDATED",
@@ -101,7 +140,14 @@ async def update_policy(sp_id: str, updated_policy: SecurityPolicyModel, svc: Se
 )
 async def delete_policy(sp_id: str, svc: SecurityPolicyService = Depends(get_security_policy_service)):
     t1 = T.time()
-    await svc.delete_policy(sp_id)
+    try:
+        await svc.delete_policy(sp_id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SECURITY_POLICY.DELETED",
