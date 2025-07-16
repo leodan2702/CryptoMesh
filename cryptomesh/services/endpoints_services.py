@@ -1,10 +1,10 @@
 # cryptomesh/services/endpoints_services.py
 import time as T
-from fastapi import HTTPException
 from cryptomesh.models import EndpointModel
 from cryptomesh.repositories.endpoints_repository import EndpointsRepository
 from cryptomesh.services.security_policy_service import SecurityPolicyService
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import CryptoMeshError, NotFoundError, ValidationError
 
 L = get_logger(__name__)
 
@@ -19,6 +19,7 @@ class EndpointsService:
 
     async def create_endpoint(self, data: EndpointModel):
         t1 = T.time()
+        # Verificamos si el endpoint ya existe
         if await self.repository.get_by_id(data.endpoint_id):
             elapsed = round(T.time() - t1, 4)
             L.error({
@@ -27,7 +28,7 @@ class EndpointsService:
                 "endpoint_id": data.endpoint_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=400, detail="Endpoint already exists")
+            raise ValidationError(f"Endpoint '{data.endpoint_id}' already exists")
 
         endpoint = await self.repository.create(data)
         elapsed = round(T.time() - t1, 4)
@@ -39,7 +40,7 @@ class EndpointsService:
                 "endpoint_id": data.endpoint_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to create endpoint")
+            raise CryptoMeshError(f"Failed to create endpoint '{data.endpoint_id}'")
 
         L.info({
             "event": "ENDPOINT.CREATED",
@@ -71,13 +72,29 @@ class EndpointsService:
                 "endpoint_id": endpoint_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Endpoint not found")
+            raise NotFoundError(endpoint_id)
 
-        # Buscamos la política de seguridad asociada
-        sp = await self.security_policy_service.get_policy(endpoint.security_policy)
+        # --- Manejo de SecurityPolicy incrustada ---
+        # Se asume que `endpoint.security_policy` es un objeto SecurityPolicyModel,
+        # por lo que extraemos el sp_id para obtener la política completa actualizada.
+        sp_id = None
+        if hasattr(endpoint.security_policy, 'sp_id'):
+            sp_id = endpoint.security_policy.sp_id
+        else:
+            # Si es un string o None, se usa tal cual
+            sp_id = endpoint.security_policy
 
+        sp = None
+        if sp_id:
+            sp = await self.security_policy_service.get_policy(sp_id)
+
+        # Construimos el dict del endpoint, reemplazando security_policy con el objeto completo si se encontró
         endpoint_data = endpoint.model_dump()
-        endpoint_data['security_policy'] = sp.sp_id if sp else endpoint.security_policy
+        if sp:
+            endpoint_data['security_policy'] = sp.model_dump()
+        else:
+            # Si no se encontró la política, dejamos lo que haya
+            endpoint_data['security_policy'] = endpoint.security_policy
 
         L.info({
             "event": "ENDPOINT.FETCHED",
@@ -95,7 +112,7 @@ class EndpointsService:
                 "endpoint_id": endpoint_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Endpoint not found")
+            raise NotFoundError(endpoint_id)
 
         updated = await self.repository.update(endpoint_id, updates)
         elapsed = round(T.time() - t1, 4)
@@ -106,7 +123,7 @@ class EndpointsService:
                 "endpoint_id": endpoint_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to update endpoint")
+            raise CryptoMeshError(f"Failed to update endpoint '{endpoint_id}'")
 
         L.info({
             "event": "ENDPOINT.UPDATED",
@@ -125,7 +142,7 @@ class EndpointsService:
                 "endpoint_id": endpoint_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Endpoint not found")
+            raise NotFoundError(endpoint_id)
 
         success = await self.repository.delete(endpoint_id)
         elapsed = round(T.time() - t1, 4)
@@ -136,7 +153,7 @@ class EndpointsService:
                 "endpoint_id": endpoint_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to delete endpoint")
+            raise CryptoMeshError(f"Failed to delete endpoint '{endpoint_id}'")
 
         L.info({
             "event": "ENDPOINT.DELETED",

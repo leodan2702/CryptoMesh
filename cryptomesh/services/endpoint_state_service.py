@@ -1,9 +1,9 @@
 import time as T
-from fastapi import HTTPException
 from typing import List
 from cryptomesh.models import EndpointStateModel
 from cryptomesh.repositories.endpoint_state_repository import EndpointStateRepository
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import NotFoundError, ValidationError, CryptoMeshError
 
 L = get_logger(__name__)
 
@@ -25,7 +25,7 @@ class EndpointStateService:
                 "state_id": state.state_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=400, detail="Endpoint state already exists")
+            raise ValidationError(f"Endpoint state '{state.state_id}' already exists")
 
         created = await self.repository.create(state)
         elapsed = round(T.time() - t1, 4)
@@ -37,7 +37,7 @@ class EndpointStateService:
                 "state_id": state.state_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to create endpoint state")
+            raise CryptoMeshError(f"Failed to create endpoint state '{state.state_id}'")
 
         L.info({
             "event": "ENDPOINT_STATE.CREATED",
@@ -69,7 +69,7 @@ class EndpointStateService:
                 "state_id": state_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Endpoint state not found")
+            raise NotFoundError(state_id)
 
         L.info({
             "event": "ENDPOINT_STATE.FETCHED",
@@ -87,7 +87,7 @@ class EndpointStateService:
                 "state_id": state_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Endpoint state not found")
+            raise NotFoundError(state_id)
 
         updated = await self.repository.update(state_id, updates)
         elapsed = round(T.time() - t1, 4)
@@ -98,7 +98,7 @@ class EndpointStateService:
                 "state_id": state_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to update endpoint state")
+            raise CryptoMeshError(f"Failed to update endpoint state '{state_id}'")
 
         L.info({
             "event": "ENDPOINT_STATE.UPDATED",
@@ -117,7 +117,7 @@ class EndpointStateService:
                 "state_id": state_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Endpoint state not found")
+            raise NotFoundError(state_id)
 
         success = await self.repository.delete(state_id)
         elapsed = round(T.time() - t1, 4)
@@ -128,7 +128,7 @@ class EndpointStateService:
                 "state_id": state_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to delete endpoint state")
+            raise CryptoMeshError(f"Failed to delete endpoint state '{state_id}'")
 
         L.info({
             "event": "ENDPOINT_STATE.DELETED",

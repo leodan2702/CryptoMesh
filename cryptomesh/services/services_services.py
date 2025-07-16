@@ -1,8 +1,8 @@
 import time as T
-from fastapi import HTTPException
 from cryptomesh.models import ServiceModel
 from cryptomesh.repositories.services_repository import ServicesRepository
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import NotFoundError, ValidationError, CryptoMeshError
 
 L = get_logger(__name__)
 
@@ -22,7 +22,7 @@ class ServicesService:
                 "service_id": data.service_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=400, detail="Service already exists")
+            raise ValidationError(f"Service '{data.service_id}' already exists")
         
         service = await self.repository.create(data)
         elapsed = round(T.time() - t1, 4)
@@ -34,7 +34,7 @@ class ServicesService:
                 "service_id": data.service_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to create service")
+            raise CryptoMeshError(f"Failed to create service '{data.service_id}'")
         
         L.info({
             "event": "SERVICE.CREATED",
@@ -65,7 +65,7 @@ class ServicesService:
                 "service_id": service_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Service not found")
+            raise NotFoundError(service_id)
 
         L.info({
             "event": "SERVICE.FETCHED",
@@ -84,7 +84,7 @@ class ServicesService:
                 "service_id": service_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Service not found")
+            raise NotFoundError(service_id)
 
         updated = await self.repository.update(service_id, updates)
         elapsed = round(T.time() - t1, 4)
@@ -95,7 +95,7 @@ class ServicesService:
                 "service_id": service_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to update service")
+            raise CryptoMeshError(f"Failed to update service '{service_id}'")
 
         L.info({
             "event": "SERVICE.UPDATED",
@@ -115,7 +115,7 @@ class ServicesService:
                 "service_id": service_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Service not found")
+            raise NotFoundError(service_id)
 
         success = await self.repository.delete(service_id)
         elapsed = round(T.time() - t1, 4)
@@ -126,7 +126,7 @@ class ServicesService:
                 "service_id": service_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to delete service")
+            raise CryptoMeshError(f"Failed to delete service '{service_id}'")
 
         L.info({
             "event": "SERVICE.DELETED",
