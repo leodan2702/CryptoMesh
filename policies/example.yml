@@ -1,0 +1,53 @@
+endpoints:
+  ep1:
+    name: "Endpoint A"
+    image: "axo:endpoint"
+    resources:
+      cpu: 2
+      ram: "2GB"
+    security_policy:
+      sp_id: "sp1"
+      roles:
+        - "analyst"
+      requires_authentication: true
+    policy_id: "policy1"
+
+services:
+  s_data:
+    security_policy:
+      sp_id: "sp1"
+      roles:
+        - "analyst"
+      requires_authentication: true
+    microservices:
+      - "ms_loader"
+    resources:
+      cpu: 2
+      ram: "2GB"
+    policy_id: "policy1"
+
+microservices:
+  ms_loader:
+    service_id: "s_data"
+    resources:
+      cpu: 1
+      ram: "1GB"
+    functions:
+      - "load_data"
+    policy_id: "policy1"
+
+functions:
+  load_data:
+    microservice_id: "ms_loader"
+    image: "rory:load"
+    resources:
+      cpu: 1
+      ram: "512MB"
+    storage:
+      capacity: "1GB"
+      storage_id: "stor1"
+      source_path: "/input"
+      sink_path: "/output"
+    endpoint_id: "ep1"
+    deployment_status: "deployed"
+    policy_id: "policy1"
