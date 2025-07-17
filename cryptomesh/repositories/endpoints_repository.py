@@ -78,6 +78,11 @@ class EndpointsRepository:
     async def update(self, endpoint_id: str, updates: dict) -> Optional[EndpointModel]:
         t1 = T.time()
         try:
+             sp = updates.get("security_policy")
+            if sp and isinstance(sp, SecurityPolicyModel):
+                updates["security_policy"] = sp.model_dump(by_alias=True, exclude_unset=True)
+
+
             updated = await self.collection.find_one_and_update(
                 {"endpoint_id": endpoint_id},
                 {"$set": updates},

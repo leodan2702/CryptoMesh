@@ -30,7 +30,7 @@ class EndpointModel(BaseModel):
     name: str
     image: str
     resources: ResourcesModel # resource_id
-    security_policy: str  # sp_id
+    security_policy: SecurityPolicyModel  # sp_id
     created_at: datetime = Field(default_factory=datetime.utcnow)
     policy_id: str
 
@@ -43,7 +43,7 @@ class EndpointStateModel(BaseModel):
 
 class ServiceModel(BaseModel):
     service_id: str
-    security_policy: str # sp_id
+    security_policy: SecurityPolicyModel # sp_id
     microservices: List[str]  # Lista de microservice_id
     resources: ResourcesModel  # resource_id
     created_at: datetime = Field(default_factory=datetime.utcnow)
