@@ -5,6 +5,15 @@ from cryptomesh.services.roles_service import RolesService
 from cryptomesh.repositories.roles_repository import RolesRepository
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import (
+    CryptoMeshError,
+    NotFoundError,
+    ValidationError,
+    InvalidYAML,
+    CreationError,
+    UnauthorizedError,
+    FunctionNotFound,
+)
 import time as T
 
 router = APIRouter()
@@ -20,12 +29,17 @@ def get_roles_service() -> RolesService:
     response_model=RoleModel,
     response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
-    summary="Crear un nuevo role",
-    description="Crea un nuevo role en la base de datos."
+    summary="Crear un nuevo rol",
+    description="Crea un nuevo rol en la base de datos."
 )
 async def create_role(role: RoleModel, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
-    response = await svc.create_role(role)
+    try:
+        response = await svc.create_role(role)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ROLE.CREATED",
@@ -44,7 +58,10 @@ async def create_role(role: RoleModel, svc: RolesService = Depends(get_roles_ser
 )
 async def list_roles(svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
-    roles = await svc.list_roles()
+    try:
+        roles = await svc.list_roles()
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.debug({
         "event": "API.ROLE.LISTED",
@@ -63,7 +80,14 @@ async def list_roles(svc: RolesService = Depends(get_roles_service)):
 )
 async def get_role(role_id: str, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
-    role = await svc.get_role(role_id)
+    try:
+        role = await svc.get_role(role_id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ROLE.FETCHED",
@@ -83,7 +107,14 @@ async def get_role(role_id: str, svc: RolesService = Depends(get_roles_service))
 async def update_role(role_id: str, updated: RoleModel, svc: RolesService = Depends(get_roles_service)):
     update_data = updated.model_dump(by_alias=True, exclude_unset=True)
     t1 = T.time()
-    result = await svc.update_role(role_id, update_data)
+    try:
+        result = await svc.update_role(role_id, update_data)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ROLE.UPDATED",
@@ -101,7 +132,14 @@ async def update_role(role_id: str, updated: RoleModel, svc: RolesService = Depe
 )
 async def delete_role(role_id: str, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
-    await svc.delete_role(role_id)
+    try:
+        await svc.delete_role(role_id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ROLE.DELETED",
