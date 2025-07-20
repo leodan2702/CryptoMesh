@@ -1,9 +1,17 @@
 import time as T
-from fastapi import HTTPException
 from typing import List
 from cryptomesh.models import RoleModel
 from cryptomesh.repositories.roles_repository import RolesRepository
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import (
+    CryptoMeshError,
+    NotFoundError,
+    ValidationError,
+    InvalidYAML,
+    CreationError,
+    UnauthorizedError,
+    FunctionNotFound,
+)
 
 L = get_logger(__name__)
 
@@ -25,7 +33,7 @@ class RolesService:
                 "role_id": role.role_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=400, detail="Role already exists")
+            raise ValidationError(f"Role '{role.role_id}' already exists")
 
         created = await self.repository.create(role)
         elapsed = round(T.time() - t1, 4)
@@ -37,7 +45,7 @@ class RolesService:
                 "role_id": role.role_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to create role")
+            raise CryptoMeshError(f"Failed to create role '{role.role_id}'")
 
         L.info({
             "event": "ROLE.CREATED",
@@ -68,7 +76,7 @@ class RolesService:
                 "role_id": role_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Role not found")
+            raise NotFoundError(role_id)
 
         L.info({
             "event": "ROLE.FETCHED",
@@ -86,7 +94,7 @@ class RolesService:
                 "role_id": role_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Role not found")
+            raise NotFoundError(role_id)
 
         updated = await self.repository.update(role_id, updates)
         elapsed = round(T.time() - t1, 4)
@@ -97,7 +105,7 @@ class RolesService:
                 "role_id": role_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to update role")
+            raise CryptoMeshError(f"Failed to update role '{role_id}'")
 
         L.info({
             "event": "ROLE.UPDATED",
@@ -116,7 +124,7 @@ class RolesService:
                 "role_id": role_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Role not found")
+            raise NotFoundError(role_id)
 
         success = await self.repository.delete(role_id)
         elapsed = round(T.time() - t1, 4)
@@ -127,7 +135,7 @@ class RolesService:
                 "role_id": role_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to delete role")
+            raise CryptoMeshError(f"Failed to delete role '{role_id}'")
 
         L.info({
             "event": "ROLE.DELETED",
