@@ -1,7 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List
-from cryptomesh_client.models.resources import ResourcesModel
+from cryptomesh.cryptomesh_client.models.resources import ResourcesModel
 
 class MicroserviceModel(BaseModel):
     microservice_id: str

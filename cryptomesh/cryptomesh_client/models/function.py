@@ -1,8 +1,8 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import Dict
-from cryptomesh_client.models.resources import ResourcesModel
-from cryptomesh_client.models.storage import StorageModel
+from cryptomesh.cryptomesh_client.models.resources import ResourcesModel
+from cryptomesh.cryptomesh_client.models.storage import StorageModel
 
 class FunctionModel(BaseModel):
     function_id: str
