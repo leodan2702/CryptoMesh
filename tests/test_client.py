@@ -1,9 +1,27 @@
 import pytest
-from cryptomesh_client.client import CryptoMeshClient
-from cryptomesh_client.log.logger import get_logger
-
+from cryptomesh.cryptomesh_client.client import CryptoMeshClient
+from cryptomesh.models import FunctionModel,ResourcesModel,StorageModel
 
 BASE_URL = "http://localhost:19000"
+
+client = CryptoMeshClient(BASE_URL)
+
+@pytest.mark.asyncio
+async def test_create_function():
+    res = await client.create_function(
+        function=FunctionModel(
+            function_id="1",
+            deployment_status="COMPLETED",
+            endpoint_id="1",
+            image="",
+            microservice_id="",
+            policy_id="",
+            resources=ResourcesModel(cpu=1,ram="1GB"),
+            storage=StorageModel(capacity="1GB",storage_id="",source_path="/mnt/source",sink_path="/mnt/sink")
+        )
+    )
+    assert res.is_ok
+
 
 @pytest.mark.asyncio
 async def test_list_functions():

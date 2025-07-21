@@ -5,11 +5,6 @@ from cryptomesh.cryptomesh_client.models.service import ServiceModel
 from cryptomesh.cryptomesh_client.models.function import FunctionModel
 from cryptomesh.cryptomesh_client.models.microservice import MicroserviceModel
 from cryptomesh.cryptomesh_client.models.endpoint import EndpointModel
-from cryptomesh.cryptomesh_client.models.security_policy import SecurityPolicyModel
-from cryptomesh.cryptomesh_client.models.role import RoleModel
-from cryptomesh.cryptomesh_client.models.function_state import FunctionStateModel
-from cryptomesh.cryptomesh_client.models.function_result import FunctionResultModel
-from cryptomesh.cryptomesh_client.models.endpoint_state import EndpointStateModel
 from cryptomesh.errors import (
     CryptoMeshError,
     NotFoundError,
@@ -22,6 +17,10 @@ from cryptomesh.errors import (
 import httpx
 import json
 import time
+from typing import Optional, Dict, Any, List
+from cryptomesh.log.logger import get_logger
+from cryptomesh.models import * 
+from option import Ok,Err,Result
 
 L = get_logger("cryptomesh-client")
 
@@ -111,13 +110,11 @@ class CryptoMeshClient:
             raise CryptoMeshError(message, code)
 
     # -------------------- Function Methods --------------------
-    async def create_function(self, function: FunctionModel) -> FunctionModel:
+    async def create_function(self, function: FunctionModel) -> Result[FunctionModel,CryptoMeshError]:
         payload = json.loads(function.model_dump_json(by_alias=True))
-        try:
-            data = await self._post("/api/v1/functions/", payload)
-            return FunctionModel(**data)
-        except Exception as e:
-            raise CreationError("function", function.function_id, e) from e
+        data = await self._post("/api/v1/functions/", payload)
+        return data
+        # return FunctionModel(**data)
 
     async def get_function(self, function_id: str) -> FunctionModel:
         data = await self._get(f"/api/v1/functions/{function_id}/")
@@ -274,19 +271,18 @@ class CryptoMeshClient:
         })
         return await self._handle_response(response)
 
-    async def _post(self, path: str, payload: Dict[str, Any], headers: Dict[str, str] = {}) -> Any:
-        url = f"{self.base_url}{path}"
-        full_headers = {**self.headers, **headers}
-        t1 = time.time()
-        async with httpx.AsyncClient(headers=full_headers, follow_redirects=True) as client:
-            response = await client.post(url, json=payload)
-        L.info({
-            "event": "POST",
-            "path": path,
-            "status": response.status_code,
-            "elapsed": round(time.time() - t1, 3)
-        })
-        return await self._handle_response(response)
+    async def _post(self, path: str, payload: Dict[str, Any], headers: Dict[str, str] = {}) -> Result[Any,Exception]:
+        try:
+            url = f"{self.base_url}{path}"
+            full_headers = {**self.headers, **headers}
+            t1 = time.time()
+            async with httpx.AsyncClient(headers=full_headers, follow_redirects=True) as client:
+                response = await client.post(url, json=payload)
+            L.info({"event": "POST", "path": path, "status": response.status_code, "elapsed": round(time.time() - t1, 3)})
+            response.raise_for_status()
+            return Ok(response.json() if response.content else {})
+        except Exception as e:
+            return Err(e)
 
     async def _put(self, path: str, payload: Any, headers: Dict[str, str] = {}) -> Any:
         url = f"{self.base_url}{path}"
