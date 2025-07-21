@@ -5,9 +5,4 @@ build/
 dist/*
 .github/workflows/publish-to-test-pipy-backup.yml
 **/*.lock
-<<<<<<< HEAD
-# **/*/publish.sh
 logs/
-=======
-logs/
->>>>>>> task11
