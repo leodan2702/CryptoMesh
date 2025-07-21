@@ -1,10 +1,6 @@
 from typing import Optional, Dict, Any, List
 from cryptomesh.log.logger import get_logger
 from cryptomesh.policies import CMPolicyManager
-from cryptomesh.cryptomesh_client.models.service import ServiceModel
-from cryptomesh.cryptomesh_client.models.function import FunctionModel
-from cryptomesh.cryptomesh_client.models.microservice import MicroserviceModel
-from cryptomesh.cryptomesh_client.models.endpoint import EndpointModel
 from cryptomesh.errors import (
     CryptoMeshError,
     NotFoundError,
