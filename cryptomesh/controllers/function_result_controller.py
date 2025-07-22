@@ -1,10 +1,19 @@
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status, Response, HTTPException
 from typing import List
 from cryptomesh.models import FunctionResultModel
 from cryptomesh.services.function_result_service import FunctionResultService
 from cryptomesh.repositories.function_result_repository import FunctionResultRepository
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import (
+    CryptoMeshError,
+    NotFoundError,
+    ValidationError,
+    InvalidYAML,
+    CreationError,
+    UnauthorizedError,
+    FunctionNotFound,
+)
 import time as T
 
 L = get_logger(__name__)
@@ -25,7 +34,12 @@ def get_function_result_service() -> FunctionResultService:
 )
 async def create_function_result(result: FunctionResultModel, svc: FunctionResultService = Depends(get_function_result_service)):
     t1 = T.time()
-    response = await svc.create_result(result)
+    try:
+        response = await svc.create_result(result)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION_RESULT.CREATED",
@@ -44,7 +58,10 @@ async def create_function_result(result: FunctionResultModel, svc: FunctionResul
 )
 async def list_function_results(svc: FunctionResultService = Depends(get_function_result_service)):
     t1 = T.time()
-    results = await svc.list_results()
+    try:
+        results = await svc.list_results()
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.debug({
         "event": "API.FUNCTION_RESULT.LISTED",
@@ -63,7 +80,22 @@ async def list_function_results(svc: FunctionResultService = Depends(get_functio
 )
 async def get_function_result(result_id: str, svc: FunctionResultService = Depends(get_function_result_service)):
     t1 = T.time()
-    result = await svc.get_result(result_id)
+    try:
+        result = await svc.get_result(result_id)
+        if not result:
+            raise NotFoundError(result_id)
+    except NotFoundError as e:
+        elapsed = round(T.time() - t1, 4)
+        L.warning({
+            "event": "API.FUNCTION_RESULT.NOT_FOUND",
+            "result_id": result_id,
+            "time": elapsed
+        })
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION_RESULT.FETCHED",
@@ -83,7 +115,22 @@ async def get_function_result(result_id: str, svc: FunctionResultService = Depen
 async def update_function_result(result_id: str, updated: FunctionResultModel, svc: FunctionResultService = Depends(get_function_result_service)):
     update_data = updated.model_dump(by_alias=True, exclude_unset=True)
     t1 = T.time()
-    response = await svc.update_result(result_id, update_data)
+    try:
+        response = await svc.update_result(result_id, update_data)
+        if not response:
+            raise NotFoundError(result_id)
+    except NotFoundError as e:
+        elapsed = round(T.time() - t1, 4)
+        L.error({
+            "event": "API.FUNCTION_RESULT.UPDATE.FAIL",
+            "result_id": result_id,
+            "time": elapsed
+        })
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION_RESULT.UPDATED",
@@ -101,7 +148,14 @@ async def update_function_result(result_id: str, updated: FunctionResultModel, s
 )
 async def delete_function_result(result_id: str, svc: FunctionResultService = Depends(get_function_result_service)):
     t1 = T.time()
-    await svc.delete_result(result_id)
+    try:
+        await svc.delete_result(result_id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION_RESULT.DELETED",

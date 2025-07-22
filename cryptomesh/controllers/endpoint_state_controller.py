@@ -5,6 +5,15 @@ from cryptomesh.services.endpoint_state_service import EndpointStateService
 from cryptomesh.repositories.endpoint_state_repository import EndpointStateRepository
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import (
+    CryptoMeshError,
+    NotFoundError,
+    ValidationError,
+    InvalidYAML,
+    CreationError,
+    UnauthorizedError,
+    FunctionNotFound,
+)
 import time as T
 
 L = get_logger(__name__)
@@ -25,7 +34,12 @@ def get_endpoint_state_service() -> EndpointStateService:
 )
 async def create_endpoint_state(state: EndpointStateModel, svc: EndpointStateService = Depends(get_endpoint_state_service)):
     t1 = T.time()
-    response = await svc.create_state(state)
+    try:
+        response = await svc.create_state(state)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ENDPOINT_STATE.CREATED",
@@ -44,7 +58,10 @@ async def create_endpoint_state(state: EndpointStateModel, svc: EndpointStateSer
 )
 async def list_endpoint_states(svc: EndpointStateService = Depends(get_endpoint_state_service)):
     t1 = T.time()
-    states = await svc.list_states()
+    try:
+        states = await svc.list_states()
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.debug({
         "event": "API.ENDPOINT_STATE.LISTED",
@@ -63,15 +80,23 @@ async def list_endpoint_states(svc: EndpointStateService = Depends(get_endpoint_
 )
 async def get_endpoint_state(state_id: str, svc: EndpointStateService = Depends(get_endpoint_state_service)):
     t1 = T.time()
-    state = await svc.get_state(state_id)
-    elapsed = round(T.time() - t1, 4)
-    if not state:
+    try:
+        state = await svc.get_state(state_id)
+        if not state:
+            raise NotFoundError(state_id)
+    except NotFoundError as e:
+        elapsed = round(T.time() - t1, 4)
         L.warning({
             "event": "API.ENDPOINT_STATE.NOT_FOUND",
             "state_id": state_id,
             "time": elapsed
         })
-        raise HTTPException(status_code=404, detail="Estado de endpoint no encontrado")
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
+    elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ENDPOINT_STATE.FETCHED",
         "state_id": state_id,
@@ -90,15 +115,23 @@ async def get_endpoint_state(state_id: str, svc: EndpointStateService = Depends(
 async def update_endpoint_state(state_id: str, updated: EndpointStateModel, svc: EndpointStateService = Depends(get_endpoint_state_service)):
     update_data = updated.model_dump(by_alias=True, exclude_unset=True)
     t1 = T.time()
-    result = await svc.update_state(state_id, update_data)
-    elapsed = round(T.time() - t1, 4)
-    if not result:
+    try:
+        result = await svc.update_state(state_id, update_data)
+        if not result:
+            raise NotFoundError(state_id)
+    except NotFoundError as e:
+        elapsed = round(T.time() - t1, 4)
         L.error({
             "event": "API.ENDPOINT_STATE.UPDATE.FAIL",
             "state_id": state_id,
             "time": elapsed
         })
-        raise HTTPException(status_code=404, detail="Estado de endpoint no encontrado o error al actualizar")
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
+    elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ENDPOINT_STATE.UPDATED",
         "state_id": state_id,
@@ -115,7 +148,14 @@ async def update_endpoint_state(state_id: str, updated: EndpointStateModel, svc:
 )
 async def delete_endpoint_state(state_id: str, svc: EndpointStateService = Depends(get_endpoint_state_service)):
     t1 = T.time()
-    await svc.delete_state(state_id)
+    try:
+        await svc.delete_state(state_id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.to_dict())
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+    except CryptoMeshError as e:
+        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ENDPOINT_STATE.DELETED",
