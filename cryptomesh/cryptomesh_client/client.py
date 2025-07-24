@@ -107,9 +107,12 @@ class CryptoMeshClient:
 
     # -------------------- Function Methods --------------------
     async def create_function(self, function: FunctionModel) -> Result[FunctionModel,CryptoMeshError]:
-        payload = json.loads(function.model_dump_json(by_alias=True))
-        data = await self._post("/api/v1/functions/", payload)
-        return data
+        try:
+            payload = json.loads(function.model_dump_json(by_alias=True))
+            data = await self._post("/api/v1/functions/", payload)
+            return Ok(data)
+        except Exception as e:
+            return Err(CryptoMeshError(message=str(e), code= 500))
         # return FunctionModel(**data)
 
     async def get_function(self, function_id: str) -> FunctionModel:
