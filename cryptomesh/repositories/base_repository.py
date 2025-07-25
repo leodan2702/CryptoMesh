@@ -31,7 +31,7 @@ class BaseRepository(Generic[T]):
             L.error({"error": str(e)})
             raise HTTPException(status_code=500, detail="Database error in create")
 
-    async def find_all(self) -> List[T]:
+    async def get_all(self) -> List[T]:
         try:
             docs = []
             cursor = self.collection.find({})
