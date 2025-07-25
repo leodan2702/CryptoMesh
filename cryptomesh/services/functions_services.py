@@ -24,7 +24,7 @@ class FunctionsService:
 
     async def create_function(self, data: FunctionModel):
         t1 = T.time()
-        if await self.repository.get_by_id(data.function_id):
+        if await self.repository.get_by_id(data.function_id, id_field="function_id"):
             elapsed = round(T.time() - t1, 4)
             L.error({
                 "event": "FUNCTION.CREATE.FAIL",
@@ -66,7 +66,7 @@ class FunctionsService:
 
     async def get_function(self, function_id: str):
         t1 = T.time()
-        function = await self.repository.get_by_id(function_id)
+        function = await self.repository.get_by_id(function_id, id_field="function_id")
         elapsed = round(T.time() - t1, 4)
 
         if not function:
@@ -86,7 +86,7 @@ class FunctionsService:
 
     async def update_function(self, function_id: str, updates: dict):
         t1 = T.time()
-        if not await self.repository.get_by_id(function_id):
+        if not await self.repository.get_by_id(function_id, id_field="function_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "FUNCTION.UPDATE.NOT_FOUND",
@@ -95,7 +95,7 @@ class FunctionsService:
             })
             raise NotFoundError(function_id)
 
-        updated = await self.repository.update(function_id, updates)
+        updated = await self.repository.update({"function_id":function_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated:
@@ -116,7 +116,7 @@ class FunctionsService:
 
     async def delete_function(self, function_id: str):
         t1 = T.time()
-        if not await self.repository.get_by_id(function_id):
+        if not await self.repository.get_by_id(function_id, id_field="function_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "FUNCTION.DELETE.NOT_FOUND",
@@ -125,7 +125,7 @@ class FunctionsService:
             })
             raise NotFoundError(function_id)
 
-        success = await self.repository.delete(function_id)
+        success = await self.repository.delete({"function_id": function_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:

@@ -1,4 +1,3 @@
-# cryptomesh/services/endpoints_services.py
 import time as T
 from cryptomesh.models import EndpointModel
 from cryptomesh.repositories.endpoints_repository import EndpointsRepository
@@ -27,8 +26,8 @@ class EndpointsService:
 
     async def create_endpoint(self, data: EndpointModel):
         t1 = T.time()
-        # Verificamos si el endpoint ya existe
-        if await self.repository.get_by_id(data.endpoint_id):
+        # pasar id_field para que get_by_id busque por "endpoint_id"
+        if await self.repository.get_by_id(data.endpoint_id, id_field="endpoint_id"):
             elapsed = round(T.time() - t1, 4)
             L.error({
                 "event": "ENDPOINT.CREATE.FAIL",
@@ -71,7 +70,7 @@ class EndpointsService:
 
     async def get_endpoint(self, endpoint_id: str):
         t1 = T.time()
-        endpoint = await self.repository.get_by_id(endpoint_id)
+        endpoint = await self.repository.get_by_id(endpoint_id, id_field="endpoint_id")
         elapsed = round(T.time() - t1, 4)
 
         if not endpoint:
@@ -82,38 +81,37 @@ class EndpointsService:
             })
             raise NotFoundError(endpoint_id)
 
+        L.info({
+            "event": "ENDPOINT.FETCHED",
+            "endpoint_id": endpoint_id,
+            "time": elapsed
+        })
+        
+        return endpoint
+
         # --- Manejo de SecurityPolicy incrustada ---
-        # Se asume que `endpoint.security_policy` es un objeto SecurityPolicyModel,
-        # por lo que extraemos el sp_id para obtener la política completa actualizada.
         sp_id = None
         if hasattr(endpoint.security_policy, 'sp_id'):
             sp_id = endpoint.security_policy.sp_id
         else:
-            # Si es un string o None, se usa tal cual
             sp_id = endpoint.security_policy
 
         sp = None
         if sp_id:
             sp = await self.security_policy_service.get_policy(sp_id)
 
-        # Construimos el dict del endpoint, reemplazando security_policy con el objeto completo si se encontró
         endpoint_data = endpoint.model_dump()
         if sp:
             endpoint_data['security_policy'] = sp.model_dump()
         else:
-            # Si no se encontró la política, dejamos lo que haya
             endpoint_data['security_policy'] = endpoint.security_policy
 
-        L.info({
-            "event": "ENDPOINT.FETCHED",
-            "endpoint_id": endpoint_id,
-            "time": elapsed
-        })
-        return EndpointModel(**endpoint_data)
 
-    async def update_endpoint(self, endpoint_id: str, updates: dict) -> EndpointModel:
+        
+
+    async def update_endpoint(self, endpoint_id: str, updates: dict):
         t1 = T.time()
-        if not await self.repository.get_by_id(endpoint_id):
+        if not await self.repository.get_by_id(endpoint_id, id_field="endpoint_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "ENDPOINT.UPDATE.NOT_FOUND",
@@ -122,7 +120,7 @@ class EndpointsService:
             })
             raise NotFoundError(endpoint_id)
 
-        updated = await self.repository.update(endpoint_id, updates)
+        updated = await self.repository.update({"endpoint_id": endpoint_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated:
@@ -143,7 +141,8 @@ class EndpointsService:
 
     async def delete_endpoint(self, endpoint_id: str):
         t1 = T.time()
-        if not await self.repository.get_by_id(endpoint_id):
+        # pasar id_field para buscar por "endpoint_id"
+        if not await self.repository.get_by_id(endpoint_id, id_field="endpoint_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "ENDPOINT.DELETE.NOT_FOUND",
@@ -152,7 +151,8 @@ class EndpointsService:
             })
             raise NotFoundError(endpoint_id)
 
-        success = await self.repository.delete(endpoint_id)
+        # Cambio: query debe ser dict de acuerdo a base_repository.py
+        success = await self.repository.delete({"endpoint_id": endpoint_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:
@@ -169,3 +169,4 @@ class EndpointsService:
             "time": elapsed
         })
         return {"detail": f"Endpoint '{endpoint_id}' deleted"}
+

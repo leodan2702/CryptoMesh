@@ -3,6 +3,8 @@ from typing import List
 from cryptomesh.models import ServiceModel
 from cryptomesh.services.services_services import ServicesService
 from cryptomesh.repositories.services_repository import ServicesRepository
+from cryptomesh.repositories.security_policy_repository import SecurityPolicyRepository
+from cryptomesh.services.security_policy_service import SecurityPolicyService
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
 from cryptomesh.errors import (
@@ -22,7 +24,10 @@ L = get_logger(__name__)
 def get_services_service() -> ServicesService:
     collection = get_collection("services")
     repository = ServicesRepository(collection)
-    return ServicesService(repository)
+    sp_collection = get_collection("security_policies")
+    sp_repository = SecurityPolicyRepository(sp_collection)
+    security_policy_service = SecurityPolicyService(sp_repository)
+    return ServicesService(repository, security_policy_service)
 
 @router.post(
     "/services/",

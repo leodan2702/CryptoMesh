@@ -1,6 +1,7 @@
 import time as T
 from cryptomesh.models import ServiceModel
 from cryptomesh.repositories.services_repository import ServicesRepository
+from cryptomesh.services.security_policy_service import SecurityPolicyService
 from cryptomesh.log.logger import get_logger
 from cryptomesh.errors import (
     CryptoMeshError,
@@ -15,15 +16,16 @@ from cryptomesh.errors import (
 L = get_logger(__name__)
 
 class ServicesService:
-    def __init__(self, repository: ServicesRepository):
+    def __init__(self, repository: ServicesRepository, security_policy_service: SecurityPolicyService):
         self.repository = repository
+        self.security_policy_service = security_policy_service
 
     async def create_service(self, data: ServiceModel):
         t1 = T.time()
-        existing = await self.repository.get_by_id(data.service_id)
-        elapsed = round(T.time() - t1, 4)
+        existing = await self.repository.get_by_id(data.service_id, id_field="service_id")
 
         if existing:
+            elapsed = round(T.time() - t1, 4)
             L.error({
                 "event": "SERVICE.CREATE.FAIL",
                 "reason": "Already exists",
@@ -31,7 +33,8 @@ class ServicesService:
                 "time": elapsed
             })
             raise ValidationError(f"Service '{data.service_id}' already exists")
-        
+
+
         service = await self.repository.create(data)
         elapsed = round(T.time() - t1, 4)
 
@@ -42,8 +45,8 @@ class ServicesService:
                 "service_id": data.service_id,
                 "time": elapsed
             })
-            raise CryptoMeshError(f"Failed to create service '{data.service_id}'")
-        
+            raise CreationError(f"Failed to create service '{data.service_id}'")
+
         L.info({
             "event": "SERVICE.CREATED",
             "service_id": data.service_id,
@@ -64,7 +67,7 @@ class ServicesService:
 
     async def get_service(self, service_id: str):
         t1 = T.time()
-        service = await self.repository.get_by_id(service_id)
+        service = await self.repository.get_by_id(service_id, id_field="service_id")
         elapsed = round(T.time() - t1, 4)
 
         if not service:
@@ -84,7 +87,7 @@ class ServicesService:
 
     async def update_service(self, service_id: str, updates: dict):
         t1 = T.time()
-        existing = await self.repository.get_by_id(service_id)
+        existing = await self.repository.get_by_id(service_id, id_field="service_id")
         if not existing:
             elapsed = round(T.time() - t1, 4)
             L.warning({
@@ -94,7 +97,8 @@ class ServicesService:
             })
             raise NotFoundError(service_id)
 
-        updated = await self.repository.update(service_id, updates)
+
+        updated = await self.repository.update({"service_id": service_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated:
@@ -115,7 +119,7 @@ class ServicesService:
 
     async def delete_service(self, service_id: str):
         t1 = T.time()
-        existing = await self.repository.get_by_id(service_id)
+        existing = await self.repository.get_by_id(service_id, id_field="service_id")
         if not existing:
             elapsed = round(T.time() - t1, 4)
             L.warning({
@@ -125,7 +129,7 @@ class ServicesService:
             })
             raise NotFoundError(service_id)
 
-        success = await self.repository.delete(service_id)
+        success = await self.repository.delete({"service_id": service_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:
@@ -142,4 +146,3 @@ class ServicesService:
             "time": elapsed
         })
         return {"detail": f"Service '{service_id}' deleted"}
-

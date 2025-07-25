@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 from logging.handlers import TimedRotatingFileHandler
+import datetime
 import json
 import threading
 from option import NONE, Option
@@ -64,7 +65,12 @@ class JsonFormatter(logging.Formatter):
         else:
             log_data['message'] = record.getMessage()
 
-        return json.dumps(log_data, indent=4) + "\n"
+        def json_default(obj):
+            if isinstance(obj, datetime.datetime):
+                return obj.isoformat()
+            return str(obj)  # fallback a str para otros objetos no serializables
+
+        return json.dumps(log_data, indent=4, default = json_default) + "\n"
 
 
 class Log(logging.Logger):
