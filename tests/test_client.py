@@ -26,7 +26,6 @@ async def test_create_service():
     res = await client.create_service(
         service=ServiceModel(
             service_id="3",
-            # deployment_status="COMPLETED",
             security_policy=SecurityPolicyModel(
                 requires_authentication=True,
                 roles=["admin"],
