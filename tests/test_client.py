@@ -1,6 +1,6 @@
 import pytest
 from cryptomesh.cryptomesh_client.client import CryptoMeshClient
-from cryptomesh.models import FunctionModel,ResourcesModel,StorageModel
+from cryptomesh.models import FunctionModel,ResourcesModel,StorageModel,ServiceModel,SecurityPolicyModel
 
 BASE_URL = "http://localhost:19000"
 
@@ -21,7 +21,23 @@ async def test_create_function():
         )
     )
     assert res.is_ok
-
+@pytest.mark.asyncio
+async def test_create_service():
+    res = await client.create_service(
+        service=ServiceModel(
+            service_id="3",
+            # deployment_status="COMPLETED",
+            security_policy=SecurityPolicyModel(
+                requires_authentication=True,
+                roles=["admin"],
+                sp_id=""
+            ),
+            microservices=["m1","m2"],
+            resources=ResourcesModel(cpu=1,ram="1GB"),
+            policy_id="test_policy"
+        )
+    )
+    
 
 @pytest.mark.asyncio
 async def test_list_functions():
