@@ -25,7 +25,7 @@ class MicroservicesService:
 
     async def create_microservice(self, microservice: MicroserviceModel) -> MicroserviceModel:
         t1 = T.time()
-        if await self.repository.get_by_id(microservice.microservice_id):
+        if await self.repository.get_by_id(microservice.microservice_id, id_field="microservice_id"):
             elapsed = round(T.time() - t1, 4)
             L.error({
                 "event": "MICROSERVICE.CREATE.FAIL",
@@ -67,7 +67,7 @@ class MicroservicesService:
 
     async def get_microservice(self, microservice_id: str) -> MicroserviceModel:
         t1 = T.time()
-        ms = await self.repository.get_by_id(microservice_id)
+        ms = await self.repository.get_by_id(microservice_id, id_field="microservice_id")
         elapsed = round(T.time() - t1, 4)
 
         if not ms:
@@ -87,7 +87,7 @@ class MicroservicesService:
 
     async def update_microservice(self, microservice_id: str, updates: dict) -> MicroserviceModel:
         t1 = T.time()
-        if not await self.repository.get_by_id(microservice_id):
+        if not await self.repository.get_by_id(microservice_id, id_field="microservice_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "MICROSERVICE.UPDATE.NOT_FOUND",
@@ -96,7 +96,7 @@ class MicroservicesService:
             })
             raise NotFoundError(microservice_id)
 
-        updated = await self.repository.update(microservice_id, updates)
+        updated = await self.repository.update({"microservice_id": microservice_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated:
@@ -117,7 +117,7 @@ class MicroservicesService:
 
     async def delete_microservice(self, microservice_id: str) -> dict:
         t1 = T.time()
-        if not await self.repository.get_by_id(microservice_id):
+        if not await self.repository.get_by_id(microservice_id, id_field="microservice_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "MICROSERVICE.DELETE.NOT_FOUND",
@@ -126,7 +126,7 @@ class MicroservicesService:
             })
             raise NotFoundError(microservice_id)
 
-        success = await self.repository.delete(microservice_id)
+        success = await self.repository.delete({"microservice_id": microservice_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:
