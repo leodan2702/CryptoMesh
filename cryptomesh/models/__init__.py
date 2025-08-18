@@ -1,6 +1,7 @@
 from datetime import datetime,timezone
 from pydantic import BaseModel, Field
 from typing import List, Dict
+import uuid
 
 class ResourcesModel(BaseModel):
     cpu: int
@@ -8,41 +9,40 @@ class ResourcesModel(BaseModel):
     
 class StorageModel(BaseModel):
     capacity: str
-    storage_id: str
     source_path: str
     sink_path: str
 
 class RoleModel(BaseModel):
-    role_id: str
+    role_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     description: str
     permissions: List[str]
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class SecurityPolicyModel(BaseModel):
-    sp_id: str
+    sp_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     roles: List[str]  # Referencias a RoleModel
     requires_authentication: bool
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class EndpointModel(BaseModel):
-    endpoint_id: str
+    endpoint_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     image: str
     resources: ResourcesModel # resource_id
-    security_policy: str  # sp_id
+    security_policy: SecurityPolicyModel  # sp_id
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    policy_id: str
+    policy_id: str #reference to yaml policy
 
 class EndpointStateModel(BaseModel):
-    state_id: str
+    state_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     endpoint_id: str
     state: str
     metadata: Dict[str, str]
     timestamp: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
 
 class ServiceModel(BaseModel):
-    service_id: str
+    service_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     security_policy: SecurityPolicyModel # sp_id
     microservices: List[str]  # Lista de microservice_id
     resources: ResourcesModel  # resource_id
@@ -50,7 +50,7 @@ class ServiceModel(BaseModel):
     policy_id: str
 
 class MicroserviceModel(BaseModel):
-    microservice_id: str
+    microservice_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     service_id: str
     functions: List[str]  # Lista de function_id
     resources: ResourcesModel  # resource_id
@@ -58,7 +58,7 @@ class MicroserviceModel(BaseModel):
     policy_id: str
 
 class FunctionModel(BaseModel):
-    function_id: str
+    function_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     microservice_id: str
     image: str
     resources: ResourcesModel  #INCRUSTADO
@@ -69,14 +69,14 @@ class FunctionModel(BaseModel):
     policy_id: str
 
 class FunctionStateModel(BaseModel):
-    state_id: str
+    state_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     function_id: str
     state: str
     metadata: Dict[str, str]
     timestamp: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
 
 class FunctionResultModel(BaseModel):
-    state_id: str
+    result_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     function_id: str
     metadata: Dict[str, str]
     timestamp: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
