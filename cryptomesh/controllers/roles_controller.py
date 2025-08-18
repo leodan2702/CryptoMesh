@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status, Response, HTTPException
 from typing import List
-from cryptomesh.models import RoleModel
+import time as T
+
 from cryptomesh.services.roles_service import RolesService
 from cryptomesh.repositories.roles_repository import RolesRepository
 from cryptomesh.db import get_collection
@@ -8,13 +9,14 @@ from cryptomesh.log.logger import get_logger
 from cryptomesh.errors import (
     CryptoMeshError,
     NotFoundError,
-    ValidationError,
-    InvalidYAML,
-    CreationError,
-    UnauthorizedError,
-    FunctionNotFound,
+    ValidationError
 )
-import time as T
+
+from cryptomesh.dtos.role_dto import (
+    RoleCreateDTO,
+    RoleResponseDTO,
+    RoleUpdateDTO
+)
 
 router = APIRouter()
 L = get_logger(__name__)
@@ -26,16 +28,17 @@ def get_roles_service() -> RolesService:
 
 @router.post(
     "/roles/",
-    response_model=RoleModel,
+    response_model=RoleResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
     summary="Crear un nuevo rol",
     description="Crea un nuevo rol en la base de datos."
 )
-async def create_role(role: RoleModel, svc: RolesService = Depends(get_roles_service)):
+async def create_role(dto: RoleCreateDTO, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
     try:
-        response = await svc.create_role(role)
+        model = dto.to_model()
+        created = await svc.create_role(model)
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=e.to_dict())
     except CryptoMeshError as e:
@@ -43,14 +46,14 @@ async def create_role(role: RoleModel, svc: RolesService = Depends(get_roles_ser
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ROLE.CREATED",
-        "role_id": role.role_id,
+        "role_id": created.role_id,
         "time": elapsed
     })
-    return response
+    return RoleResponseDTO.from_model(created)
 
 @router.get(
     "/roles/",
-    response_model=List[RoleModel],
+    response_model=List[RoleResponseDTO],
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
     summary="Obtener todos los roles",
@@ -68,20 +71,22 @@ async def list_roles(svc: RolesService = Depends(get_roles_service)):
         "count": len(roles),
         "time": elapsed
     })
-    return roles
+    return [RoleResponseDTO.from_model(r) for r in roles]
 
 @router.get(
     "/roles/{role_id}",
-    response_model=RoleModel,
+    response_model=RoleResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
-    summary="Obtener role por ID",
-    description="Devuelve un role específico dado su ID."
+    summary="Obtener rol por ID",
+    description="Devuelve un rol específico dado su ID."
 )
 async def get_role(role_id: str, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
     try:
         role = await svc.get_role(role_id)
+        if not role:
+            raise NotFoundError(role_id)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=e.to_dict())
     except ValidationError as e:
@@ -94,21 +99,25 @@ async def get_role(role_id: str, svc: RolesService = Depends(get_roles_service))
         "role_id": role_id,
         "time": elapsed
     })
-    return role
+    return RoleResponseDTO.from_model(role)
 
 @router.put(
     "/roles/{role_id}",
-    response_model=RoleModel,
+    response_model=RoleResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
-    summary="Actualizar role por ID",
-    description="Actualiza un role existente."
+    summary="Actualizar rol por ID",
+    description="Actualiza un rol existente."
 )
-async def update_role(role_id: str, updated: RoleModel, svc: RolesService = Depends(get_roles_service)):
-    update_data = updated.model_dump(by_alias=True, exclude_unset=True)
+async def update_role(role_id: str, dto: RoleUpdateDTO, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
     try:
-        result = await svc.update_role(role_id, update_data)
+        existing = await svc.get_role(role_id)
+        if not existing:
+            raise NotFoundError(role_id)
+
+        updated_model = RoleUpdateDTO.apply_updates(dto, existing)
+        updated = await svc.update_role(role_id, updated_model.model_dump(by_alias=True))
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=e.to_dict())
     except ValidationError as e:
@@ -119,16 +128,15 @@ async def update_role(role_id: str, updated: RoleModel, svc: RolesService = Depe
     L.info({
         "event": "API.ROLE.UPDATED",
         "role_id": role_id,
-        "updates": update_data,
         "time": elapsed
     })
-    return result
+    return RoleResponseDTO.from_model(updated)
 
 @router.delete(
     "/roles/{role_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Eliminar role por ID",
-    description="Elimina un role de la base de datos según su ID."
+    summary="Eliminar rol por ID",
+    description="Elimina un rol de la base de datos según su ID."
 )
 async def delete_role(role_id: str, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
