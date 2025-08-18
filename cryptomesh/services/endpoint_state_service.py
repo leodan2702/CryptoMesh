@@ -88,7 +88,7 @@ class EndpointStateService:
 
     async def update_state(self, state_id: str, updates: dict) -> EndpointStateModel:
         t1 = T.time()
-        if not await self.repository.get_by_id(state_id):
+        if not await self.repository.get_by_id(state_id, id_field="state_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "ENDPOINT_STATE.UPDATE.NOT_FOUND",
@@ -97,7 +97,7 @@ class EndpointStateService:
             })
             raise NotFoundError(state_id)
 
-        updated = await self.repository.update(state_id, updates)
+        updated = await self.repository.update({"state_id": state_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated:
@@ -118,7 +118,7 @@ class EndpointStateService:
 
     async def delete_state(self, state_id: str) -> dict:
         t1 = T.time()
-        if not await self.repository.get_by_id(state_id):
+        if not await self.repository.get_by_id(state_id, id_field="state_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "ENDPOINT_STATE.DELETE.NOT_FOUND",
@@ -127,7 +127,7 @@ class EndpointStateService:
             })
             raise NotFoundError(state_id)
 
-        success = await self.repository.delete(state_id)
+        success = await self.repository.delete({"state_id": state_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:

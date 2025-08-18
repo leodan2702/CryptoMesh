@@ -25,15 +25,15 @@ class FunctionResultService:
 
     async def create_result(self, result: FunctionResultModel):
         t1 = T.time()
-        if await self.repository.get_by_id(result.state_id):
+        if await self.repository.get_by_id(result.result_id):
             elapsed = round(T.time() - t1, 4)
             L.error({
                 "event": "FUNCTION_RESULT.CREATE.FAIL",
                 "reason": "Already exists",
-                "state_id": result.state_id,
+                "state_id": result.result_id,
                 "time": elapsed
             })
-            raise ValidationError(f"Function result '{result.state_id}' already exists")
+            raise ValidationError(f"Function result '{result.result_id}' already exists")
 
         created = await self.repository.create(result)
         elapsed = round(T.time() - t1, 4)
@@ -42,14 +42,14 @@ class FunctionResultService:
             L.error({
                 "event": "FUNCTION_RESULT.CREATE.FAIL",
                 "reason": "Failed to create",
-                "state_id": result.state_id,
+                "state_id": result.result_id,
                 "time": elapsed
             })
-            raise CryptoMeshError(f"Failed to create function result '{result.state_id}'")
+            raise CryptoMeshError(f"Failed to create function result '{result.result_id}'")
 
         L.info({
             "event": "FUNCTION_RESULT.CREATED",
-            "state_id": result.state_id,
+            "state_id": result.result_id,
             "time": elapsed
         })
         return created
@@ -86,9 +86,9 @@ class FunctionResultService:
         })
         return result
 
-    async def update_result(self, result_id: str, updates: dict) -> FunctionResultModel:
+    async def update_result(self, result_id: str, updates: dict):
         t1 = T.time()
-        if not await self.repository.get_by_id(result_id):
+        if not await self.repository.get_by_id(result_id, id_field="result_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "FUNCTION_RESULT.UPDATE.NOT_FOUND",
@@ -97,7 +97,7 @@ class FunctionResultService:
             })
             raise NotFoundError(result_id)
 
-        updated = await self.repository.update(result_id, updates)
+        updated = await self.repository.update({"result_id": result_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated:
@@ -118,7 +118,7 @@ class FunctionResultService:
 
     async def delete_result(self, result_id: str) -> dict:
         t1 = T.time()
-        if not await self.repository.get_by_id(result_id):
+        if not await self.repository.get_by_id(result_id, id_field="result_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "FUNCTION_RESULT.DELETE.NOT_FOUND",
@@ -127,7 +127,7 @@ class FunctionResultService:
             })
             raise NotFoundError(result_id)
 
-        success = await self.repository.delete(result_id)
+        success = await self.repository.delete({"result_id": result_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:

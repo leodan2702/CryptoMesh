@@ -51,7 +51,7 @@ class EndpointsService:
 
         L.info({
             "event": "ENDPOINT.CREATED",
-            "endpoint_id": data.endpoint_id,
+            "endpoint_id": endpoint.endpoint_id,
             "time": elapsed
         })
         return endpoint
@@ -109,7 +109,7 @@ class EndpointsService:
 
         
 
-    async def update_endpoint(self, endpoint_id: str, updates: dict):
+    async def update_endpoint(self, endpoint_id: str, updates: dict): 
         t1 = T.time()
         if not await self.repository.get_by_id(endpoint_id, id_field="endpoint_id"):
             elapsed = round(T.time() - t1, 4)
