@@ -47,10 +47,24 @@ class BaseRepository(Generic[T]):
             if isinstance(updates, BaseModel):
                 updates = updates.model_dump(by_alias=True, exclude_unset=True)
 
+            original_doc = await self.collection.find_one(query)
+
+      
+            if original_doc and "security_policy" in original_doc and "security_policy" in updates:
+                original_sp = original_doc["security_policy"] or {}
+                new_sp = updates["security_policy"] or {}
+                
+                merged_sp = {**original_sp, **new_sp}
+                if "sp_id" not in new_sp and "sp_id" in original_sp:
+                    merged_sp["sp_id"] = original_sp["sp_id"]
+                updates["security_policy"] = merged_sp
+
             updated_doc = await self.collection.find_one_and_update(
                 query, {"$set": updates}, return_document=True
-            )
+        )
+
             return self.model(**updated_doc) if updated_doc else None
+
         except PyMongoError as e:
             L.error({"error": str(e)})
             raise HTTPException(status_code=500, detail="Database error in update")
@@ -63,11 +77,3 @@ class BaseRepository(Generic[T]):
             L.error({"error": str(e)})
             raise HTTPException(status_code=500, detail="Database error in delete")
 
-
-    async def get_by_id(self, id_value: str, id_field: str = "service_id") -> Optional[T]:
-        try:
-            document = await self.collection.find_one({id_field: id_value})
-            return self.model(**document) if document else None
-        except PyMongoError as e:
-            L.error({"error": str(e)})
-            raise HTTPException(status_code=500, detail="Database error in get_by_id")
