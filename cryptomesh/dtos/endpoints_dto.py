@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime
 from cryptomesh.models import EndpointModel
 from cryptomesh.dtos.resources_dto import ResourcesDTO, ResourcesUpdateDTO
-from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO, SecurityPolicyResponseDTO
+from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO, SecurityPolicyResponseDTO,SecurityPolicyUpdateDTO
 import uuid
 
 # -------------------------------
