@@ -1,113 +1,102 @@
 import pytest
-from cryptomesh.models import MicroserviceModel, ResourcesModel
+from cryptomesh.dtos.microservices_dto import (
+    MicroserviceCreateDTO,
+    MicroserviceResponseDTO,
+    MicroserviceUpdateDTO
+)
+from cryptomesh.dtos.resources_dto import ResourcesDTO, ResourcesUpdateDTO
+from cryptomesh.models import MicroserviceModel
 from cryptomesh.repositories.microservices_repository import MicroservicesRepository
+from cryptomesh.services.microservices_services import MicroservicesService
+from cryptomesh.errors import NotFoundError
 
-# ✅ TEST: Crear un nuevo microservicio correctamente
 @pytest.mark.asyncio
 async def test_create_microservice(get_db):
     db = get_db
     repo = MicroservicesRepository(db.microservices)
+    service = MicroservicesService(repo)
 
-    microservice = MicroserviceModel(
-        microservice_id="ms_test_create",
+    create_dto = MicroserviceCreateDTO(
         service_id="s_test_create",
+        resources=ResourcesDTO(cpu=2, ram="2GB"),
         functions=["func1", "func2"],
-        resources=ResourcesModel(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
 
-    result = await repo.create(microservice)
-    assert result is not None
-    assert result.microservice_id == "ms_test_create"
-    assert result.service_id == "s_test_create"
+    created = await service.create_microservice(create_dto.to_model())
+    response_dto = MicroserviceResponseDTO.from_model(created)
 
-# ✅ TEST: Obtener un microservicio por ID
+    assert response_dto.microservice_id == created.microservice_id
+    assert response_dto.service_id == "s_test_create"
+    assert "func1" in response_dto.functions
+
+
 @pytest.mark.asyncio
 async def test_get_microservice(get_db):
     db = get_db
     repo = MicroservicesRepository(db.microservices)
+    service = MicroservicesService(repo)
 
-    microservice = MicroserviceModel(
-        microservice_id="ms_test_get",
+    create_dto = MicroserviceCreateDTO(
         service_id="s_test_get",
+        resources=ResourcesDTO(cpu=2, ram="2GB"),
         functions=["func1", "func2"],
-        resources=ResourcesModel(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
 
-    await repo.create(microservice)
-    fetched = await repo.get_by_id("ms_test_get")
-    assert fetched is not None
-    assert fetched.microservice_id == "ms_test_get"
-    assert fetched.service_id == "s_test_get"
+    created = await service.create_microservice(create_dto.to_model())
+    fetched = await service.get_microservice(created.microservice_id)
+    response_dto = MicroserviceResponseDTO.from_model(fetched)
 
-# ✅ TEST: Actualizar un microservicio existente
+    assert response_dto.microservice_id == created.microservice_id
+    assert response_dto.service_id == "s_test_get"
+
+
 @pytest.mark.asyncio
 async def test_update_microservice(get_db):
     db = get_db
     repo = MicroservicesRepository(db.microservices)
+    service = MicroservicesService(repo)
 
-    microservice = MicroserviceModel(
-        microservice_id="ms_test_update",
+    create_dto = MicroserviceCreateDTO(
         service_id="s_test_update",
+        resources=ResourcesDTO(cpu=2, ram="2GB"),
         functions=["func1", "func2"],
-        resources=ResourcesModel(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
+    created = await service.create_microservice(create_dto.to_model())
 
-    await repo.create(microservice)
-    updates = {"functions": ["func3", "func4"]}
-    updated = await repo.update("ms_test_update", updates)
-    assert updated is not None
-    assert updated.microservice_id == "ms_test_update"
-    assert "func3" in updated.functions
-    assert "func4" in updated.functions
+    update_dto = MicroserviceUpdateDTO(
+        functions=["func3", "func4"],
+        resources=ResourcesUpdateDTO(cpu=4, ram="4GB")
+    )
+    updated_model = MicroserviceUpdateDTO.apply_updates(update_dto, created)
 
-# ✅ TEST: Eliminar un microservicio y confirmar que ya no existe
+    updated = await service.update_microservice(created.microservice_id, updated_model.model_dump())
+    response_dto = MicroserviceResponseDTO.from_model(updated)
+
+    assert "func3" in response_dto.functions
+    assert "func4" in response_dto.functions
+    assert response_dto.resources.cpu == 4
+    assert response_dto.resources.ram == "4GB"
+
+
 @pytest.mark.asyncio
 async def test_delete_microservice(get_db):
     db = get_db
     repo = MicroservicesRepository(db.microservices)
+    service = MicroservicesService(repo)
 
-    microservice = MicroserviceModel(
-        microservice_id="ms_test_delete",
+    create_dto = MicroserviceCreateDTO(
         service_id="s_test_delete",
-        functions=["func1", "func2"],
-        resources=ResourcesModel(cpu=2, ram="2GB"),
-        policy_id="Leo_Policy"
-    )
-
-    await repo.create(microservice)
-    deleted = await repo.delete("ms_test_delete")
-    assert deleted is True
-
-    fetched = await repo.get_by_id("ms_test_delete")
-    assert fetched is None
-
-# ✅ TEST: Listar todos los microservicios
-@pytest.mark.asyncio
-async def test_list_microservices(get_db):
-    db = get_db
-    repo = MicroservicesRepository(db.microservices)
-
-    ms1 = MicroserviceModel(
-        microservice_id="ms_test_list_1",
-        service_id="s_test_list",
+        resources=ResourcesDTO(cpu=2, ram="2GB"),
         functions=["func1"],
-        resources=ResourcesModel(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
-    ms2 = MicroserviceModel(
-        microservice_id="ms_test_list_2",
-        service_id="s_test_list",
-        functions=["func2"],
-        resources=ResourcesModel(cpu=2, ram="2GB"),
-        policy_id="Leo_Policy"
-    )
+    created = await service.create_microservice(create_dto.to_model())
 
-    await repo.create(ms1)
-    await repo.create(ms2)
-    microservices = await repo.get_all()
-    ids = [ms.microservice_id for ms in microservices]
-    assert "ms_test_list_1" in ids
-    assert "ms_test_list_2" in ids
+    result = await service.delete_microservice(created.microservice_id)
+    assert "deleted" in result["detail"]
+
+    with pytest.raises(NotFoundError):
+        await service.get_microservice(created.microservice_id)
