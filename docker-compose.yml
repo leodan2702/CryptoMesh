@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   crypto-mesh-db:
     image: mongo:latest
@@ -27,6 +25,9 @@ services:
       - crypto-mesh-broker
     ports:
       - "${API_PORT}:19000"
+    environment:
+      MONGO_DATABASE_NAME: ${MONGODB_DATABASE_NAME:-cryptomesh}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://crypto-mesh-db:27017/cryptomesh}
     volumes:
       - ./logs:/app/logs
     restart: unless-stopped
