@@ -4,6 +4,5 @@ mictlanx-env/
 build/
 dist/*
 .github/workflows/publish-to-test-pipy-backup.yml
-**/*.lock
 logs/
 .env
