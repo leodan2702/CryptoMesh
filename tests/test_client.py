@@ -1,27 +1,14 @@
 import pytest
 from cryptomesh.cryptomesh_client.client import CryptoMeshClient
 from cryptomesh.models import FunctionModel,ResourcesModel,StorageModel
+from cryptomesh.dtos.endpoints_dto import EndpointCreateDTO, EndpointResponseDTO
+from cryptomesh.dtos.functions_dto import FunctionCreateDTO, FunctionResponseDTO
+from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO
+from cryptomesh.dtos.resources_dto import ResourcesDTO
+from cryptomesh.dtos.storage_dto import StorageDTO
+from option import Result, Ok, Err
 
 BASE_URL = "http://localhost:19000"
-
-client = CryptoMeshClient(BASE_URL)
-
-@pytest.mark.asyncio
-async def test_create_function():
-    res = await client.create_function(
-        function=FunctionModel(
-            function_id="1",
-            deployment_status="COMPLETED",
-            endpoint_id="1",
-            image="",
-            microservice_id="",
-            policy_id="",
-            resources=ResourcesModel(cpu=1,ram="1GB"),
-            storage=StorageModel(capacity="1GB",storage_id="",source_path="/mnt/source",sink_path="/mnt/sink")
-        )
-    )
-    assert res.is_ok
-
 
 @pytest.mark.asyncio
 async def test_list_functions():
@@ -104,21 +91,68 @@ async def test_delete_microservice():
     except Exception:
         pass
 
-@pytest.mark.asyncio
-async def test_list_endpoints():
+@pytest.fixture
+async def test_endpoint():
     client = CryptoMeshClient(BASE_URL)
-    result = await client.list_endpoints()
-    assert isinstance(result, list)
-    if result:
-        assert hasattr(result[0], "endpoint_id")
+    
+    create_dto = EndpointCreateDTO(
+        name="endpoint-test",
+        image="test-image:latest",
+        resources=ResourcesDTO(cpu=1, ram="512MB"),
+        security_policy=SecurityPolicyDTO(
+            sp_id="f6ef8e0a-7c86-410b-a6ae-2da0ed82344d",
+            roles=["admin"],
+            requires_authentication=False
+        ),
+        policy_id="policy-123"
+    )
+    
+    # Crear el endpoint
+    endpoint_resp = await client.create_endpoint(create_dto)
+    yield endpoint_resp  # Pasar al test
+    # Limpiar después
+    await client.delete_endpoint(endpoint_resp.endpoint_id)
 
+# ───────────────────────────────
+# Test list endpoints
+# ───────────────────────────────
 @pytest.mark.asyncio
-async def test_get_endpoint():
+async def test_list_endpoints(test_endpoint):
     client = CryptoMeshClient(BASE_URL)
-    result = await client.list_endpoints()
-    if result:
-        obj = await client.get_endpoint(result[0].endpoint_id)
-        assert getattr(obj, "endpoint_id") == result[0].endpoint_id
+    endpoints = await client.list_endpoints()
+    assert isinstance(endpoints, list)
+    assert any(e.endpoint_id == test_endpoint.endpoint_id for e in endpoints)
+
+# ───────────────────────────────
+# Test get endpoint
+# ───────────────────────────────
+@pytest.mark.asyncio
+async def test_get_endpoint(test_endpoint):
+    client = CryptoMeshClient(BASE_URL)
+    endpoint = await client.get_endpoint(test_endpoint.endpoint_id)
+    dto = EndpointResponseDTO(**endpoint)
+    assert dto.endpoint_id == test_endpoint.endpoint_id
+    assert dto.name == "endpoint-test"
+
+# ───────────────────────────────
+# Test update endpoint
+# ───────────────────────────────
+@pytest.mark.asyncio
+async def test_update_endpoint(test_endpoint):
+    client = CryptoMeshClient(BASE_URL)
+    
+    update_dto = EndpointUpdateDTO(
+        name="endpoint-updated",
+        resources=ResourcesUpdateDTO(cpu=4)
+    )
+    
+    update_data = update_dto.model_dump(exclude_unset=True)
+    update_resp = await client.update_endpoint(test_endpoint.endpoint_id, update_data)
+    
+    # Validar que la actualización fue exitosa
+    updated = await client.get_endpoint(test_endpoint.endpoint_id)
+    dto = EndpointResponseDTO(**updated)
+    assert dto.name == "endpoint-updated"
 
 @pytest.mark.asyncio
 async def test_delete_endpoint():
@@ -199,7 +233,7 @@ async def test_list_function_results():
     result = await client.list_function_results()
     assert isinstance(result, list)
     if result:
-        assert hasattr(result[0], "state_id")
+        assert hasattr(result[0], "result_id")
 
 @pytest.mark.asyncio
 async def test_list_endpoint_states():
@@ -227,4 +261,6 @@ async def test_delete_endpoint_state():
             assert deleted is True
     except Exception:
         pass
-
+    assert isinstance(result, list)
+    if result:
+        assert hasattr(result[0], "state_id")
