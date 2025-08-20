@@ -184,12 +184,14 @@ class CryptoMeshClient:
         return True
 
     # -------------------- Endpoint Methods --------------------
-    async def create_endpoint(self, endpoint: EndpointCreateDTO) -> EndpointResponseDTO:
+    async def create_endpoint(self, endpoint: EndpointCreateDTO) -> Result[EndpointResponseDTO,Exception]:
         payload = endpoint.model_dump(by_alias=True)
         data = await self._post("/api/v1/endpoints/", payload)
-        if not isinstance(data, dict):
-            raise ValueError(f"Invalid response from server: {data}")
-        return EndpointResponseDTO(**data)
+        if data.is_ok:
+            return Ok(EndpointResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
+    
+    
 
 
     async def get_endpoint(self, endpoint_id: str) -> EndpointResponseDTO:
@@ -198,7 +200,7 @@ class CryptoMeshClient:
 
     async def list_endpoints(self) -> List[EndpointResponseDTO]:
         data = await self._get("/api/v1/endpoints/")
-        return [EndpointResponseDTO(**item) for item in data]
+        return [EndpointResponseDTO.model_validate(item) for item in data]
 
     async def delete_endpoint(self, endpoint_id: str) -> bool:
         await self._delete(f"/api/v1/endpoints/{endpoint_id}/")
