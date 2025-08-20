@@ -102,7 +102,7 @@ class EndpointUpdateDTO(BaseModel):
                 model.resources = ResourcesUpdateDTO.apply_updates(resource_dto, model.resources)
 
             elif field == "security_policy" and value is not None:
-                security_policy_dto = SecurityPolicyDTO(**value)
+                security_policy_dto = SecurityPolicyUpdateDTO(**value)
                 model.security_policy = SecurityPolicyUpdateDTO.apply_updates(security_policy_dto, model.security_policy)
             else:
                 setattr(model, field, value)
