@@ -5,25 +5,18 @@ import yaml
 from typing import Any, Dict
 
 from cryptomesh.models import (
-    PolicyModel,
-    ServiceModel,
-    MicroserviceModel,
+    EndpointModel,
     FunctionModel,
-    SecurityPolicy,
-    Resource,
-    Storage,
-    StoragePath,
-    ConnectionModel 
+    MicroserviceModel,
+    ServiceModel,
 )
-
 
 class CMPolicyManager:
     """
     CMPolicyManager is responsible for managing the policy configuration
     for the CryptoMesh system.
     """
-
-    def __init__(self, policy_file: str = "policies/example_1.yml"):
+    def __init__(self, policy_file: str):
         self.policy_file = policy_file
         self._raw_data: Dict[str, Any] = {}
 
@@ -39,42 +32,33 @@ class CMPolicyManager:
 
         return self._raw_data
 
-    def interpret(self) -> PolicyModel:
-        """
-        Interpret the loaded policy configuration and convert it into a PolicyModel object.
-        """
+    def parse(self) -> Dict[str, Dict[str, Any]]:
         if not self._raw_data:
             self.load_policy()
+        return {
+            "endpoints": self._raw_data.get("endpoints", {}),
+            "functions": self._raw_data.get("functions", {}),
+            "microservices": self._raw_data.get("microservices", {}),
+            "services": self._raw_data.get("services", {}),
+        }
 
-        services_objs = {}
-
-        for service_id, service_data in self._raw_data["services"].items():
-            microservices_objs = {}
-
-            for ms_name, ms_data in service_data.get("microservices", {}).items():
-                functions_objs = {
-                    fn_name: FunctionModel(**fn_data)
-                    for fn_name, fn_data in ms_data.get("functions", {}).items()
-                }
-
-                microservices_objs[ms_name] = MicroserviceModel(
-                    security_policy=SecurityPolicy(**ms_data["security_policy"]),
-                    resources=ms_data["resources"],
-                    functions=functions_objs,
-                )
-
-            services_objs[service_id] = ServiceModel(
-                security_policy=SecurityPolicy(**service_data["security_policy"]),
-                microservices=microservices_objs,
-            )
-
-        connections_objs = [
-            ConnectionModel(**conn)
-            for conn in self._raw_data.get("connections", [])
-        ]
-
-        return PolicyModel(
-            cryptomesh=self._raw_data["cryptomesh"],
-            services=services_objs,
-            connections=connections_objs,
-        )
+    def as_models(self) -> Dict[str, Dict[str, Any]]:
+        parsed = self.parse()
+        return {
+            "endpoints": {
+                eid: EndpointModel(endpoint_id=eid, **edata)
+                for eid, edata in parsed["endpoints"].items()
+            },
+            "functions": {
+                fid: FunctionModel(function_id=fid, **fdata)
+                for fid, fdata in parsed["functions"].items()
+            },
+            "microservices": {
+                msid: MicroserviceModel(microservice_id=msid, **msdata)
+                for msid, msdata in parsed["microservices"].items()
+            },
+            "services": {
+                sid: ServiceModel(service_id=sid, **sdata)
+                for sid, sdata in parsed["services"].items()
+            },
+        }

@@ -1,9 +1,17 @@
 import time as T
-from fastapi import HTTPException
 from typing import List
 from cryptomesh.models import SecurityPolicyModel
 from cryptomesh.repositories.security_policy_repository import SecurityPolicyRepository
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import (
+    CryptoMeshError,
+    NotFoundError,
+    ValidationError,
+    InvalidYAML,
+    CreationError,
+    UnauthorizedError,
+    FunctionNotFound,
+)
 
 L = get_logger(__name__)
 
@@ -25,7 +33,7 @@ class SecurityPolicyService:
                 "sp_id": policy.sp_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=400, detail="Security policy already exists")
+            raise ValidationError(f"Security policy '{policy.sp_id}' already exists")
 
         new_policy = await self.repository.create(policy)
         elapsed = round(T.time() - t1, 4)
@@ -37,7 +45,7 @@ class SecurityPolicyService:
                 "sp_id": policy.sp_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to create security policy")
+            raise CryptoMeshError(f"Failed to create security policy '{policy.sp_id}'")
 
         L.info({
             "event": "POLICY.CREATED",
@@ -68,7 +76,7 @@ class SecurityPolicyService:
                 "sp_id": sp_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Security policy not found")
+            raise NotFoundError(sp_id)
 
         L.info({
             "event": "POLICY.FETCHED",
@@ -79,16 +87,16 @@ class SecurityPolicyService:
 
     async def update_policy(self, sp_id: str, updates: dict) -> SecurityPolicyModel:
         t1 = T.time()
-        if not await self.repository.get_by_id(sp_id):
+        if not await self.repository.get_by_id(sp_id, id_field="sp_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "POLICY.UPDATE.NOT_FOUND",
                 "sp_id": sp_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Security policy not found")
+            raise NotFoundError(sp_id)
 
-        updated_policy = await self.repository.update(sp_id, updates)
+        updated_policy = await self.repository.update({"sp_id": sp_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated_policy:
@@ -97,7 +105,7 @@ class SecurityPolicyService:
                 "sp_id": sp_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to update security policy")
+            raise CryptoMeshError(f"Failed to update security policy '{sp_id}'")
 
         L.info({
             "event": "POLICY.UPDATED",
@@ -109,16 +117,16 @@ class SecurityPolicyService:
 
     async def delete_policy(self, sp_id: str) -> dict:
         t1 = T.time()
-        if not await self.repository.get_by_id(sp_id):
+        if not await self.repository.get_by_id(sp_id, id_field="sp_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "POLICY.DELETE.NOT_FOUND",
                 "sp_id": sp_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Security policy not found")
+            raise NotFoundError(sp_id)
 
-        success = await self.repository.delete(sp_id)
+        success = await self.repository.delete({"sp_id": sp_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:
@@ -127,7 +135,7 @@ class SecurityPolicyService:
                 "sp_id": sp_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to delete security policy")
+            raise CryptoMeshError(f"Failed to delete security policy '{sp_id}'")
 
         L.info({
             "event": "POLICY.DELETED",

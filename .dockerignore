@@ -1,0 +1,24 @@
+# Archivos del sistema y caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.DS_Store
+
+# Git
+.git
+.gitignore
+
+# Entornos virtuales locales
+venv/
+.env
+
+# Archivos de logs
+*.log
+*.logs
+
+# Desarrollo
+.idea/
+.vscode/
+

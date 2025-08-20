@@ -1,9 +1,17 @@
 import time as T
-from fastapi import HTTPException
 from typing import List
 from cryptomesh.models import FunctionResultModel
 from cryptomesh.repositories.function_result_repository import FunctionResultRepository
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import (
+    CryptoMeshError,
+    NotFoundError,
+    ValidationError,
+    InvalidYAML,
+    CreationError,
+    UnauthorizedError,
+    FunctionNotFound,
+)
 
 L = get_logger(__name__)
 
@@ -17,15 +25,15 @@ class FunctionResultService:
 
     async def create_result(self, result: FunctionResultModel):
         t1 = T.time()
-        if await self.repository.get_by_id(result.state_id):
+        if await self.repository.get_by_id(result.result_id):
             elapsed = round(T.time() - t1, 4)
             L.error({
                 "event": "FUNCTION_RESULT.CREATE.FAIL",
                 "reason": "Already exists",
-                "state_id": result.state_id,
+                "state_id": result.result_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=400, detail="Function result already exists")
+            raise ValidationError(f"Function result '{result.result_id}' already exists")
 
         created = await self.repository.create(result)
         elapsed = round(T.time() - t1, 4)
@@ -34,14 +42,14 @@ class FunctionResultService:
             L.error({
                 "event": "FUNCTION_RESULT.CREATE.FAIL",
                 "reason": "Failed to create",
-                "state_id": result.state_id,
+                "state_id": result.result_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to create function result")
+            raise CryptoMeshError(f"Failed to create function result '{result.result_id}'")
 
         L.info({
             "event": "FUNCTION_RESULT.CREATED",
-            "state_id": result.state_id,
+            "state_id": result.result_id,
             "time": elapsed
         })
         return created
@@ -69,7 +77,7 @@ class FunctionResultService:
                 "result_id": result_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Function result not found")
+            raise NotFoundError(result_id)
 
         L.info({
             "event": "FUNCTION_RESULT.FETCHED",
@@ -78,18 +86,18 @@ class FunctionResultService:
         })
         return result
 
-    async def update_result(self, result_id: str, updates: dict) -> FunctionResultModel:
+    async def update_result(self, result_id: str, updates: dict):
         t1 = T.time()
-        if not await self.repository.get_by_id(result_id):
+        if not await self.repository.get_by_id(result_id, id_field="result_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "FUNCTION_RESULT.UPDATE.NOT_FOUND",
                 "result_id": result_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Function result not found")
+            raise NotFoundError(result_id)
 
-        updated = await self.repository.update(result_id, updates)
+        updated = await self.repository.update({"result_id": result_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated:
@@ -98,7 +106,7 @@ class FunctionResultService:
                 "result_id": result_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to update function result")
+            raise CryptoMeshError(f"Failed to update function result '{result_id}'")
 
         L.info({
             "event": "FUNCTION_RESULT.UPDATED",
@@ -110,16 +118,16 @@ class FunctionResultService:
 
     async def delete_result(self, result_id: str) -> dict:
         t1 = T.time()
-        if not await self.repository.get_by_id(result_id):
+        if not await self.repository.get_by_id(result_id, id_field="result_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "FUNCTION_RESULT.DELETE.NOT_FOUND",
                 "result_id": result_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Function result not found")
+            raise NotFoundError(result_id)
 
-        success = await self.repository.delete(result_id)
+        success = await self.repository.delete({"result_id": result_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:
@@ -128,7 +136,7 @@ class FunctionResultService:
                 "result_id": result_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to delete function result")
+            raise CryptoMeshError(f"Failed to delete function result '{result_id}'")
 
         L.info({
             "event": "FUNCTION_RESULT.DELETED",

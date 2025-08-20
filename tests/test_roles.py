@@ -1,109 +1,118 @@
 import pytest
+from cryptomesh.dtos.role_dto import RoleCreateDTO, RoleUpdateDTO, RoleResponseDTO
 from cryptomesh.models import RoleModel
 from cryptomesh.repositories.roles_repository import RolesRepository
+from cryptomesh.services.roles_service import RolesService
+from cryptomesh.errors import NotFoundError
 
-# ✅ TEST: Insertar un nuevo rol correctamente
 @pytest.mark.asyncio
-async def test_insert_role(get_db):
+async def test_create_role(get_db):
     db = get_db
     repo = RolesRepository(db.roles)
+    role_svc = RolesService(repo)
 
-    role = RoleModel(
-        role_id="role_test_create",
+    create_dto = RoleCreateDTO(
         name="Test Role",
         description="Role for testing",
         permissions=["read", "write"]
     )
 
-    created = await repo.create(role)
-    assert created is not None
-    assert created.role_id == "role_test_create"
-    assert created.name == "Test Role"
-    assert "read" in created.permissions
+    created = await role_svc.create_role(create_dto.to_model(role_id="role_test_create"))
+    response_dto = RoleResponseDTO.from_model(created)
 
-# ✅ TEST: Obtener un rol por ID
+    assert response_dto.role_id == created.role_id
+    assert "read" in response_dto.permissions
+    assert "write" in response_dto.permissions
+
+
 @pytest.mark.asyncio
-async def test_get_role_by_id(get_db):
+async def test_get_role(get_db):
     db = get_db
     repo = RolesRepository(db.roles)
+    role_svc = RolesService(repo)
 
-    role = RoleModel(
-        role_id="role_test_get",
+    create_dto = RoleCreateDTO(
         name="Get Role",
         description="Role to fetch",
         permissions=["read"]
     )
 
-    await repo.create(role)
-    fetched = await repo.get_by_id("role_test_get")
-    assert fetched is not None
-    assert fetched.role_id == "role_test_get"
-    assert fetched.name == "Get Role"
-    assert "read" in fetched.permissions
+    created = await role_svc.create_role(create_dto.to_model(role_id="role_test_get"))
+    fetched = await role_svc.get_role(created.role_id)
+    response_dto = RoleResponseDTO.from_model(fetched)
 
-# ✅ TEST: Actualizar un rol existente
+    assert response_dto.role_id == created.role_id
+    assert response_dto.name == "Get Role"
+    assert "read" in response_dto.permissions
+
+
 @pytest.mark.asyncio
 async def test_update_role(get_db):
     db = get_db
     repo = RolesRepository(db.roles)
+    role_svc = RolesService(repo)
 
-    role = RoleModel(
-        role_id="role_test_update",
+    create_dto = RoleCreateDTO(
         name="Old Role",
         description="Role before update",
         permissions=["read"]
     )
+    created = await role_svc.create_role(create_dto.to_model(role_id="role_test_update"))
 
-    await repo.create(role)
-    updates = {"name": "Updated Role", "permissions": ["read", "write"]}
-    updated = await repo.update("role_test_update", updates)
-    assert updated is not None
-    assert updated.name == "Updated Role"
-    assert "write" in updated.permissions
+    update_dto = RoleUpdateDTO(
+        name="Updated Role",
+        permissions=["read", "write"]
+    )
+    updated_model = RoleUpdateDTO.apply_updates(update_dto, created)
+    updated = await role_svc.update_role(created.role_id, updated_model.model_dump())
+    response_dto = RoleResponseDTO.from_model(updated)
 
-# ✅ TEST: Eliminar un rol y confirmar que ya no exista
+    assert response_dto.name == "Updated Role"
+    assert "write" in response_dto.permissions
+
+
 @pytest.mark.asyncio
 async def test_delete_role(get_db):
     db = get_db
     repo = RolesRepository(db.roles)
+    role_svc = RolesService(repo)
 
-    role = RoleModel(
-        role_id="role_test_delete",
+    create_dto = RoleCreateDTO(
         name="Role to Delete",
         description="Role for deletion test",
         permissions=["read"]
     )
+    created = await role_svc.create_role(create_dto.to_model(role_id="role_test_delete"))
 
-    await repo.create(role)
-    deleted = await repo.delete("role_test_delete")
-    assert deleted is True
+    result = await role_svc.delete_role(created.role_id)
+    assert "deleted" in result["detail"]
 
-    fetched = await repo.get_by_id("role_test_delete")
-    assert fetched is None
+    with pytest.raises(NotFoundError):
+        await role_svc.get_role(created.role_id)
 
-# ✅ TEST: Listar todos los roles
+
 @pytest.mark.asyncio
 async def test_list_roles(get_db):
     db = get_db
     repo = RolesRepository(db.roles)
+    role_svc = RolesService(repo)
 
-    role1 = RoleModel(
-        role_id="role_test_list_1",
+    create_dto1 = RoleCreateDTO(
         name="Role List 1",
         description="First role",
         permissions=["read"]
     )
-    role2 = RoleModel(
-        role_id="role_test_list_2",
+    create_dto2 = RoleCreateDTO(
         name="Role List 2",
         description="Second role",
         permissions=["write"]
     )
 
-    await repo.create(role1)
-    await repo.create(role2)
+    await role_svc.create_role(create_dto1.to_model(role_id="role_test_list_1"))
+    await role_svc.create_role(create_dto2.to_model(role_id="role_test_list_2"))
 
-    roles = await repo.get_all()
+    roles = await role_svc.list_roles()
     role_ids = [r.role_id for r in roles]
+
     assert "role_test_list_1" in role_ids
     assert "role_test_list_2" in role_ids

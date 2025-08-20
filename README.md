@@ -53,7 +53,7 @@ Once you get all the software, please execute the following command to install t
 ```bash
 poetry install
 ```
-### How to deploy database and broker
+### How to deploy database, broker and API
 
 **Install docker and docker Compose:**
 
@@ -66,51 +66,55 @@ poetry install
 
 **Start the services:**
 
-- Run the following command to start both services in detached mode:
+- Run the following command to build the images (if necessary) and start all services in detached mode (runs in background):
 ```bash
-docker compose up -d
+docker-compose up --build -d
+```
+
+- Alternatively, to see the logs in the console (not detached):
+```bash
+docker-compose up --build
 ```
 
 **Stopping the services:**
 ```bash
-docker compose down
+docker-compose stop
 ```
 
+**Start the services:**
+```bash
+docker-compose start
+```
 
-## Running the CryptoMesh Server with Poetry
+**Stopping and Removing Containers**
+```bash
+docker-compose down
+```
 
-Follow these steps to run the CryptoMesh server:
+**Dockerfile**
 
-1. **Install Poetry (if not already installed):**
-   - Follow the instructions at [Poetry Installation](https://python-poetry.org/docs/#installation).
+- `FROM python:3.11-slim`: Lightweight base image with Python 3.11.
+- `WORKDIR /app`: Sets the working directory inside the container.
+- `COPY requirements.txt .` and `RUN pip install --no-cache-dir -r requirements.txt`: Copies and installs dependencies.
+- `COPY . .`: Copies all the source code into the container.
+- `CMD ["uvicorn", "cryptomesh.server:app", "--host", "0.0.0.0", "--port", "19000"]`: Sets the command to start the FastAPI server.
 
-2. **Install Project Dependencies(If not already installed):**
-   - Open your terminal and navigate to the project directory (where your `pyproject.toml` file is located).
-   - Run the following command to install all required dependencies:
-     ```bash
-     poetry install
-     ```
+**docker-compose.yml**
 
-3. **Run the Server:**
-   - Start the server using Poetry's virtual environment with this command:
-     ```bash
-     poetry run python3 ./cryptomesh/server.py
-     ```
-   - This ensures that the server runs with the correct dependencies specified in your project.
+- Defines services for the database (`mongo`), the broker (`rabbitmq`), and the API (`cryptomesh-api`).
+- Uses environment variables to configure connections.
+- Maps ports to access services from the host machine.
+- Uses `depends_on` to ensure the correct startup order.
 
-4. **Access the API Endpoints:**
-   - Once the server is running, you can access the API endpoints in your browser or via a tool like cURL/Postman:
-     - `http://localhost:19000/api/v1/services`
-     - `http://localhost:19000/api/v1/microservices`
-     - `http://localhost:19000/api/v1/functions`
+**Environment Variables**
 
-5. **Stopping the Server:**
-   - To stop the server, press `Ctrl+C` in the terminal.
+- `MONGO_PORT`: The port on your local machine that maps to the MongoDB container (default `27018`). Use this to connect to the database from your host.  
+- `RABBITMQ_PORT`: The port on your local machine that maps to the RabbitMQ broker (default `5673`). This is used by applications to send and receive messages.  
+- `RABBITMQ_MANAGEMENT_PORT`: The port on your local machine that maps to the RabbitMQ Management UI (default `15673`). Access the web interface for monitoring queues, exchanges, and connections.  
+- `API_PORT`: The port on your local machine that maps to the CryptoMesh API container (default `19000`). Use this to send HTTP requests to the API.
 
-**Note:**  
-Ensure that any other required services (like MongoDB) are running before starting the server.
-
-
+**Logs**
+- API logs are saved in the `./logs` directory thanks to the mounted volume.
 
 
 ## Running Tests

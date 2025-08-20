@@ -1,9 +1,17 @@
 import time as T
-from fastapi import HTTPException
 from typing import List
 from cryptomesh.models import MicroserviceModel
 from cryptomesh.repositories.microservices_repository import MicroservicesRepository
 from cryptomesh.log.logger import get_logger
+from cryptomesh.errors import (
+    CryptoMeshError,
+    NotFoundError,
+    ValidationError,
+    InvalidYAML,
+    CreationError,
+    UnauthorizedError,
+    FunctionNotFound,
+)
 
 L = get_logger(__name__)
 
@@ -17,7 +25,7 @@ class MicroservicesService:
 
     async def create_microservice(self, microservice: MicroserviceModel) -> MicroserviceModel:
         t1 = T.time()
-        if await self.repository.get_by_id(microservice.microservice_id):
+        if await self.repository.get_by_id(microservice.microservice_id, id_field="microservice_id"):
             elapsed = round(T.time() - t1, 4)
             L.error({
                 "event": "MICROSERVICE.CREATE.FAIL",
@@ -25,7 +33,7 @@ class MicroservicesService:
                 "microservice_id": microservice.microservice_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=400, detail="Microservice already exists")
+            raise ValidationError(f"Microservice '{microservice.microservice_id}' already exists")
 
         created = await self.repository.create(microservice)
         elapsed = round(T.time() - t1, 4)
@@ -37,7 +45,7 @@ class MicroservicesService:
                 "microservice_id": microservice.microservice_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to create microservice")
+            raise CryptoMeshError(f"Failed to create microservice '{microservice.microservice_id}'")
 
         L.info({
             "event": "MICROSERVICE.CREATED",
@@ -59,7 +67,7 @@ class MicroservicesService:
 
     async def get_microservice(self, microservice_id: str) -> MicroserviceModel:
         t1 = T.time()
-        ms = await self.repository.get_by_id(microservice_id)
+        ms = await self.repository.get_by_id(microservice_id, id_field="microservice_id")
         elapsed = round(T.time() - t1, 4)
 
         if not ms:
@@ -68,7 +76,7 @@ class MicroservicesService:
                 "microservice_id": microservice_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Microservice not found")
+            raise NotFoundError(microservice_id)
 
         L.info({
             "event": "MICROSERVICE.FETCHED",
@@ -79,16 +87,16 @@ class MicroservicesService:
 
     async def update_microservice(self, microservice_id: str, updates: dict) -> MicroserviceModel:
         t1 = T.time()
-        if not await self.repository.get_by_id(microservice_id):
+        if not await self.repository.get_by_id(microservice_id, id_field="microservice_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "MICROSERVICE.UPDATE.NOT_FOUND",
                 "microservice_id": microservice_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Microservice not found")
+            raise NotFoundError(microservice_id)
 
-        updated = await self.repository.update(microservice_id, updates)
+        updated = await self.repository.update({"microservice_id": microservice_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated:
@@ -97,7 +105,7 @@ class MicroservicesService:
                 "microservice_id": microservice_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to update microservice")
+            raise CryptoMeshError(f"Failed to update microservice '{microservice_id}'")
 
         L.info({
             "event": "MICROSERVICE.UPDATED",
@@ -109,16 +117,16 @@ class MicroservicesService:
 
     async def delete_microservice(self, microservice_id: str) -> dict:
         t1 = T.time()
-        if not await self.repository.get_by_id(microservice_id):
+        if not await self.repository.get_by_id(microservice_id, id_field="microservice_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "MICROSERVICE.DELETE.NOT_FOUND",
                 "microservice_id": microservice_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=404, detail="Microservice not found")
+            raise NotFoundError(microservice_id)
 
-        success = await self.repository.delete(microservice_id)
+        success = await self.repository.delete({"microservice_id": microservice_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:
@@ -127,7 +135,7 @@ class MicroservicesService:
                 "microservice_id": microservice_id,
                 "time": elapsed
             })
-            raise HTTPException(status_code=500, detail="Failed to delete microservice")
+            raise CryptoMeshError(f"Failed to delete microservice '{microservice_id}'")
 
         L.info({
             "event": "MICROSERVICE.DELETED",
