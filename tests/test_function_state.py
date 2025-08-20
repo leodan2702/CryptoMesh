@@ -1,106 +1,121 @@
 import pytest
-from fastapi import HTTPException
+from cryptomesh.dtos.function_state_dto import (
+    FunctionStateCreateDTO,
+    FunctionStateResponseDTO,
+    FunctionStateUpdateDTO
+)
 from cryptomesh.models import FunctionStateModel
 from cryptomesh.repositories.function_state_repository import FunctionStateRepository
 from cryptomesh.services.function_state_service import FunctionStateService
+from cryptomesh.errors import NotFoundError
 
-# ✅ TEST: Crear un nuevo estado de función
 @pytest.mark.asyncio
 async def test_create_function_state(get_db):
     db = get_db
     repo = FunctionStateRepository(db.function_states)
     service = FunctionStateService(repo)
 
-    state = FunctionStateModel(
-        state_id="fs_unique_create",
+    create_dto = FunctionStateCreateDTO(
         function_id="fn_unique_create",
         state="running",
         metadata={"progress": "50%"}
     )
-    created = await service.create_state(state)
-    assert created is not None
-    assert created.state_id == "fs_unique_create"
+    created = await service.create_state(FunctionStateCreateDTO.to_model(create_dto, state_id="fs_unique_create"))
+    response_dto = FunctionStateResponseDTO.from_model(created)
 
-# ✅ TEST: Listar todos los estados de función
-@pytest.mark.asyncio
-async def test_list_function_states(get_db):
-    db = get_db
-    repo = FunctionStateRepository(db.function_states)
-    service = FunctionStateService(repo)
+    assert response_dto.state_id == created.state_id
+    assert response_dto.state == "running"
+    assert response_dto.metadata["progress"] == "50%"
 
-    await service.create_state(FunctionStateModel(
-        state_id="fs_unique_list_1",
-        function_id="fn_unique_list",
-        state="running",
-        metadata={"progress": "60%"}
-    ))
-    await service.create_state(FunctionStateModel(
-        state_id="fs_unique_list_2",
-        function_id="fn_unique_list",
-        state="completed",
-        metadata={"result": "success"}
-    ))
 
-    states = await service.list_states()
-    ids = [s.state_id for s in states]
-    assert "fs_unique_list_1" in ids
-    assert "fs_unique_list_2" in ids
-
-# ✅ TEST: Obtener un estado por ID
 @pytest.mark.asyncio
 async def test_get_function_state(get_db):
     db = get_db
     repo = FunctionStateRepository(db.function_states)
     service = FunctionStateService(repo)
 
-    await service.create_state(FunctionStateModel(
-        state_id="fs_unique_get",
+    create_dto = FunctionStateCreateDTO(
         function_id="fn_unique_get",
         state="completed",
         metadata={"result": "success"}
-    ))
+    )
+    created = await service.create_state(FunctionStateCreateDTO.to_model(create_dto, state_id="fs_unique_get"))
 
-    fetched = await service.get_state("fs_unique_get")
-    assert fetched is not None
-    assert fetched.state == "completed"
+    fetched = await service.get_state(created.state_id)
+    response_dto = FunctionStateResponseDTO.from_model(fetched)
 
-# ✅ TEST: Actualizar un estado existente
+    assert response_dto.state_id == created.state_id
+    assert response_dto.state == "completed"
+    assert response_dto.metadata["result"] == "success"
+
+
 @pytest.mark.asyncio
 async def test_update_function_state(get_db):
     db = get_db
     repo = FunctionStateRepository(db.function_states)
     service = FunctionStateService(repo)
 
-    await service.create_state(FunctionStateModel(
-        state_id="fs_unique_update",
+    create_dto = FunctionStateCreateDTO(
         function_id="fn_unique_update",
         state="pending",
         metadata={"info": "initial"}
-    ))
+    )
+    created = await service.create_state(FunctionStateCreateDTO.to_model(create_dto, state_id="fs_unique_update"))
 
-    updates = {"state": "running", "metadata": {"info": "in progress"}}
-    updated = await service.update_state("fs_unique_update", updates)
-    assert updated is not None
-    assert updated.state == "running"
-    assert updated.metadata["info"] == "in progress"
+    update_dto = FunctionStateUpdateDTO(
+        state="running",
+        metadata={"info": "in progress"}
+    )
+    updated_model = FunctionStateUpdateDTO.apply_updates(update_dto, created)
+    updated = await service.update_state(created.state_id, updated_model.model_dump())
+    response_dto = FunctionStateResponseDTO.from_model(updated)
 
-# ✅ TEST: Eliminar un estado y confirmar su eliminación
+    assert response_dto.state == "running"
+    assert response_dto.metadata["info"] == "in progress"
+
+
 @pytest.mark.asyncio
 async def test_delete_function_state(get_db):
     db = get_db
     repo = FunctionStateRepository(db.function_states)
     service = FunctionStateService(repo)
 
-    await service.create_state(FunctionStateModel(
-        state_id="fs_unique_delete",
+    create_dto = FunctionStateCreateDTO(
         function_id="fn_unique_delete",
         state="failed",
         metadata={"error": "Timeout"}
-    ))
+    )
+    created = await service.create_state(FunctionStateCreateDTO.to_model(create_dto, state_id="fs_unique_delete"))
 
-    result = await service.delete_state("fs_unique_delete")
-    assert "detail" in result
+    result = await service.delete_state(created.state_id)
+    assert "deleted" in result["detail"]
 
-    with pytest.raises(HTTPException):
-        await service.get_state("fs_unique_delete")
+    with pytest.raises(NotFoundError):
+        await service.get_state(created.state_id)
 
+
+@pytest.mark.asyncio
+async def test_list_function_states(get_db):
+    db = get_db
+    repo = FunctionStateRepository(db.function_states)
+    service = FunctionStateService(repo)
+
+    create_dto1 = FunctionStateCreateDTO(
+        function_id="fn_list_1",
+        state="running",
+        metadata={"progress": "60%"}
+    )
+    create_dto2 = FunctionStateCreateDTO(
+        function_id="fn_list_2",
+        state="completed",
+        metadata={"result": "success"}
+    )
+
+    await service.create_state(FunctionStateCreateDTO.to_model(create_dto1, state_id="fs_list_1"))
+    await service.create_state(FunctionStateCreateDTO.to_model(create_dto2, state_id="fs_list_2"))
+
+    states = await service.list_states()
+    state_ids = [s.state_id for s in states]
+
+    assert "fs_list_1" in state_ids
+    assert "fs_list_2" in state_ids
