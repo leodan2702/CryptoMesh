@@ -3,8 +3,6 @@ import cryptomesh.controllers as Controllers
 import uvicorn
 from contextlib import asynccontextmanager
 from cryptomesh.db import connect_to_mongo,close_mongo_connection
-import os
-import logging
 from cryptomesh.log import Log
 import time as T
 from cryptomesh.log.logger import get_logger
@@ -36,7 +34,6 @@ app.add_middleware(
     allow_headers=["*"],              # HTTP request headers allowed
 )
 # Include API routes from the service controller under /api/v1
-
 app.include_router(Controllers.services_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Services"])
 app.include_router(Controllers.microservices_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Microservices"])
 app.include_router(Controllers.functions_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Functions"])
@@ -46,8 +43,6 @@ app.include_router(Controllers.roles_router, prefix=config.CRYPTO_MESH_API_PREFI
 app.include_router(Controllers.endpoint_state_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Endpoint State"])
 app.include_router(Controllers.function_state_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Function State"])
 app.include_router(Controllers.function_result_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Function Result"])
-
-
 if __name__ == "__main__":
     uvicorn.run(app, host=config.CRYPTO_MESH_HOST, port=config.CRYPTO_MESH_PORT)
 

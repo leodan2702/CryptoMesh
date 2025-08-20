@@ -8,8 +8,41 @@ from cryptomesh.dtos.resources_dto import ResourcesDTO,ResourcesUpdateDTO
 from cryptomesh.dtos.storage_dto import StorageDTO
 from option import Result, Ok, Err
 
+from cryptomesh.models import FunctionModel,ResourcesModel,StorageModel,ServiceModel,SecurityPolicyModel
 BASE_URL = "http://localhost:19000"
+client = CryptoMeshClient(BASE_URL)
 
+@pytest.mark.asyncio
+async def test_create_function():
+    res = await client.create_function(
+        function=FunctionModel(
+            function_id="1",
+            deployment_status="COMPLETED",
+            endpoint_id="1",
+            image="",
+            microservice_id="",
+            policy_id="",
+            resources=ResourcesModel(cpu=1,ram="1GB"),
+            storage=StorageModel(capacity="1GB",storage_id="",source_path="/mnt/source",sink_path="/mnt/sink")
+        )
+    )
+    assert res.is_ok
+@pytest.mark.asyncio
+async def test_create_service():
+    res = await client.create_service(
+        service=ServiceModel(
+            service_id="3",
+            security_policy=SecurityPolicyModel(
+                requires_authentication=True,
+                roles=["admin"],
+                sp_id=""
+            ),
+            microservices=["m1","m2"],
+            resources=ResourcesModel(cpu=1,ram="1GB"),
+            policy_id="test_policy"
+        )
+    )
+    
 @pytest.mark.asyncio
 async def test_list_functions():
     client = CryptoMeshClient(BASE_URL)
