@@ -373,7 +373,7 @@ class CryptoMeshClient:
         })
         return await self._handle_response(response)
 
-    async def _post(self, path: str, payload: Dict[str, Any], headers: Dict[str, str] = {}) -> Any:
+    async def _post(self, path: str, payload: Dict[str, Any], headers: Dict[str, str] = {}) -> Result[Any, Exception]:
         try:
             url = f"{self.base_url}{path}"
             full_headers = {**self.headers, **headers}
