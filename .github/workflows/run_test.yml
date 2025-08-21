@@ -1,8 +1,8 @@
 name: Run Unit Test via Pytest  
   
 on:
-  push: 
-    branches: ["*"]
+  # push: 
+    # branches: ["*"]
   pull_request:
     branches: ["*"]
     paths:
@@ -46,11 +46,22 @@ jobs:
       - name: Install Dependencies
         run: poetry install --no-interaction --no-root
 
-
+      - name: Start CryptoMesh backend
+        run: |
+          docker compose -f docker-compose.yml up -d
+          echo "CryptoMesh service was deployed..."
+          for i in {1..20}; do
+            if curl -s http://localhost:19000/docs > /dev/null; then
+              echo "✅ CryptoMesh service is successfully deployed"
+              break
+            fi
+            sleep 3
+          done
+        
       - name: Lint with Ruff  
         run: |  
           pip install ruff  
-          ruff --format=github --target-version=py311 .  
+          ruff check .  
         continue-on-error: true  
         
       - name: Wait for MongoDB to be ready
