@@ -1,8 +1,8 @@
 name: Run Unit Test via Pytest  
   
 on:
-  push: 
-    branches: ["*"]
+  # push: 
+    # branches: ["*"]
   pull_request:
     branches: ["*"]
     paths:
@@ -17,16 +17,16 @@ jobs:
     strategy:  
       matrix:  
         python-version: ["3.11"]  
-    services:
-      mongodb:
-        image: mongo:6
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd="mongosh --eval 'db.adminCommand(\"ping\")'"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+    # services:
+    #   mongodb:
+    #     image: mongo:6
+    #     ports:
+    #       - 27017:27017
+    #     options: >-
+    #       --health-cmd="mongosh --eval 'db.adminCommand(\"ping\")'"
+    #       --health-interval=10s
+    #       --health-timeout=5s
+    #       --health-retries=5
     steps:  
       - uses: actions/checkout@v3  
       - name: Set up Python ${{ matrix.python-version }}  
@@ -46,29 +46,42 @@ jobs:
       - name: Install Dependencies
         run: poetry install --no-interaction --no-root
 
-
+      - name: Start CryptoMesh backend
+        run: |
+          docker compose -f docker-compose.yml up -d
+          echo "CryptoMesh service was deployed..."
+          for i in {1..20}; do
+            if curl -s http://localhost:19000/docs > /dev/null; then
+              echo "✅ CryptoMesh service is successfully deployed"
+              break
+            fi
+            sleep 3
+          done
+        
       - name: Lint with Ruff  
         run: |  
           pip install ruff  
-          ruff --format=github --target-version=py311 .  
+          ruff check .  
         continue-on-error: true  
         
-      - name: Wait for MongoDB to be ready
-        run: |
-          for i in {1..10}; do
-            if mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
-              echo "MongoDB is up!"
-              break
-            fi
-            echo "Waiting for MongoDB..."
-            sleep 3
-          done
+      # - name: Wait for MongoDB to be ready
+      #   run: |
+      #     for i in {1..10}; do
+      #       if mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
+      #         echo "MongoDB is up!"
+      #         break
+      #       fi
+      #       echo "Waiting for MongoDB..."
+      #       sleep 3
+      #     done
 
       - name: Test with pytest  
         run: |  
           poetry run coverage run -m pytest  -v -s  
         env:
           LOG_PATH: log  
+          MONGO_DATABASE_NAME: cryptomesh
+          MONGODB_URI: mongodb://localhost:27017/cryptomesh
       - name: Generate Coverage Report  
         run: |  
           poetry run coverage report -m

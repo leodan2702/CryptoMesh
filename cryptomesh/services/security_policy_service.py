@@ -87,7 +87,7 @@ class SecurityPolicyService:
 
     async def update_policy(self, sp_id: str, updates: dict) -> SecurityPolicyModel:
         t1 = T.time()
-        if not await self.repository.get_by_id(sp_id):
+        if not await self.repository.get_by_id(sp_id, id_field="sp_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "POLICY.UPDATE.NOT_FOUND",
@@ -96,7 +96,7 @@ class SecurityPolicyService:
             })
             raise NotFoundError(sp_id)
 
-        updated_policy = await self.repository.update(sp_id, updates)
+        updated_policy = await self.repository.update({"sp_id": sp_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated_policy:
@@ -117,7 +117,7 @@ class SecurityPolicyService:
 
     async def delete_policy(self, sp_id: str) -> dict:
         t1 = T.time()
-        if not await self.repository.get_by_id(sp_id):
+        if not await self.repository.get_by_id(sp_id, id_field="sp_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "POLICY.DELETE.NOT_FOUND",
@@ -126,7 +126,7 @@ class SecurityPolicyService:
             })
             raise NotFoundError(sp_id)
 
-        success = await self.repository.delete(sp_id)
+        success = await self.repository.delete({"sp_id": sp_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:

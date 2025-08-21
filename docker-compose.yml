@@ -1,17 +1,33 @@
 services:
   crypto-mesh-db:
     image: mongo:latest
+    container_name: crypto-mesh-db
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT:-27017}:27017"
     volumes:
       - mongo-data:/data/db
     restart: unless-stopped
 
   crypto-mesh-broker:
     image: rabbitmq:4.0-management
+    container_name: crypto-mesh-broker
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    restart: unless-stopped
+
+  crypto-mesh-api:
+    build: .
+    image: cryptomesh-api:latest
+    container_name: crypto-mesh-api
+    depends_on:
+      - crypto-mesh-db
+      - crypto-mesh-broker
+    ports:
+      - "${API_PORT:-19000}:19000"
+    environment:
+      MONGO_DATABASE_NAME: ${MONGODB_DATABASE_NAME:-cryptomesh}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://crypto-mesh-db:27017/cryptomesh}
     restart: unless-stopped
 
 volumes:

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, status, Response, HTTPException
 from typing import List
-from cryptomesh.models import FunctionStateModel
 from cryptomesh.services.function_state_service import FunctionStateService
 from cryptomesh.repositories.function_state_repository import FunctionStateRepository
 from cryptomesh.db import get_collection
@@ -14,6 +13,7 @@ from cryptomesh.errors import (
     UnauthorizedError,
     FunctionNotFound,
 )
+from cryptomesh.dtos.function_state_dto import FunctionStateCreateDTO, FunctionStateUpdateDTO, FunctionStateResponseDTO
 import time as T
 
 router = APIRouter()
@@ -26,16 +26,16 @@ def get_function_state_service() -> FunctionStateService:
 
 @router.post(
     "/function-states/",
-    response_model=FunctionStateModel,
-    response_model_by_alias=True,
+    response_model=FunctionStateResponseDTO,
     status_code=status.HTTP_201_CREATED,
     summary="Crear un nuevo estado de función",
     description="Crea un nuevo registro de estado para una función en la base de datos."
 )
-async def create_function_state(state: FunctionStateModel, svc: FunctionStateService = Depends(get_function_state_service)):
+async def create_function_state(dto: FunctionStateCreateDTO, svc: FunctionStateService = Depends(get_function_state_service)):
     t1 = T.time()
     try:
-        response = await svc.create_state(state)
+        model = FunctionStateCreateDTO.to_model(dto)
+        created = await svc.create_state(model)
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=e.to_dict())
     except CryptoMeshError as e:
@@ -43,14 +43,14 @@ async def create_function_state(state: FunctionStateModel, svc: FunctionStateSer
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION_STATE.CREATED",
-        "state_id": state.state_id,
+        "state_id": created.state_id,
         "time": elapsed
     })
-    return response
+    return FunctionStateResponseDTO.from_model(created)
 
 @router.get(
     "/function-states/",
-    response_model=List[FunctionStateModel],
+    response_model=List[FunctionStateResponseDTO],
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
     summary="Listar todos los estados de función",
@@ -68,21 +68,20 @@ async def list_function_states(svc: FunctionStateService = Depends(get_function_
         "count": len(states),
         "time": elapsed
     })
-    return states
+    return [FunctionStateResponseDTO.from_model(s) for s in states]
 
 @router.get(
     "/function-states/{state_id}",
-    response_model=FunctionStateModel,
+    response_model=FunctionStateResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
-    summary="Obtener estado de función por ID",
-    description="Devuelve un registro de estado de función específico dado su ID."
+    summary="Obtener estado de función por ID"
 )
 async def get_function_state(state_id: str, svc: FunctionStateService = Depends(get_function_state_service)):
     t1 = T.time()
     try:
-        result = await svc.get_state(state_id)
-        if not result:
+        state = await svc.get_state(state_id)
+        if not state:
             raise NotFoundError(state_id)
     except NotFoundError as e:
         elapsed = round(T.time() - t1, 4)
@@ -102,23 +101,24 @@ async def get_function_state(state_id: str, svc: FunctionStateService = Depends(
         "state_id": state_id,
         "time": elapsed
     })
-    return result
+    return FunctionStateResponseDTO.from_model(state)
 
 @router.put(
     "/function-states/{state_id}",
-    response_model=FunctionStateModel,
-    response_model_by_alias=True,
+    response_model=FunctionStateResponseDTO,
     status_code=status.HTTP_200_OK,
     summary="Actualizar estado de función por ID",
     description="Actualiza completamente un registro de estado de función existente."
 )
-async def update_function_state(state_id: str, updated: FunctionStateModel, svc: FunctionStateService = Depends(get_function_state_service)):
-    update_data = updated.model_dump(by_alias=True, exclude_unset=True)
+async def update_function_state(state_id: str, dto: FunctionStateUpdateDTO, svc: FunctionStateService = Depends(get_function_state_service)):
     t1 = T.time()
     try:
-        result = await svc.update_state(state_id, update_data)
-        if not result:
+        existing = await svc.get_state(state_id)
+        if not existing:
             raise NotFoundError(state_id)
+
+        updated_model = FunctionStateUpdateDTO.apply_updates(dto, existing)
+        updated = await svc.update_state(state_id, updated_model.model_dump(by_alias=True))
     except NotFoundError as e:
         elapsed = round(T.time() - t1, 4)
         L.error({
@@ -135,10 +135,9 @@ async def update_function_state(state_id: str, updated: FunctionStateModel, svc:
     L.info({
         "event": "API.FUNCTION_STATE.UPDATED",
         "state_id": state_id,
-        "updates": update_data,
         "time": elapsed
     })
-    return result
+    return FunctionStateResponseDTO.from_model(updated)
 
 @router.delete(
     "/function-states/{state_id}",

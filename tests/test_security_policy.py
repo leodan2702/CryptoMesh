@@ -51,7 +51,7 @@ async def test_update_policy(get_db):
     await repo.create(policy)
 
     updates = {"roles": ["new_role"], "requires_authentication": False}
-    updated = await repo.update("sp_test_update", updates)
+    updated = await repo.update({"sp_id": "sp_test_update"}, updates)  # <-- filtro como dict
     assert updated is not None
     assert updated.roles == ["new_role"]
     assert updated.requires_authentication is False
@@ -68,7 +68,7 @@ async def test_delete_policy(get_db):
         requires_authentication=False
     )
     await repo.create(policy)
-    deleted = await repo.delete("sp_test_delete")
+    deleted = await repo.delete({"sp_id": "sp_test_delete"})  # <-- filtro como dict
     assert deleted is True
 
     fetched = await repo.get_by_id("sp_test_delete")
@@ -97,3 +97,4 @@ async def test_list_policies(get_db):
     sp_ids = [p.sp_id for p in policies]
     assert "sp_test_list_1" in sp_ids
     assert "sp_test_list_2" in sp_ids
+

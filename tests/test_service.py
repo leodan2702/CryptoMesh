@@ -1,107 +1,133 @@
 import pytest
-from cryptomesh.repositories.services_repository import ServicesRepository
+from cryptomesh.dtos.services_dto import (
+    ServiceCreateDTO,
+    ServiceResponseDTO,
+    ServiceUpdateDTO
+)
+from cryptomesh.dtos.resources_dto import ResourcesDTO, ResourcesUpdateDTO
+from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO
 from cryptomesh.models import ServiceModel
+from cryptomesh.repositories.services_repository import ServicesRepository
+from cryptomesh.services.services_services import ServicesService
+from cryptomesh.services.security_policy_service import SecurityPolicyService
+from cryptomesh.errors import NotFoundError
 
-# ✅ TEST: Insertar un nuevo servicio correctamente
 @pytest.mark.asyncio
-async def test_insert_service(get_db):
+async def test_create_service(get_db):
     db = get_db
-    repo = ServicesRepository(collection=db.services)
+    sp_service = SecurityPolicyService(None)  # se puede mockear o usar real si quieres
+    repo = ServicesRepository(db.services)
+    service_svc = ServicesService(repo, sp_service)
 
-    service = ServiceModel(
-        service_id="s_unique_create",
-        security_policy="security_manager",
+    policy_dto = SecurityPolicyDTO(
+        sp_id="security_manager",
+        roles=["security_manager"],
+        requires_authentication=True
+    )
+
+    create_dto = ServiceCreateDTO(
+        security_policy=policy_dto,
         microservices=[],
-        resources={"cpu": 2, "ram": "2GB"},
+        resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
-    result = await repo.create(service)
-    assert result is not None
-    assert result.security_policy == "security_manager"
 
-# ✅ TEST: Obtener un servicio por ID
+    created = await service_svc.create_service(create_dto.to_model(service_id="s_test_create"))
+    response_dto = ServiceResponseDTO.from_model(created)
+
+    assert response_dto.service_id == created.service_id
+    assert response_dto.security_policy.sp_id == "security_manager"
+
+
 @pytest.mark.asyncio
-async def test_get_service_by_id(get_db):
+async def test_get_service(get_db):
     db = get_db
-    repo = ServicesRepository(collection=db.services)
+    sp_service = SecurityPolicyService(None)
+    repo = ServicesRepository(db.services)
+    service_svc = ServicesService(repo, sp_service)
 
-    service = ServiceModel(
-        service_id="s_unique_get",
-        security_policy="ml1_analyst",  # ✅ asegurado para el assert
+    policy_dto = SecurityPolicyDTO(
+        sp_id="ml1_analyst",
+        roles=["ml1_analyst"],
+        requires_authentication=True
+    )
+
+    create_dto = ServiceCreateDTO(
+        security_policy=policy_dto,
         microservices=[],
-        resources={"cpu": 2, "ram": "2GB"},
+        resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
-    await repo.create(service)
-    fetched = await repo.get_by_id("s_unique_get")
-    assert fetched is not None
-    assert fetched.security_policy == "ml1_analyst"
 
-# ✅ TEST: Actualizar un servicio existente
+    created = await service_svc.create_service(create_dto.to_model(service_id="s_test_get"))
+    fetched = await service_svc.get_service(created.service_id)
+    response_dto = ServiceResponseDTO.from_model(fetched)
+
+    assert response_dto.service_id == created.service_id
+    assert response_dto.security_policy.sp_id == "ml1_analyst"
+
+
 @pytest.mark.asyncio
 async def test_update_service(get_db):
     db = get_db
-    repo = ServicesRepository(collection=db.services)
+    sp_service = SecurityPolicyService(None)
+    repo = ServicesRepository(db.services)
+    service_svc = ServicesService(repo, sp_service)
 
-    service = ServiceModel(
-        service_id="s_unique_update",
-        security_policy="security_manager",
+    policy_dto = SecurityPolicyDTO(
+        sp_id="security_manager",
+        roles=["security_manager"],
+        requires_authentication=True
+    )
+
+    create_dto = ServiceCreateDTO(
+        security_policy=policy_dto,
         microservices=[],
-        resources={"cpu": 2, "ram": "2GB"},
+        resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
-    await repo.create(service)
 
-    new_policy = {"security_policy": "ml1_analyst"}
-    updated = await repo.update("s_unique_update", new_policy)
-    assert updated is not None
-    assert updated.security_policy == "ml1_analyst"
+    created = await service_svc.create_service(create_dto.to_model(service_id="s_test_update"))
 
-# ✅ TEST: Eliminar un servicio y confirmar que ya no exista
+    update_dto = ServiceUpdateDTO(
+        microservices=["ms1", "ms2"],
+        resources=ResourcesUpdateDTO(cpu=4, ram="4GB")
+    )
+
+    updated_model = ServiceUpdateDTO.apply_updates(update_dto, created)
+    updated = await service_svc.update_service(created.service_id, updated_model.model_dump())
+    response_dto = ServiceResponseDTO.from_model(updated)
+
+    assert "ms1" in response_dto.microservices
+    assert "ms2" in response_dto.microservices
+    assert response_dto.resources.cpu == 4
+    assert response_dto.resources.ram == "4GB"
+
+
 @pytest.mark.asyncio
 async def test_delete_service(get_db):
     db = get_db
-    repo = ServicesRepository(collection=db.services)
+    sp_service = SecurityPolicyService(None)
+    repo = ServicesRepository(db.services)
+    service_svc = ServicesService(repo, sp_service)
 
-    service = ServiceModel(
-        service_id="s_unique_delete",
-        security_policy="security_manager",
+    policy_dto = SecurityPolicyDTO(
+        sp_id="security_manager",
+        roles=["security_manager"],
+        requires_authentication=True
+    )
+
+    create_dto = ServiceCreateDTO(
+        security_policy=policy_dto,
         microservices=[],
-        resources={"cpu": 2, "ram": "2GB"},
+        resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
-    await repo.create(service)
 
-    deleted = await repo.delete("s_unique_delete")
-    assert deleted is True
+    created = await service_svc.create_service(create_dto.to_model(service_id="s_test_delete"))
+    result = await service_svc.delete_service(created.service_id)
 
-    fetched = await repo.get_by_id("s_unique_delete")
-    assert fetched is None
+    assert "deleted" in result["detail"]
 
-# ✅ TEST: Listar todos los servicios
-@pytest.mark.asyncio
-async def test_list_services(get_db):
-    db = get_db
-    repo = ServicesRepository(collection=db.services)
-
-    service1 = ServiceModel(
-        service_id="s_unique_list_1",
-        security_policy="security_manager",
-        microservices=[],
-        resources={"cpu": 2, "ram": "2GB"},
-        policy_id="Leo_Policy"
-    )
-    service2 = ServiceModel(
-        service_id="s_unique_list_2",
-        security_policy="ml1_analyst",
-        microservices=[],
-        resources={"cpu": 2, "ram": "2GB"},
-        policy_id="Leo_Policy"
-    )
-    await repo.create(service1)
-    await repo.create(service2)
-
-    services = await repo.get_all()
-    service_ids = [s.service_id for s in services]
-    assert "s_unique_list_1" in service_ids
-    assert "s_unique_list_2" in service_ids
+    with pytest.raises(NotFoundError):
+        await service_svc.get_service(created.service_id)

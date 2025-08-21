@@ -15,6 +15,7 @@ from cryptomesh.errors import (
     FunctionNotFound,
 )
 import time as T
+from cryptomesh.dtos.function_result_dto import FunctionResultCreateDTO, FunctionResultResponseDTO, FunctionResultUpdateDTO
 
 L = get_logger(__name__)
 router = APIRouter()
@@ -26,16 +27,17 @@ def get_function_result_service() -> FunctionResultService:
 
 @router.post(
     "/function-results/",
-    response_model=FunctionResultModel,
+    response_model=FunctionResultResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
     summary="Crear un nuevo function result",
     description="Crea un nuevo registro de resultado para una función en la base de datos."
 )
-async def create_function_result(result: FunctionResultModel, svc: FunctionResultService = Depends(get_function_result_service)):
+async def create_function_result(dto:FunctionResultCreateDTO, svc: FunctionResultService = Depends(get_function_result_service)):
     t1 = T.time()
     try:
-        response = await svc.create_result(result)
+        model = dto.to_model()
+        created = await svc.create_result(model)
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=e.to_dict())
     except CryptoMeshError as e:
@@ -43,14 +45,14 @@ async def create_function_result(result: FunctionResultModel, svc: FunctionResul
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION_RESULT.CREATED",
-        "state_id": result.state_id,
+        "result_id": created.result_id,
         "time": elapsed
     })
-    return response
+    return FunctionResultResponseDTO.from_model(created)
 
 @router.get(
     "/function-results/",
-    response_model=List[FunctionResultModel],
+    response_model=List[FunctionResultResponseDTO],
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
     summary="Listar todos los function results",
@@ -68,11 +70,11 @@ async def list_function_results(svc: FunctionResultService = Depends(get_functio
         "count": len(results),
         "time": elapsed
     })
-    return results
+    return [FunctionResultResponseDTO.from_model(r) for r in results]
 
 @router.get(
     "/function-results/{result_id}",
-    response_model=FunctionResultModel,
+    response_model=FunctionResultResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
     summary="Obtener function result por ID",
@@ -102,23 +104,26 @@ async def get_function_result(result_id: str, svc: FunctionResultService = Depen
         "result_id": result_id,
         "time": elapsed
     })
-    return result
+    return FunctionResultResponseDTO.from_model(result)
 
 @router.put(
     "/function-results/{result_id}",
-    response_model=FunctionResultModel,
+    response_model=FunctionResultResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
     summary="Actualizar function result por ID",
     description="Actualiza un registro de resultado de función existente."
 )
-async def update_function_result(result_id: str, updated: FunctionResultModel, svc: FunctionResultService = Depends(get_function_result_service)):
-    update_data = updated.model_dump(by_alias=True, exclude_unset=True)
+async def update_function_result(result_id: str, dto: FunctionResultUpdateDTO, svc: FunctionResultService = Depends(get_function_result_service)):
     t1 = T.time()
     try:
-        response = await svc.update_result(result_id, update_data)
-        if not response:
+        existing = await svc.get_result(result_id)
+        if not existing:
             raise NotFoundError(result_id)
+
+        updated_model = FunctionResultUpdateDTO.apply_updates(dto, existing)
+        updated = await svc.update_result(result_id, updated_model.model_dump(by_alias=True))
+
     except NotFoundError as e:
         elapsed = round(T.time() - t1, 4)
         L.error({
@@ -135,10 +140,9 @@ async def update_function_result(result_id: str, updated: FunctionResultModel, s
     L.info({
         "event": "API.FUNCTION_RESULT.UPDATED",
         "result_id": result_id,
-        "updates": update_data,
         "time": elapsed
     })
-    return response
+    return FunctionResultResponseDTO.from_model(updated)
 
 @router.delete(
     "/function-results/{result_id}",

@@ -87,7 +87,7 @@ class RolesService:
 
     async def update_role(self, role_id: str, updates: dict) -> RoleModel:
         t1 = T.time()
-        if not await self.repository.get_by_id(role_id):
+        if not await self.repository.get_by_id(role_id, id_field="role_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "ROLE.UPDATE.NOT_FOUND",
@@ -96,7 +96,7 @@ class RolesService:
             })
             raise NotFoundError(role_id)
 
-        updated = await self.repository.update(role_id, updates)
+        updated = await self.repository.update({"role_id": role_id}, updates)
         elapsed = round(T.time() - t1, 4)
 
         if not updated:
@@ -117,7 +117,7 @@ class RolesService:
 
     async def delete_role(self, role_id: str) -> dict:
         t1 = T.time()
-        if not await self.repository.get_by_id(role_id):
+        if not await self.repository.get_by_id(role_id, id_field="role_id"):
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "ROLE.DELETE.NOT_FOUND",
@@ -126,7 +126,7 @@ class RolesService:
             })
             raise NotFoundError(role_id)
 
-        success = await self.repository.delete(role_id)
+        success = await self.repository.delete({"role_id": role_id})
         elapsed = round(T.time() - t1, 4)
 
         if not success:

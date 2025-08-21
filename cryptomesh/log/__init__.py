@@ -138,7 +138,7 @@ class Log(logging.Logger):
             if to_file:
                 # Rotating file handler
                 file_handler = TimedRotatingFileHandler(
-                    filename=output_path.unwrap_or(f"{path}/{filename.unwrap_or(name)}"),
+                    filename=output_path.unwrap_or(f"{path}/{filename.unwrap_or(name)}.log"),
                     when=when,
                     interval=interval
                 )
@@ -150,7 +150,7 @@ class Log(logging.Logger):
             if error_log:
                 # Error file handler
                 error_file_handler = logging.FileHandler(
-                    filename=error_output_path.unwrap_or(f"{path}/{filename.unwrap_or(name)}.error")
+                    filename=error_output_path.unwrap_or(f"{path}/{filename.unwrap_or(name)}.error.log"),
                 )
                 error_file_handler.setFormatter(formatter)
                 error_file_handler.setLevel(logging.ERROR)
