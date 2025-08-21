@@ -12,8 +12,8 @@ services:
     image: rabbitmq:4.0-management
     container_name: crypto-mesh-broker
     ports:
-      - "${RABBITMQ_PORT}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     restart: unless-stopped
 
   crypto-mesh-api:
@@ -24,7 +24,7 @@ services:
       - crypto-mesh-db
       - crypto-mesh-broker
     ports:
-      - "${API_PORT}:19000"
+      - "${API_PORT:-19000}:19000"
     environment:
       MONGO_DATABASE_NAME: ${MONGODB_DATABASE_NAME:-cryptomesh}
       MONGODB_URI: ${MONGODB_URI:-mongodb://crypto-mesh-db:27017/cryptomesh}
