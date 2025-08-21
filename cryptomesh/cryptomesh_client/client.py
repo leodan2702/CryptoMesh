@@ -107,48 +107,40 @@ class CryptoMeshClient:
             raise CryptoMeshError(message, code)
 
     # -------------------- Function Methods --------------------
-    async def create_function(self, function: FunctionCreateDTO) -> Result[FunctionResponseDTO, CreationError]:
-        try:
-            # Serializar DTO
-            payload = function.model_dump(by_alias=True)
-
-            #Llamada al backend
-            result = await self._post("/api/v1/functions/", payload)
-
-             # Si _post retorna un Result
-            if isinstance(result, Err):
-                return result  # Pasar el error directamente
-            response_data = result.unwrap() if isinstance(result, Ok) else result
-
-            # Crear DTO de respuesta
-            return Ok(FunctionResponseDTO(**response_data))
-
-        except Exception as e:
-            # No asumimos que function_id exista
-            func_id = getattr(function, "function_id", "<unknown>")
-            return Err(CreationError("function", func_id, e))
-
+    async def create_function(self, function: FunctionCreateDTO) -> Result[EndpointResponseDTO, Exception]:
+        payload = function.model_dump(by_alias=True)
+        data = await self._post("/api/v1/functions/", payload)
+        if data.is_ok:
+            return Ok(FunctionResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def get_function(self, function_id: str) -> FunctionResponseDTO:
         data = await self._get(f"/api/v1/functions/{function_id}/")
-        return FunctionResponseDTO(**data)
+        return FunctionResponseDTO.model_validate(data)
 
     async def list_functions(self) -> List[FunctionResponseDTO]:
         data = await self._get("/api/v1/functions/")
-        return [FunctionResponseDTO(**item) for item in data]
+        return [FunctionResponseDTO.model_validate(item) for item in data]
 
-    async def delete_function(self, function_id: str) -> bool:
-        await self._delete(f"/api/v1/functions/{function_id}/")
-        return True
+    async def update_function(self, function_id: str, function: FunctionUpdateDTO) -> FunctionResponseDTO:
+        payload = function.model_dump(by_alias=True,  exclude_none=True)
+        data = await self._put(f"/api/v1/functions/{function_id}/", payload)
+        return FunctionResponseDTO.model_validate(data)
+
+    async def delete_function(self, function_id: str) -> Result[bool, Exception]:
+        try:
+            data = await self._delete(f"/api/v1/functions/{function_id}/")
+            return Ok(True)
+        except Exception as e:
+            return Err(e)
 
     # -------------------- Service Methods --------------------
-    async def create_service(self, service: ServiceCreateDTO) -> Result[ServiceResponseDTO, CreationError]:
-        try:
-            payload = service.model_dump(by_alias=True)
-            data = await self._post("/api/v1/services/", payload)
-            return Ok(ServiceResponseDTO(**data))
-        except Exception as e:
-            return Err(CreationError("service", service.service_id, e))
+    async def create_service(self, service: ServiceCreateDTO) -> Result[ServiceResponseDTO, Exception]:
+        payload = service.model_dump(by_alias=True)
+        data = await self._post("/api/v1/services/", payload)
+        if data.is_ok:
+            return Ok(ServiceResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def get_service(self, service_id:str) -> ServiceResponseDTO:
         data = await self._get(f"/api/v1/services/{service_id}/")
@@ -158,30 +150,45 @@ class CryptoMeshClient:
         data = await self._get("/api/v1/services/")
         return [ServiceResponseDTO(**item) for item in data]
 
-    async def delete_service(self, service_id: str) -> bool:
-        await self._delete(f"/api/v1/services/{service_id}/")
-        return True
+    async def update_service(self, service_id: str, service: ServiceUpdateDTO) -> ServiceResponseDTO:
+        payload = service.model_dump(by_alias=True, exclude_none=True)
+        data = await self._put(f"/api/v1/services/{service_id}/", payload)
+        return ServiceResponseDTO.model_validate(data)
+
+    async def delete_service(self, service_id: str) -> Result[bool, Exception]:
+        try:
+            await self._delete(f"/api/v1/services/{service_id}/")
+            return Ok(True)
+        except Exception as e:
+            return Err(e)
 
     # -------------------- Microservice Methods --------------------
-    async def create_microservice(self, microservice: MicroserviceCreateDTO) -> Result[MicroserviceResponseDTO, CreationError]:
-        try:
+    async def create_microservice(self, microservice: MicroserviceCreateDTO) -> Result[MicroserviceResponseDTO, Exception]:
             payload = microservice.model_dump(by_alias=True)
             data = await self._post("/api/v1/microservices/", payload)
-            return Ok(MicroserviceResponseDTO(**data))
-        except Exception as e:
-            return Err(CreationError("microservice", microservice.microservice_id, e))
+            if data.is_ok:
+                return Ok(MicroserviceResponseDTO.model_validate(data.unwrap()))    
+            return Err(data.unwrap_err())
 
     async def get_microservice(self, microservice_id: str) -> MicroserviceResponseDTO:
         data = await self._get(f"/api/v1/microservices/{microservice_id}/")
-        return MicroserviceResponseDTO(**data)
+        return MicroserviceResponseDTO.model_validate(data)
 
     async def list_microservices(self) -> List[MicroserviceResponseDTO]:
         data = await self._get("/api/v1/microservices/")
-        return [MicroserviceResponseDTO(**item) for item in data]
+        return [MicroserviceResponseDTO.model_validate(item) for item in data]
 
-    async def delete_microservice(self, microservice_id: str) -> bool:
-        await self._delete(f"/api/v1/microservices/{microservice_id}/")
-        return True
+    async def update_microservice(self, microservice_id: str, microservice: MicroserviceUpdateDTO) -> MicroserviceResponseDTO:
+        payload = microservice.model_dump(by_alias=True, exclude_none=True)
+        data = await self._put(f"/api/v1/microservices/{microservice_id}/", payload)
+        return MicroserviceResponseDTO.model_validate(data)
+
+    async def delete_microservice(self, microservice_id: str) -> Result[bool, Exception]:
+        try:
+            await self._delete(f"/api/v1/microservices/{microservice_id}/")
+            return Ok (True)
+        except Exception as e:
+            return Err(e)
 
     # -------------------- Endpoint Methods --------------------
     async def create_endpoint(self, endpoint: EndpointCreateDTO) -> Result[EndpointResponseDTO,Exception]:
@@ -191,85 +198,165 @@ class CryptoMeshClient:
             return Ok(EndpointResponseDTO.model_validate(data.unwrap()))
         return Err(data.unwrap_err())
     
-    
-
-
     async def get_endpoint(self, endpoint_id: str) -> EndpointResponseDTO:
         data = await self._get(f"/api/v1/endpoints/{endpoint_id}/")
-        return EndpointResponseDTO(**data)
+        return EndpointResponseDTO.model_validate(data)
 
     async def list_endpoints(self) -> List[EndpointResponseDTO]:
         data = await self._get("/api/v1/endpoints/")
         return [EndpointResponseDTO.model_validate(item) for item in data]
 
-    async def delete_endpoint(self, endpoint_id: str) -> bool:
-        await self._delete(f"/api/v1/endpoints/{endpoint_id}/")
-        return True
+    async def update_endpoint(self, endpoint_id: str, endpoint: EndpointUpdateDTO) -> EndpointResponseDTO:
+        payload = endpoint.model_dump(by_alias=True, exclude_none=True)
+        data = await self._put(f"/api/v1/endpoints/{endpoint_id}/", payload)
+        return EndpointResponseDTO.model_validate(data)
+
+    async def delete_endpoint(self, endpoint_id: str) -> Result[bool, Exception]:
+        try:
+            await self._delete(f"/api/v1/endpoints/{endpoint_id}/")
+            return Ok(True)
+        except Exception as e:
+            return Err(e)
 
     # -------------------- SecurityPolicy Methods --------------------
-    async def create_security_policy(self, policy: SecurityPolicyDTO) -> Result[SecurityPolicyResponseDTO, CreationError]:
-        try:
-            payload = policy.model_dump(by_alias=True)
-            data = await self._post("/api/v1/security-policies/", payload)
-            return Ok(SecurityPolicyResponseDTO(**data))
-        except Exception as e:
-            return Err(CreationError("security_policy", policy.sp_id, e))
+    async def create_security_policy(self, policy: SecurityPolicyDTO) -> Result[SecurityPolicyResponseDTO, Exception]:
+        payload = policy.model_dump(by_alias=True)
+        data = await self._post("/api/v1/security-policies/", payload)
+        if data.is_ok:
+            return Ok(SecurityPolicyResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def get_security_policy(self, sp_id: str) -> SecurityPolicyResponseDTO:
         data = await self._get(f"/api/v1/security-policies/{sp_id}/")
-        return SecurityPolicyResponseDTO(**data)
+        return SecurityPolicyResponseDTO.model_validate(data)
 
     async def list_security_policies(self) -> List[SecurityPolicyResponseDTO]:
         data = await self._get("/api/v1/security-policies/")
-        return [SecurityPolicyResponseDTO(**item) for item in data]
+        return [SecurityPolicyResponseDTO.model_validate(item) for item in data]
 
-    async def delete_security_policy(self, sp_id: str) -> bool:
-        await self._delete(f"/api/v1/security-policies/{sp_id}/")
-        return True
+    async def update_security_policy(self, sp_id: str, policy: SecurityPolicyUpdateDTO) -> SecurityPolicyResponseDTO:
+        payload = policy.model_dump(by_alias=True, exclude_none=True)
+        data = await self._put(f"/api/v1/security-policies/{sp_id}/", payload)
+        return SecurityPolicyResponseDTO.model_validate(data)
+
+    async def delete_security_policy(self, sp_id: str) -> Result[bool, Exception]:
+        try:
+            await self._delete(f"/api/v1/security-policies/{sp_id}/")
+            return Ok(True)
+        except Exception as e:
+            return Err(e)
 
     # -------------------- Role Methods --------------------
-    async def create_role(self, role: RoleCreateDTO) -> Result[RoleResponseDTO, CreationError]:
-        try:
-            payload = role.model_dump(by_alias=True)
-            data = await self._post("/api/v1/roles/", payload)
-            return RoleResponseDTO(**data)
-        except Exception as e:
-            return Err(CreationError("role", role.role_id, e))
+    async def create_role(self, role: RoleCreateDTO) -> Result[RoleResponseDTO, Exception]:
+        payload = role.model_dump(by_alias=True)
+        data = await self._post("/api/v1/roles/", payload)
+        if data.is_ok:
+            return Ok(RoleResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
+
 
     async def get_role(self, role_id: str) -> RoleResponseDTO:
         data = await self._get(f"/api/v1/roles/{role_id}/")
-        return RoleResponseDTO(**data)
+        return RoleResponseDTO.model_validate(data)
 
     async def list_roles(self) -> List[RoleResponseDTO]:
         data = await self._get("/api/v1/roles/")
-        return [RoleResponseDTO(**item) for item in data]
+        return [RoleResponseDTO.model_validate(item) for item in data]
 
-    async def delete_role(self, role_id: str) -> bool:
-        await self._delete(f"/api/v1/roles/{role_id}/")
-        return True
+    async def update_role(self, role_id: str, role: RoleUpdateDTO) -> RoleResponseDTO:
+        payload = role.model_dump(by_alias=True, exclude_none=True)
+        data = await self._put(f"/api/v1/roles/{role_id}/", payload)
+        return RoleResponseDTO.model_validate(data)
+
+    async def delete_role(self, role_id: str) -> Result[bool, Exception]:
+        try:
+            await self._delete(f"/api/v1/roles/{role_id}/")
+            return Ok(True)
+        except Exception as e:
+            return Err(e)
 
     # -------------------- FunctionState Methods --------------------
+    async def create_function_state(self, state: FunctionStateCreateDTO) -> Result[FunctionStateResponseDTO, Exception]:
+        payload = state.model_dump(by_alias=True)
+        data = await self._post("/api/v1/function-states/", payload)
+        if data.is_ok:
+            return Ok(FunctionStateResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
+
+    async def get_function_state(self, state_id: str) -> FunctionStateResponseDTO:
+        data = await self._get(f"/api/v1/function-states/{state_id}/")
+        return FunctionStateResponseDTO.model_validate(data)
+    
     async def list_function_states(self) -> List[FunctionStateResponseDTO]:
         data = await self._get("/api/v1/function-states/")
-        return [FunctionStateResponseDTO(**item) for item in data]
+        return [FunctionStateResponseDTO.model_validate(item) for item in data]
+
+    async def update_function_state(self, state_id: str, state: FunctionStateUpdateDTO) -> FunctionStateResponseDTO:
+        payload = state.model_dump(by_alias=True, exclude_none=True)
+        data = await self._put(f"/api/v1/function-states/{state_id}/", payload)
+        return FunctionStateResponseDTO.model_validate(data)
+
+    async def delete_function_state(self, state_id: str) -> Result[bool, Exception]:
+        try:
+            await self._delete(f"/api/v1/function-states/{state_id}/")
+            return Ok(True)
+        except Exception as e:
+            return Err(e)
 
     # -------------------- FunctionResult Methods --------------------
+    async def create_function_result(self, result: FunctionResultCreateDTO) -> Result[FunctionResultResponseDTO, Exception]:
+        payload = result.model_dump(by_alias=True)
+        data = await self._post("/api/v1/function-results/", payload)
+        if data.is_ok:
+            return Ok(FunctionResultResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
+
+    async def get_function_result(self, result_id: str) -> FunctionResultResponseDTO:
+        data = await self._get(f"/api/v1/function-results/{result_id}/")
+        return FunctionResultResponseDTO.model_validate(data)
+        
     async def list_function_results(self) -> List[FunctionResultResponseDTO]:
         data = await self._get("/api/v1/function-results/")
-        return [FunctionResultResponseDTO(**item) for item in data]
+        return [FunctionResultResponseDTO.model_validate(item) for item in data]
+
+    async def update_function_result(self, result_id: str, result: FunctionResultUpdateDTO) -> FunctionResultResponseDTO:
+        payload = result.model_dump(by_alias=True, exclude_none=True)
+        data = await self._put(f"/api/v1/function-results/{result_id}/", payload)
+        return FunctionResultResponseDTO.model_validate(data)
+
+    async def delete_function_result(self, result_id: str) -> Result[bool, Exception]:
+        try:
+            await self._delete(f"/api/v1/function-results/{result_id}/")
+            return Ok(True)
+        except Exception as e:
+            return Err(e)
 
     # -------------------- EndpointState Methods --------------------
+    async def create_endpoint_state(self, state: EndpointStateCreateDTO) -> Result[EndpointStateResponseDTO, Exception]:
+        payload = state.model_dump(by_alias=True)
+        data = await self._post("/api/v1/endpoint-states/", payload)
+        if data.is_ok:
+            return Ok(EndpointStateResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
     async def list_endpoint_states(self) -> List[EndpointStateResponseDTO]:
         data = await self._get("/api/v1/endpoint-states/")
-        return [EndpointStateResponseDTO(**item) for item in data]
+        return [EndpointStateResponseDTO.model_validate(item) for item in data]
 
     async def get_endpoint_state(self, state_id: str) -> EndpointStateResponseDTO:
         data = await self._get(f"/api/v1/endpoint-states/{state_id}/")
-        return EndpointStateResponseDTO(**data)
+        return EndpointStateResponseDTO.model_validate(data)
 
-    async def delete_endpoint_state(self, state_id: str) -> bool:
-        await self._delete(f"/api/v1/endpoint-states/{state_id}/")
-        return True
+    async def update_endpoint_state(self, state_id: str, state: EndpointStateUpdateDTO) -> EndpointStateResponseDTO:
+        payload = state.model_dump(by_alias=True, exclude_none=True)
+        data = await self._put(f"/api/v1/endpoint-states/{state_id}/", payload)
+        return EndpointStateResponseDTO.model_validate(data)
+
+    async def delete_endpoint_state(self, state_id: str) -> Result[bool, Exception]:
+        try:
+            await self._delete(f"/api/v1/endpoint-states/{state_id}/")
+            return Ok(True)
+        except Exception as e:
+            return Err(e)
 
     # -------------------- Core HTTP Methods --------------------
     async def _get(self, path: str, headers: Dict[str, str] = {}) -> Any:
