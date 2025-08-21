@@ -80,6 +80,8 @@ jobs:
           poetry run coverage run -m pytest  -v -s  
         env:
           LOG_PATH: log  
+          MONGO_DATABASE_NAME: cryptomesh
+          MONGODB_URI: mongodb://localhost:27017/cryptomesh
       - name: Generate Coverage Report  
         run: |  
           poetry run coverage report -m
