@@ -73,7 +73,7 @@ async def list_functions(svc: FunctionsService = Depends(get_functions_service))
     return [FunctionResponseDTO.from_model(f) for f in functions]
 
 @router.get(
-    "/functions/{function_id}",
+    "/functions/{function_id}/",
     response_model=FunctionResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -107,7 +107,7 @@ async def get_function(function_id: str, svc: FunctionsService = Depends(get_fun
     return FunctionResponseDTO.from_model(func)
 
 @router.put(
-    "/functions/{function_id}",
+    "/functions/{function_id}/",
     response_model=FunctionResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -145,7 +145,7 @@ async def update_function(function_id: str, dto: FunctionUpdateDTO, svc: Functio
     return FunctionResponseDTO.from_model(updated)
 
 @router.delete(
-    "/functions/{function_id}",
+    "/functions/{function_id}/",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar una función por ID",
     description="Elimina una función de la base de datos según su ID."

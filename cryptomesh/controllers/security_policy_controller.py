@@ -51,7 +51,7 @@ async def create_policy(dto: SecurityPolicyDTO, svc: SecurityPolicyService = Dep
     return SecurityPolicyResponseDTO.from_model(created_policy)
 
 @router.get(
-    "/security-policies/{sp_id}",
+    "/security-policies/{sp_id}/",
     response_model=SecurityPolicyResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -107,7 +107,7 @@ async def list_policies(svc: SecurityPolicyService = Depends(get_security_policy
     return [SecurityPolicyResponseDTO.from_model(p) for p in policies]
 
 @router.put(
-    "/security-policies/{sp_id}",
+    "/security-policies/{sp_id}/",
     response_model=SecurityPolicyResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -145,7 +145,7 @@ async def update_policy(sp_id: str, dto:SecurityPolicyUpdateDTO, svc: SecurityPo
     return SecurityPolicyResponseDTO.from_model(saved_policy)
 
 @router.delete(
-    "/security-policies/{sp_id}",
+    "/security-policies/{sp_id}/",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar una política de seguridad",
     description="Elimina una política de seguridad existente."

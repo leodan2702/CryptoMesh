@@ -74,7 +74,7 @@ async def list_microservices(svc: MicroservicesService = Depends(get_microservic
     return [MicroserviceResponseDTO.from_model(ms) for ms in microservices]
 
 @router.get(
-    "/microservices/{microservice_id}",
+    "/microservices/{microservice_id}/",
     response_model=MicroserviceResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -108,7 +108,7 @@ async def get_microservice(microservice_id: str, svc: MicroservicesService = Dep
     return MicroserviceResponseDTO.from_model(ms)
 
 @router.put(
-    "/microservices/{microservice_id}",
+    "/microservices/{microservice_id}/",
     response_model=MicroserviceResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -146,7 +146,7 @@ async def update_microservice(microservice_id: str, dto: MicroserviceUpdateDTO, 
     return MicroserviceResponseDTO.from_model(updated_ms)
 
 @router.delete(
-    "/microservices/{microservice_id}",
+    "/microservices/{microservice_id}/",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar un microservicio por ID",
     description="Elimina un microservicio de la base de datos según su ID."

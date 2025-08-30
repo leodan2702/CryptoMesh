@@ -74,7 +74,7 @@ async def list_roles(svc: RolesService = Depends(get_roles_service)):
     return [RoleResponseDTO.from_model(r) for r in roles]
 
 @router.get(
-    "/roles/{role_id}",
+    "/roles/{role_id}/",
     response_model=RoleResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -102,7 +102,7 @@ async def get_role(role_id: str, svc: RolesService = Depends(get_roles_service))
     return RoleResponseDTO.from_model(role)
 
 @router.put(
-    "/roles/{role_id}",
+    "/roles/{role_id}/",
     response_model=RoleResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -133,7 +133,7 @@ async def update_role(role_id: str, dto: RoleUpdateDTO, svc: RolesService = Depe
     return RoleResponseDTO.from_model(updated)
 
 @router.delete(
-    "/roles/{role_id}",
+    "/roles/{role_id}/",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar rol por ID",
     description="Elimina un rol de la base de datos según su ID."

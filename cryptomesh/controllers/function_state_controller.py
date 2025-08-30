@@ -71,7 +71,7 @@ async def list_function_states(svc: FunctionStateService = Depends(get_function_
     return [FunctionStateResponseDTO.from_model(s) for s in states]
 
 @router.get(
-    "/function-states/{state_id}",
+    "/function-states/{state_id}/",
     response_model=FunctionStateResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -104,7 +104,7 @@ async def get_function_state(state_id: str, svc: FunctionStateService = Depends(
     return FunctionStateResponseDTO.from_model(state)
 
 @router.put(
-    "/function-states/{state_id}",
+    "/function-states/{state_id}/",
     response_model=FunctionStateResponseDTO,
     status_code=status.HTTP_200_OK,
     summary="Actualizar estado de función por ID",
@@ -140,7 +140,7 @@ async def update_function_state(state_id: str, dto: FunctionStateUpdateDTO, svc:
     return FunctionStateResponseDTO.from_model(updated)
 
 @router.delete(
-    "/function-states/{state_id}",
+    "/function-states/{state_id}/",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar estado de función por ID",
     description="Elimina un registro de estado de función de la base de datos según su ID."
