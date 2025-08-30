@@ -50,7 +50,7 @@ async def test_get_security_policy(client):
     assert create_res.status_code == 201
     policy_id = create_res.json()["sp_id"]
 
-    response = await client.get(f"/api/v1/security-policies/{policy_id}")
+    response = await client.get(f"/api/v1/security-policies/{policy_id}/")
     assert response.status_code == 200
     data = response.json()
     assert data["sp_id"] == policy_id
@@ -77,7 +77,7 @@ async def test_update_security_policy(client):
     update_data = update_dto.model_dump(exclude_unset=True)
 
     response = await client.put(
-        f"/api/v1/security-policies/{policy_id}",
+        f"/api/v1/security-policies/{policy_id}/",
         json=update_data
     )
     assert response.status_code == 200
@@ -97,10 +97,10 @@ async def test_delete_security_policy(client):
     create_res = await client.post("/api/v1/security-policies/", json=create_dto.model_dump())
     policy_id = create_res.json()["sp_id"]
 
-    delete_res = await client.delete(f"/api/v1/security-policies/{policy_id}")
+    delete_res = await client.delete(f"/api/v1/security-policies/{policy_id}/")
     assert delete_res.status_code == 204
 
-    get_res = await client.get(f"/api/v1/security-policies/{policy_id}")
+    get_res = await client.get(f"/api/v1/security-policies/{policy_id}/")
     assert get_res.status_code == 404
 
 

@@ -43,7 +43,7 @@ async def test_get_microservice(client):
     assert create_res.status_code == 201
     microservice_id = create_res.json()["microservice_id"]
 
-    get_res = await client.get(f"/api/v1/microservices/{microservice_id}")
+    get_res = await client.get(f"/api/v1/microservices/{microservice_id}/")
     assert get_res.status_code == 200
     data = get_res.json()
 
@@ -72,7 +72,7 @@ async def test_update_microservice(client):
         "policy_id": "New_Policy"
     }
 
-    update_res = await client.put(f"/api/v1/microservices/{microservice_id}", json=update_payload)
+    update_res = await client.put(f"/api/v1/microservices/{microservice_id}/", json=update_payload)
     assert update_res.status_code == 200
     updated_data = update_res.json()
 
@@ -94,9 +94,9 @@ async def test_delete_microservice(client):
     create_res = await client.post("/api/v1/microservices/", json=dto.model_dump())
     microservice_id = create_res.json()["microservice_id"]
 
-    delete_res = await client.delete(f"/api/v1/microservices/{microservice_id}")
+    delete_res = await client.delete(f"/api/v1/microservices/{microservice_id}/")
     assert delete_res.status_code == 204
 
     # Confirmamos que ya no existe
-    get_res = await client.get(f"/api/v1/microservices/{microservice_id}")
+    get_res = await client.get(f"/api/v1/microservices/{microservice_id}/")
     assert get_res.status_code == 404

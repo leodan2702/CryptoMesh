@@ -58,7 +58,7 @@ async def test_get_service(client):
     assert post_response.status_code == 201
     service_id = post_response.json()["service_id"]
 
-    response = await client.get(f"/api/v1/services/{service_id}")
+    response = await client.get(f"/api/v1/services/{service_id}/")
     assert response.status_code == 200
     data = response.json()
     assert data["service_id"] == service_id
@@ -91,7 +91,7 @@ async def test_update_service(client):
         "microservices": ["MS3"],
         "resources": {"cpu": 4, "ram": "4GB"}
     }
-    response = await client.put(f"/api/v1/services/{service_id}", json=update_payload)
+    response = await client.put(f"/api/v1/services/{service_id}/", json=update_payload)
     assert response.status_code == 200
     data = response.json()
     assert data["service_id"] == service_id
@@ -116,9 +116,9 @@ async def test_delete_service(client):
     assert post_response.status_code == 201
     service_id = post_response.json()["service_id"]
 
-    del_res = await client.delete(f"/api/v1/services/{service_id}")
+    del_res = await client.delete(f"/api/v1/services/{service_id}/")
     # DELETE devuelve 204 según tu implementación
     assert del_res.status_code == 204
 
-    get_res = await client.get(f"/api/v1/services/{service_id}")
+    get_res = await client.get(f"/api/v1/services/{service_id}/")
     assert get_res.status_code == 404
