@@ -107,7 +107,7 @@ class CryptoMeshClient:
             raise CryptoMeshError(message, code)
 
     # -------------------- Function Methods --------------------
-    async def create_function(self, function: FunctionCreateDTO) -> Result[EndpointResponseDTO, Exception]:
+    async def create_function(self, function: FunctionCreateDTO) -> Result[FunctionResponseDTO, Exception]:
         payload = function.model_dump(by_alias=True)
         data = await self._post("/api/v1/functions/", payload)
         if data.is_ok:
