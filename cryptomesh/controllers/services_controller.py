@@ -80,7 +80,7 @@ async def list_services(svc: ServicesService = Depends(get_services_service)):
     return [ServiceResponseDTO.from_model(s) for s in services] 
 
 @router.get(
-    "/services/{service_id}",
+    "/services/{service_id}/",
     response_model=ServiceResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -114,7 +114,7 @@ async def get_service(service_id: str, svc: ServicesService = Depends(get_servic
     return ServiceResponseDTO.from_model(service)
 
 @router.put(
-    "/services/{service_id}",
+    "/services/{service_id}/",
     response_model=ServiceResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -152,7 +152,7 @@ async def update_service(service_id: str, dto: ServiceUpdateDTO, svc: ServicesSe
     return ServiceResponseDTO.from_model(updated_service)
 
 @router.delete(
-    "/services/{service_id}",
+    "/services/{service_id}/",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar un service por ID",
     description="Elimina un service de la base de datos según su ID."

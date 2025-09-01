@@ -51,7 +51,7 @@ async def test_get_function_state(client):
     assert create_res.status_code == 201
     state_id = create_res.json()["state_id"]
 
-    response = await client.get(f"/api/v1/function-states/{state_id}")
+    response = await client.get(f"/api/v1/function-states/{state_id}/")
     assert response.status_code == 200
     data = response.json()
     assert data["state_id"] == state_id
@@ -77,7 +77,7 @@ async def test_update_function_state(client):
         "state": "running",
         "metadata": {"info": "in progress"}
     }
-    response = await client.put(f"/api/v1/function-states/{state_id}", json=update_payload)
+    response = await client.put(f"/api/v1/function-states/{state_id}/", json=update_payload)
     assert response.status_code == 200
     data = response.json()
     assert data["state_id"] == state_id
@@ -99,9 +99,9 @@ async def test_delete_function_state(client):
     assert create_res.status_code == 201
     state_id = create_res.json()["state_id"]
 
-    del_res = await client.delete(f"/api/v1/function-states/{state_id}")
+    del_res = await client.delete(f"/api/v1/function-states/{state_id}/")
     assert del_res.status_code == 204
 
-    get_res = await client.get(f"/api/v1/function-states/{state_id}")
+    get_res = await client.get(f"/api/v1/function-states/{state_id}/")
     assert get_res.status_code == 404
 

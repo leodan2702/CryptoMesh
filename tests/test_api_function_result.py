@@ -25,7 +25,7 @@ async def test_get_function_result(client):
     assert create_res.status_code == 201
     result_id = create_res.json()["result_id"]
 
-    response = await client.get(f"/api/v1/function-results/{result_id}")
+    response = await client.get(f"/api/v1/function-results/{result_id}/")
     assert response.status_code == 200
     data = response.json()
     assert data["result_id"] == result_id
@@ -46,7 +46,7 @@ async def test_update_function_result(client):
     update_payload = {
         "metadata": {"status": "updated", "detail": "full update"}
     }
-    response = await client.put(f"/api/v1/function-results/{result_id}", json=update_payload)
+    response = await client.put(f"/api/v1/function-results/{result_id}/", json=update_payload)
     assert response.status_code == 200
     data = response.json()
     assert data["result_id"] == result_id
@@ -64,8 +64,8 @@ async def test_delete_function_result(client):
     assert create_res.status_code == 201
     result_id = create_res.json()["result_id"]
 
-    delete_res = await client.delete(f"/api/v1/function-results/{result_id}")
+    delete_res = await client.delete(f"/api/v1/function-results/{result_id}/")
     assert delete_res.status_code == 204
 
-    get_res = await client.get(f"/api/v1/function-results/{result_id}")
+    get_res = await client.get(f"/api/v1/function-results/{result_id}/")
     assert get_res.status_code == 404

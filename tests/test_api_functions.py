@@ -54,7 +54,7 @@ async def test_get_function(client):
     function_id = create_res.json()["function_id"]
 
     # Obtenemos por ID
-    get_res = await client.get(f"/api/v1/functions/{function_id}")
+    get_res = await client.get(f"/api/v1/functions/{function_id}/")
     assert get_res.status_code == 200
     data = get_res.json()
     assert data["function_id"] == function_id
@@ -87,7 +87,7 @@ async def test_update_function(client):
     )
     update_data = update_dto.model_dump(exclude_unset=True)
 
-    update_res = await client.put(f"/api/v1/functions/{function_id}", json=update_data)
+    update_res = await client.put(f"/api/v1/functions/{function_id}/", json=update_data)
     assert update_res.status_code == 200
     data = update_res.json()
     assert data["image"] == update_dto.image
@@ -115,9 +115,9 @@ async def test_delete_function(client):
     function_id = create_res.json()["function_id"]
 
     # Eliminar
-    delete_res = await client.delete(f"/api/v1/functions/{function_id}")
+    delete_res = await client.delete(f"/api/v1/functions/{function_id}/")
     assert delete_res.status_code == 204
 
     # Verificar que ya no existe
-    get_res = await client.get(f"/api/v1/functions/{function_id}")
+    get_res = await client.get(f"/api/v1/functions/{function_id}/")
     assert get_res.status_code == 404

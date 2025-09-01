@@ -73,7 +73,7 @@ async def list_endpoint_states(svc: EndpointStateService = Depends(get_endpoint_
     return [EndpointStateResponseDTO.from_model(s) for s in states]
 
 @router.get(
-    "/endpoint-states/{state_id}",
+    "/endpoint-states/{state_id}/",
     response_model=EndpointStateResponseDTO,
     status_code=status.HTTP_200_OK,
     summary="Obtener estado de endpoint por ID",
@@ -106,7 +106,7 @@ async def get_endpoint_state(state_id: str, svc: EndpointStateService = Depends(
     return EndpointStateResponseDTO.from_model(state)
 
 @router.put(
-    "/endpoint-states/{state_id}",
+    "/endpoint-states/{state_id}/",
     response_model=EndpointStateResponseDTO,
     status_code=status.HTTP_200_OK,
     summary="Actualizar estado de endpoint por ID",
@@ -142,7 +142,7 @@ async def update_endpoint_state(state_id: str, dto: EndpointStateUpdateDTO, svc:
     return EndpointStateResponseDTO.from_model(updated)
 
 @router.delete(
-    "/endpoint-states/{state_id}",
+    "/endpoint-states/{state_id}/",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar estado de endpoint por ID",
     description="Elimina un registro de estado de endpoint de la base de datos según su ID."
