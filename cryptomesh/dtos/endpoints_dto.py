@@ -5,6 +5,7 @@ from cryptomesh.models import EndpointModel
 from cryptomesh.dtos.resources_dto import ResourcesDTO, ResourcesUpdateDTO
 from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO, SecurityPolicyResponseDTO,SecurityPolicyUpdateDTO
 import uuid
+from typing import Optional
 
 # -------------------------------
 # DTO para creación de endpoints
@@ -18,7 +19,7 @@ class EndpointCreateDTO(BaseModel):
     image: str
     resources: ResourcesDTO
     security_policy: SecurityPolicyDTO
-    policy_id: str  # referencia a la política YAML
+    policy_id: Optional[str] = None  # referencia a la política YAML
 
     def to_model(self, endpoint_id: Optional[str] = None) -> EndpointModel:
         """

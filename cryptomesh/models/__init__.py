@@ -1,6 +1,6 @@
 from datetime import datetime,timezone
 from pydantic import BaseModel, Field
-from typing import List, Dict
+from typing import List, Dict, Optional
 import uuid
 
 class ResourcesModel(BaseModel):
@@ -32,7 +32,7 @@ class EndpointModel(BaseModel):
     resources: ResourcesModel # resource_id
     security_policy: SecurityPolicyModel  # sp_id
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    policy_id: str #reference to yaml policy
+    policy_id: Optional[str] = None #reference to yaml policy
 
 class EndpointStateModel(BaseModel):
     state_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
