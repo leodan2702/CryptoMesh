@@ -9,3 +9,4 @@ logs/
 .env
 .coverage
 htmlcov/
+logs_bench/
