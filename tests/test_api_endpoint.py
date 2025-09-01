@@ -52,7 +52,7 @@ async def test_get_endpoint(client):
     endpoint_id = create_res.json()["endpoint_id"]
 
     # Obtenemos el endpoint por ID
-    get_res = await client.get(f"/api/v1/endpoints/{endpoint_id}")
+    get_res = await client.get(f"/api/v1/endpoints/{endpoint_id}/")
     assert get_res.status_code == 200
     data = get_res.json()
     assert data["endpoint_id"] == endpoint_id
@@ -83,7 +83,7 @@ async def test_update_endpoint(client):
     update_data = update_dto.model_dump(exclude_unset=True)  # ✅ dict listo para JSON
 
     # Llamada PUT a la API
-    update_res = await client.put(f"/api/v1/endpoints/{endpoint_id}", json=update_data)
+    update_res = await client.put(f"/api/v1/endpoints/{endpoint_id}/", json=update_data)
 
     # Validación
     assert update_res.status_code == 200
@@ -110,11 +110,11 @@ async def test_delete_endpoint(client):
     endpoint_id = create_res.json()["endpoint_id"]
 
     # Eliminamos
-    delete_res = await client.delete(f"/api/v1/endpoints/{endpoint_id}")
+    delete_res = await client.delete(f"/api/v1/endpoints/{endpoint_id}/")
     assert delete_res.status_code == 204
 
     # Verificamos que ya no existe
-    get_res = await client.get(f"/api/v1/endpoints/{endpoint_id}")
+    get_res = await client.get(f"/api/v1/endpoints/{endpoint_id}/")
     assert get_res.status_code == 404
 
 

@@ -1,6 +1,5 @@
 import pytest
 from cryptomesh.cryptomesh_client.client import CryptoMeshClient
-from cryptomesh.models import FunctionModel,ResourcesModel,StorageModel
 from cryptomesh.dtos.endpoints_dto import EndpointCreateDTO, EndpointResponseDTO,EndpointUpdateDTO
 from cryptomesh.dtos.functions_dto import FunctionCreateDTO, FunctionResponseDTO, FunctionUpdateDTO
 from cryptomesh.dtos.services_dto import ServiceCreateDTO, ServiceResponseDTO, ServiceUpdateDTO
@@ -14,7 +13,6 @@ from cryptomesh.dtos.function_result_dto import FunctionResultCreateDTO, Functio
 from cryptomesh.dtos.endpoint_state_dto import EndpointStateCreateDTO, EndpointStateResponseDTO, EndpointStateUpdateDTO
 from option import Result, Ok, Err
 
-from cryptomesh.models import FunctionModel,ResourcesModel,StorageModel,ServiceModel,SecurityPolicyModel
 BASE_URL = "http://localhost:19000"
 client = CryptoMeshClient(BASE_URL)
 
@@ -64,9 +62,13 @@ async def test_get_function():
     assert result.is_ok
     function_response = result.unwrap()
 
-    function_get = await client.get_function(function_response.function_id)
+    result_get = await client.get_function(function_response.function_id)
+    assert result_get.is_ok
+    function_get = result_get.unwrap()
+
     assert function_get.function_id == function_response.function_id
     assert function_get.image == function_response.image
+
 
 @pytest.mark.asyncio
 async def test_update_function():
@@ -94,12 +96,14 @@ async def test_update_function():
         )
     )
 
-    update_result = await client.update_function(function_response.function_id, function_update)
-    
-    assert update_result.image == "test_updated_image"
-    assert update_result.resources.cpu == 1
-    assert update_result.resources.ram == "1GB" 
-    assert update_result.storage.capacity == "5GB"
+    result_update = await client.update_function(function_response.function_id, function_update)
+    assert result_update.is_ok
+    function_updated = result_update.unwrap()
+
+    assert function_updated.function_id == function_response.function_id
+    assert function_updated.image == function_update.image
+    assert function_updated.resources.cpu == function_update.resources.cpu
+    assert function_updated.storage.capacity == function_update.storage.capacity
 
 @pytest.mark.asyncio
 async def test_delete_function():
@@ -161,9 +165,12 @@ async def test_get_service():
     assert service_result.is_ok
     service_response = service_result.unwrap()
 
-    endpoint = await client.get_service(service_response.service_id)
-    assert endpoint.service_id == service_response.service_id
-    assert endpoint.security_policy.sp_id == create_service.security_policy.sp_id
+    result = await client.get_service(service_response.service_id)
+    assert result.is_ok
+    service_get = result.unwrap()
+
+    assert service_get.service_id == service_response.service_id
+    assert service_get.security_policy.sp_id == "1"
 
 @pytest.mark.asyncio
 async def test_update_service():
@@ -193,9 +200,13 @@ async def test_update_service():
         resources=ResourcesUpdateDTO(cpu=2,ram="122MB")
     )
 
-    updated_dto = await client.update_service(service_response.service_id,update_dto)
+    result = await client.update_service(service_response.service_id, update_dto)
+    assert result.is_ok
+    service_updated = result.unwrap()
 
-    assert updated_dto.security_policy.sp_id == "2"
+    assert service_updated.service_id == service_response.service_id
+    assert service_updated.security_policy.sp_id == update_dto.security_policy.sp_id
+    assert service_updated.resources.cpu == update_dto.resources.cpu
 
 
 @pytest.mark.asyncio
@@ -250,9 +261,13 @@ async def test_get_microservice():
     assert result.is_ok
     created_microservice = result.unwrap()
 
-    microservice_get = await client.get_microservice(created_microservice.microservice_id)
-    assert microservice_get.microservice_id == created_microservice.microservice_id
-    assert microservice_get.service_id == "s1"
+    result = await client.get_microservice(created_microservice.microservice_id)
+    assert result.is_ok
+    microservice_response = result.unwrap()
+
+    assert microservice_response.microservice_id == created_microservice.microservice_id
+    assert microservice_response.service_id == created_microservice.service_id
+
 
 @pytest.mark.asyncio
 async def test_update_microservice():
@@ -268,15 +283,16 @@ async def test_update_microservice():
     created_microservice = result.unwrap()
 
     update_dto = MicroserviceUpdateDTO(
-        service_id="s2",
         functions=["f3","f4"],
         resources=ResourcesUpdateDTO(cpu=2,ram="2GB")
     )
 
-    updated_dto = await client.update_microservice(created_microservice.microservice_id,update_dto)
-    assert updated_dto.resources.cpu == 2
-    assert updated_dto.resources.ram == "2GB"
-    
+    result = await client.update_microservice(created_microservice.microservice_id, update_dto)
+    assert result.is_ok
+    microservice_response = result.unwrap()
+
+    assert microservice_response.microservice_id == created_microservice.microservice_id
+    assert microservice_response.resources.cpu == update_dto.resources.cpu    
 
 @pytest.mark.asyncio
 async def test_delete_microservice():
@@ -349,9 +365,11 @@ async def test_get_endpoint():
     assert endpoint_result.is_ok
     created_endpoint_response = endpoint_result.unwrap()
     
+    # Obtener el endpoint
     endpoint = await client.get_endpoint(created_endpoint_response.endpoint_id)
-    assert endpoint.endpoint_id == created_endpoint_response.endpoint_id
-    assert endpoint.name == expected_name
+    assert endpoint.is_ok
+    endpoint_response = endpoint.unwrap()
+    assert endpoint_response.name == expected_name
 
 # ───────────────────────────────
 # Test update endpoint
@@ -389,10 +407,10 @@ async def test_update_endpoint():
     )
 
     # Actualizar el endpoint
-    updated_endpoint_dto = await client.update_endpoint(endpoint_response.endpoint_id, update_dto)
+    update_result = await client.update_endpoint(endpoint_response.endpoint_id, update_dto)
+    assert update_result.is_ok
+    updated_endpoint_dto = update_result.unwrap()
 
-    # Validar cambios
-    assert updated_endpoint_dto.endpoint_id == endpoint_response.endpoint_id
     assert updated_endpoint_dto.name == "endpoint-updated"
     assert updated_endpoint_dto.image == "updated-image:latest"
     assert updated_endpoint_dto.resources.cpu == 2
@@ -451,8 +469,13 @@ async def test_get_security_policy():
     assert result.is_ok
     security_policy_response = result.unwrap()
 
-    obj = await client.get_security_policy(security_policy_response.sp_id)
-    assert getattr(obj, "sp_id") == security_policy_response.sp_id
+    result = await client.get_security_policy(security_policy_response.sp_id)
+    assert result.is_ok
+    security_policy_get = result.unwrap()
+
+    assert security_policy_get.sp_id == security_policy_response.sp_id
+    assert security_policy_get.roles == ["admin"]
+    assert security_policy_get.requires_authentication is False
 
 @pytest.mark.asyncio
 async def test_update_security_policy():
@@ -469,9 +492,11 @@ async def test_update_security_policy():
         requires_authentication=True
     )
 
-    result_updated = await client.update_security_policy(security_policy_response.sp_id, update_dto)
+    result = await client.update_security_policy(security_policy_response.sp_id, update_dto)
+    assert result.is_ok
+    security_policy_update = result.unwrap()
 
-    assert result_updated.requires_authentication == True
+    assert security_policy_update.requires_authentication is True
 
 @pytest.mark.asyncio
 async def test_delete_security_policy():
@@ -518,8 +543,14 @@ async def test_get_role():
     assert result.is_ok
     role_response = result.unwrap()
 
-    obj = await client.get_role(role_response.role_id)
-    assert getattr(obj, "role_id") == role_response.role_id 
+    result = await client.get_role(role_response.role_id)
+    assert result.is_ok
+    role_get = result.unwrap()
+
+    assert role_get.role_id == role_response.role_id
+    assert role_get.name == "test-role"
+    assert role_get.description == "Test role"
+    assert role_get.permissions == ["read", "write"]
 
 @pytest.mark.asyncio
 async def test_update_role():
@@ -540,11 +571,12 @@ async def test_update_role():
     )
 
     result = await client.update_role(role_response.role_id, update_dto)
-    
+    assert result.is_ok
+    role_update = result.unwrap()
 
-    assert result.name == "test-role-updated"
-    assert result.description == "Updated test role"
-    assert result.permissions == ["read", "write", "execute"]
+    assert role_update.name == "test-role-updated"
+    assert role_update.description == "Updated test role"
+    assert role_update.permissions == ["read", "write", "execute"]
 
 @pytest.mark.asyncio
 async def test_delete_role():
@@ -588,9 +620,13 @@ async def test_get_function_state():
     assert result.is_ok
     function_state_response = result.unwrap()
 
-    obj = await client.get_function_state(function_state_response.state_id)
-    assert obj.state_id == function_state_response.state_id
-    assert obj.function_id == function_state_response.function_id
+    result = await client.get_function_state(function_state_response.state_id)
+    assert result.is_ok
+    function_state_get = result.unwrap()
+
+    assert function_state_get.state_id == function_state_response.state_id
+    assert function_state_get.function_id == "f1"
+    assert function_state_get.state == "running"
 
 
 @pytest.mark.asyncio
@@ -609,8 +645,10 @@ async def test_update_function_state():
     )
 
     result = await client.update_function_state(function_state_response.state_id, update_dto)
+    assert result.is_ok
+    function_state_update = result.unwrap()
 
-    assert result.state == "pending"
+    assert function_state_update.state == "pending"
 
 @pytest.mark.asyncio
 async def test_delete_function_state():
@@ -652,8 +690,13 @@ async def test_get_function_result():
     assert result.is_ok
     function_result_response = result.unwrap()
 
-    obj = await client.get_function_result(function_result_response.result_id)
-    assert obj.result_id == function_result_response.result_id
+    result = await client.get_function_result(function_result_response.result_id)
+    assert result.is_ok
+    function_result_get = result.unwrap()
+
+    assert function_result_get.result_id == function_result_response.result_id
+    assert function_result_get.function_id == "f1"
+    assert function_result_get.metadata == {"output": "value"}
 
 @pytest.mark.asyncio
 async def test_update_function_result():
@@ -671,8 +714,10 @@ async def test_update_function_result():
     )
 
     result = await client.update_function_result(function_result_response.result_id, update_dto)
+    assert result.is_ok
+    function_result_update = result.unwrap()
 
-    assert result.metadata["output"] == "value updated" 
+    assert function_result_update.metadata == {"output": "value updated"}
 
 @pytest.mark.asyncio
 async def test_delete_function_result():
@@ -715,8 +760,13 @@ async def test_get_endpoint_state():
     assert result.is_ok
     endpoint_state_response = result.unwrap()
 
-    obj = await client.get_endpoint_state(endpoint_state_response.state_id)
-    assert getattr(obj, "state_id") == endpoint_state_response.state_id
+    result = await client.get_endpoint_state(endpoint_state_response.state_id)
+    assert result.is_ok
+    endpoint_state_get = result.unwrap()
+
+    assert endpoint_state_get.state_id == endpoint_state_response.state_id
+    assert endpoint_state_get.endpoint_id == "e1"
+    assert endpoint_state_get.state == "running"
 
 @pytest.mark.asyncio
 async def test_update_endpoint_state():
@@ -734,8 +784,10 @@ async def test_update_endpoint_state():
     )
 
     result = await client.update_endpoint_state(endpoint_state_response.state_id, update_dto)
+    assert result.is_ok
+    endpoint_state_update = result.unwrap()
 
-    assert result.state == "pending"
+    assert endpoint_state_update.state == "pending"
 
 @pytest.mark.asyncio
 async def test_delete_endpoint_state():

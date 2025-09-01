@@ -9,3 +9,5 @@ logs/
 .env
 .coverage
 htmlcov/
+#Ignorar logs de bench
+benchmark/logs_bench

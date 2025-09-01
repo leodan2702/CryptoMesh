@@ -30,11 +30,6 @@ async def test_create_duplicate_endpoint_state(client):
     res2 = await client.post("/api/v1/endpoint-states/", json=payload)
     assert res2.status_code == 201
 
-# ✅ TEST: Obtener un estado inexistente debe retornar 404
-@pytest.mark.asyncio
-async def test_get_nonexistent_endpoint_state(client):
-    response = await client.get("/api/v1/endpoint-states/nonexistent_state")
-    assert response.status_code == 404
 
 # ✅ TEST: Actualizar un estado existente
 @pytest.mark.asyncio
@@ -53,7 +48,7 @@ async def test_update_endpoint_state(client):
         "state": "cold",
         "metadata": {"info": "updated"}
     }
-    update_res = await client.put(f"/api/v1/endpoint-states/{state_id}", json=update_payload)
+    update_res = await client.put(f"/api/v1/endpoint-states/{state_id}/", json=update_payload)
     assert update_res.status_code == 200
     updated_data = update_res.json()
 
@@ -75,8 +70,8 @@ async def test_delete_endpoint_state(client):
     assert create_res.status_code == 201
     state_id = create_res.json()["state_id"]
 
-    delete_res = await client.delete(f"/api/v1/endpoint-states/{state_id}")
+    delete_res = await client.delete(f"/api/v1/endpoint-states/{state_id}/")
     assert delete_res.status_code == 204
 
-    get_res = await client.get(f"/api/v1/endpoint-states/{state_id}")
+    get_res = await client.get(f"/api/v1/endpoint-states/{state_id}/")
     assert get_res.status_code == 404

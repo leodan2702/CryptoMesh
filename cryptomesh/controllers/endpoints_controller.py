@@ -78,7 +78,7 @@ async def list_endpoints(svc: EndpointsService = Depends(get_endpoints_service))
     return [EndpointResponseDTO.from_model(ep) for ep in endpoints]
 
 @router.get(
-    "/endpoints/{endpoint_id}",
+    "/endpoints/{endpoint_id}/",
     response_model=EndpointResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -112,7 +112,7 @@ async def get_endpoint(endpoint_id: str, svc: EndpointsService = Depends(get_end
     return EndpointResponseDTO.from_model(endpoint)
 
 @router.put(
-    "/endpoints/{endpoint_id}",
+    "/endpoints/{endpoint_id}/",
     response_model=EndpointResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -150,7 +150,7 @@ async def update_endpoint(endpoint_id: str, dto: EndpointUpdateDTO, svc: Endpoin
     return EndpointResponseDTO.from_model(updated)
 
 @router.delete(
-    "/endpoints/{endpoint_id}",
+    "/endpoints/{endpoint_id}/",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar un endpoint por ID",
     description="Elimina un endpoint de la base de datos según su ID."

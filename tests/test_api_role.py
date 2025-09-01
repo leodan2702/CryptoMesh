@@ -41,7 +41,7 @@ async def test_get_role(client):
     create_res = await client.post("/api/v1/roles/", json=payload)
     role_id = create_res.json()["role_id"]
 
-    response = await client.get(f"/api/v1/roles/{role_id}")
+    response = await client.get(f"/api/v1/roles/{role_id}/")
     assert response.status_code == 200
     data = response.json()
     assert data["role_id"] == role_id
@@ -63,7 +63,7 @@ async def test_update_role(client):
         "permissions": ["read", "write"]
     }
 
-    response = await client.put(f"/api/v1/roles/{role_id}", json=update_payload)
+    response = await client.put(f"/api/v1/roles/{role_id}/", json=update_payload)
     assert response.status_code == 200
 
     updated_data = response.json()
@@ -81,11 +81,11 @@ async def test_delete_role(client):
     create_res = await client.post("/api/v1/roles/", json=payload)
     role_id = create_res.json()["role_id"]
 
-    delete_res = await client.delete(f"/api/v1/roles/{role_id}")
+    delete_res = await client.delete(f"/api/v1/roles/{role_id}/")
     # FastAPI típicamente devuelve 204 No Content en DELETE
     assert delete_res.status_code == 204
 
     # Verificamos que ya no exista
-    get_res = await client.get(f"/api/v1/roles/{role_id}")
+    get_res = await client.get(f"/api/v1/roles/{role_id}/")
     assert get_res.status_code == 404
 

@@ -107,26 +107,30 @@ class CryptoMeshClient:
             raise CryptoMeshError(message, code)
 
     # -------------------- Function Methods --------------------
-    async def create_function(self, function: FunctionCreateDTO) -> Result[EndpointResponseDTO, Exception]:
+    async def create_function(self, function: FunctionCreateDTO) -> Result[FunctionResponseDTO, Exception]:
         payload = function.model_dump(by_alias=True)
         data = await self._post("/api/v1/functions/", payload)
         if data.is_ok:
             return Ok(FunctionResponseDTO.model_validate(data.unwrap()))
         return Err(data.unwrap_err())
 
-    async def get_function(self, function_id: str) -> FunctionResponseDTO:
+    async def get_function(self, function_id: str) -> Result[FunctionResponseDTO, Exception]:
         data = await self._get(f"/api/v1/functions/{function_id}/")
-        return FunctionResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(FunctionResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def list_functions(self) -> List[FunctionResponseDTO]:
         data = await self._get("/api/v1/functions/")
         return [FunctionResponseDTO.model_validate(item) for item in data]
 
-    async def update_function(self, function_id: str, function: FunctionUpdateDTO) -> FunctionResponseDTO:
-        payload = function.model_dump(by_alias=True,  exclude_none=True)
+    async def update_function(self, function_id: str, function: FunctionUpdateDTO) -> Result[FunctionResponseDTO, Exception]:
+        payload = function.model_dump(by_alias=True, exclude_none=True)
         data = await self._put(f"/api/v1/functions/{function_id}/", payload)
-        return FunctionResponseDTO.model_validate(data)
-
+        if data.is_ok:
+            return Ok(FunctionResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
+    
     async def delete_function(self, function_id: str) -> Result[bool, Exception]:
         try:
             data = await self._delete(f"/api/v1/functions/{function_id}/")
@@ -142,19 +146,23 @@ class CryptoMeshClient:
             return Ok(ServiceResponseDTO.model_validate(data.unwrap()))
         return Err(data.unwrap_err())
 
-    async def get_service(self, service_id:str) -> ServiceResponseDTO:
+    async def get_service(self, service_id:str) -> Result[ServiceResponseDTO, Exception]:
         data = await self._get(f"/api/v1/services/{service_id}/")
-        return ServiceResponseDTO(**data)
+        if data.is_ok:
+            return Ok(ServiceResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def list_services(self) -> List[ServiceResponseDTO]:
         data = await self._get("/api/v1/services/")
         return [ServiceResponseDTO(**item) for item in data]
 
-    async def update_service(self, service_id: str, service: ServiceUpdateDTO) -> ServiceResponseDTO:
+    async def update_service(self, service_id: str, service: ServiceUpdateDTO) -> Result[ServiceResponseDTO, Exception]:
         payload = service.model_dump(by_alias=True, exclude_none=True)
         data = await self._put(f"/api/v1/services/{service_id}/", payload)
-        return ServiceResponseDTO.model_validate(data)
-
+        if data.is_ok:
+            return Ok(ServiceResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
+    
     async def delete_service(self, service_id: str) -> Result[bool, Exception]:
         try:
             await self._delete(f"/api/v1/services/{service_id}/")
@@ -164,24 +172,28 @@ class CryptoMeshClient:
 
     # -------------------- Microservice Methods --------------------
     async def create_microservice(self, microservice: MicroserviceCreateDTO) -> Result[MicroserviceResponseDTO, Exception]:
-            payload = microservice.model_dump(by_alias=True)
-            data = await self._post("/api/v1/microservices/", payload)
-            if data.is_ok:
-                return Ok(MicroserviceResponseDTO.model_validate(data.unwrap()))    
-            return Err(data.unwrap_err())
+        payload = microservice.model_dump(by_alias=True)
+        data = await self._post("/api/v1/microservices/", payload)
+        if data.is_ok:
+            return Ok(MicroserviceResponseDTO.model_validate(data.unwrap()))    
+        return Err(data.unwrap_err())
 
-    async def get_microservice(self, microservice_id: str) -> MicroserviceResponseDTO:
+    async def get_microservice(self, microservice_id: str) -> Result[MicroserviceResponseDTO, Exception]:
         data = await self._get(f"/api/v1/microservices/{microservice_id}/")
-        return MicroserviceResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(MicroserviceResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def list_microservices(self) -> List[MicroserviceResponseDTO]:
         data = await self._get("/api/v1/microservices/")
         return [MicroserviceResponseDTO.model_validate(item) for item in data]
 
-    async def update_microservice(self, microservice_id: str, microservice: MicroserviceUpdateDTO) -> MicroserviceResponseDTO:
+    async def update_microservice(self, microservice_id: str, microservice: MicroserviceUpdateDTO) -> Result[MicroserviceResponseDTO, Exception]:
         payload = microservice.model_dump(by_alias=True, exclude_none=True)
         data = await self._put(f"/api/v1/microservices/{microservice_id}/", payload)
-        return MicroserviceResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(MicroserviceResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def delete_microservice(self, microservice_id: str) -> Result[bool, Exception]:
         try:
@@ -198,18 +210,23 @@ class CryptoMeshClient:
             return Ok(EndpointResponseDTO.model_validate(data.unwrap()))
         return Err(data.unwrap_err())
     
-    async def get_endpoint(self, endpoint_id: str) -> EndpointResponseDTO:
+    async def get_endpoint(self, endpoint_id: str) -> Result[EndpointResponseDTO, Exception]:
         data = await self._get(f"/api/v1/endpoints/{endpoint_id}/")
-        return EndpointResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(EndpointResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
+    
 
     async def list_endpoints(self) -> List[EndpointResponseDTO]:
         data = await self._get("/api/v1/endpoints/")
         return [EndpointResponseDTO.model_validate(item) for item in data]
 
-    async def update_endpoint(self, endpoint_id: str, endpoint: EndpointUpdateDTO) -> EndpointResponseDTO:
+    async def update_endpoint(self, endpoint_id: str, endpoint: EndpointUpdateDTO) -> Result[EndpointResponseDTO, Exception]:
         payload = endpoint.model_dump(by_alias=True, exclude_none=True)
         data = await self._put(f"/api/v1/endpoints/{endpoint_id}/", payload)
-        return EndpointResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(EndpointResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def delete_endpoint(self, endpoint_id: str) -> Result[bool, Exception]:
         try:
@@ -226,18 +243,22 @@ class CryptoMeshClient:
             return Ok(SecurityPolicyResponseDTO.model_validate(data.unwrap()))
         return Err(data.unwrap_err())
 
-    async def get_security_policy(self, sp_id: str) -> SecurityPolicyResponseDTO:
+    async def get_security_policy(self, sp_id: str) -> Result[SecurityPolicyResponseDTO, Exception]:
         data = await self._get(f"/api/v1/security-policies/{sp_id}/")
-        return SecurityPolicyResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(SecurityPolicyResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def list_security_policies(self) -> List[SecurityPolicyResponseDTO]:
         data = await self._get("/api/v1/security-policies/")
         return [SecurityPolicyResponseDTO.model_validate(item) for item in data]
 
-    async def update_security_policy(self, sp_id: str, policy: SecurityPolicyUpdateDTO) -> SecurityPolicyResponseDTO:
+    async def update_security_policy(self, sp_id: str, policy: SecurityPolicyUpdateDTO) -> Result[SecurityPolicyResponseDTO, Exception]:
         payload = policy.model_dump(by_alias=True, exclude_none=True)
         data = await self._put(f"/api/v1/security-policies/{sp_id}/", payload)
-        return SecurityPolicyResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(SecurityPolicyResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def delete_security_policy(self, sp_id: str) -> Result[bool, Exception]:
         try:
@@ -255,18 +276,22 @@ class CryptoMeshClient:
         return Err(data.unwrap_err())
 
 
-    async def get_role(self, role_id: str) -> RoleResponseDTO:
+    async def get_role(self, role_id: str) -> Result[RoleResponseDTO, Exception]:
         data = await self._get(f"/api/v1/roles/{role_id}/")
-        return RoleResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(RoleResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def list_roles(self) -> List[RoleResponseDTO]:
         data = await self._get("/api/v1/roles/")
         return [RoleResponseDTO.model_validate(item) for item in data]
 
-    async def update_role(self, role_id: str, role: RoleUpdateDTO) -> RoleResponseDTO:
+    async def update_role(self, role_id: str, role: RoleUpdateDTO) -> Result[RoleResponseDTO, Exception]:
         payload = role.model_dump(by_alias=True, exclude_none=True)
         data = await self._put(f"/api/v1/roles/{role_id}/", payload)
-        return RoleResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(RoleResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def delete_role(self, role_id: str) -> Result[bool, Exception]:
         try:
@@ -283,18 +308,22 @@ class CryptoMeshClient:
             return Ok(FunctionStateResponseDTO.model_validate(data.unwrap()))
         return Err(data.unwrap_err())
 
-    async def get_function_state(self, state_id: str) -> FunctionStateResponseDTO:
+    async def get_function_state(self, state_id: str) -> Result[FunctionStateResponseDTO, Exception]:
         data = await self._get(f"/api/v1/function-states/{state_id}/")
-        return FunctionStateResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(FunctionStateResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
     
     async def list_function_states(self) -> List[FunctionStateResponseDTO]:
         data = await self._get("/api/v1/function-states/")
         return [FunctionStateResponseDTO.model_validate(item) for item in data]
 
-    async def update_function_state(self, state_id: str, state: FunctionStateUpdateDTO) -> FunctionStateResponseDTO:
+    async def update_function_state(self, state_id: str, state: FunctionStateUpdateDTO) -> Result[FunctionStateResponseDTO, Exception]:
         payload = state.model_dump(by_alias=True, exclude_none=True)
         data = await self._put(f"/api/v1/function-states/{state_id}/", payload)
-        return FunctionStateResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(FunctionStateResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def delete_function_state(self, state_id: str) -> Result[bool, Exception]:
         try:
@@ -311,18 +340,22 @@ class CryptoMeshClient:
             return Ok(FunctionResultResponseDTO.model_validate(data.unwrap()))
         return Err(data.unwrap_err())
 
-    async def get_function_result(self, result_id: str) -> FunctionResultResponseDTO:
+    async def get_function_result(self, result_id: str) -> Result[FunctionResultResponseDTO, Exception]:
         data = await self._get(f"/api/v1/function-results/{result_id}/")
-        return FunctionResultResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(FunctionResultResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
         
     async def list_function_results(self) -> List[FunctionResultResponseDTO]:
         data = await self._get("/api/v1/function-results/")
         return [FunctionResultResponseDTO.model_validate(item) for item in data]
 
-    async def update_function_result(self, result_id: str, result: FunctionResultUpdateDTO) -> FunctionResultResponseDTO:
+    async def update_function_result(self, result_id: str, result: FunctionResultUpdateDTO) -> Result[FunctionResultResponseDTO, Exception]:
         payload = result.model_dump(by_alias=True, exclude_none=True)
         data = await self._put(f"/api/v1/function-results/{result_id}/", payload)
-        return FunctionResultResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(FunctionResultResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def delete_function_result(self, result_id: str) -> Result[bool, Exception]:
         try:
@@ -338,18 +371,23 @@ class CryptoMeshClient:
         if data.is_ok:
             return Ok(EndpointStateResponseDTO.model_validate(data.unwrap()))
         return Err(data.unwrap_err())
+    
     async def list_endpoint_states(self) -> List[EndpointStateResponseDTO]:
         data = await self._get("/api/v1/endpoint-states/")
         return [EndpointStateResponseDTO.model_validate(item) for item in data]
 
-    async def get_endpoint_state(self, state_id: str) -> EndpointStateResponseDTO:
+    async def get_endpoint_state(self, state_id: str) -> Result[EndpointStateResponseDTO, Exception]:
         data = await self._get(f"/api/v1/endpoint-states/{state_id}/")
-        return EndpointStateResponseDTO.model_validate(data)
-
-    async def update_endpoint_state(self, state_id: str, state: EndpointStateUpdateDTO) -> EndpointStateResponseDTO:
+        if data.is_ok:
+            return Ok(EndpointStateResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
+    
+    async def update_endpoint_state(self, state_id: str, state: EndpointStateUpdateDTO) -> Result[EndpointStateResponseDTO, Exception]:
         payload = state.model_dump(by_alias=True, exclude_none=True)
         data = await self._put(f"/api/v1/endpoint-states/{state_id}/", payload)
-        return EndpointStateResponseDTO.model_validate(data)
+        if data.is_ok:
+            return Ok(EndpointStateResponseDTO.model_validate(data.unwrap()))
+        return Err(data.unwrap_err())
 
     async def delete_endpoint_state(self, state_id: str) -> Result[bool, Exception]:
         try:
@@ -359,19 +397,27 @@ class CryptoMeshClient:
             return Err(e)
 
     # -------------------- Core HTTP Methods --------------------
-    async def _get(self, path: str, headers: Dict[str, str] = {}) -> Any:
-        url = f"{self.base_url}{path}"
-        full_headers = {**self.headers, **headers}
-        t1 = time.time()
-        async with httpx.AsyncClient(headers=full_headers, follow_redirects=True) as client:
-            response = await client.get(url)
-        L.info({
-            "event": "GET", 
-            "path": path, 
-            "status": response.status_code, 
-            "elapsed": round(time.time() - t1, 3)
-        })
-        return await self._handle_response(response)
+    async def _get(self, path: str, headers: Dict[str, str] = {}) -> Result[Any, Exception]:
+        try:
+            url = f"{self.base_url}{path}"
+            full_headers = {**self.headers, **headers}
+            t1 = time.time()
+            async with httpx.AsyncClient(headers=full_headers, follow_redirects=True) as client:
+                response = await client.get(url)
+
+            L.info({
+                "event": "GET",
+                "path": path,
+                "status": response.status_code,
+                "elapsed": round(time.time() - t1, 3)
+            })
+
+            data = await self._handle_response(response)
+            return Ok(data)
+
+        except Exception as e:
+            return Err(e)
+
 
     async def _post(self, path: str, payload: Dict[str, Any], headers: Dict[str, str] = {}) -> Result[Any, Exception]:
         try:
@@ -386,30 +432,46 @@ class CryptoMeshClient:
         except Exception as e:
             return Err(e)
 
-    async def _put(self, path: str, payload: Any, headers: Dict[str, str] = {}) -> Any:
-        url = f"{self.base_url}{path}"
-        full_headers = {**self.headers, **headers}
-        t1 = time.time()
-        async with httpx.AsyncClient(headers=full_headers, follow_redirects=True) as client:
-            response = await client.put(url, json=payload)
-        L.info({
-            "event": "PUT",
-            "path": path,
-            "status": response.status_code,
-            "elapsed": round(time.time() - t1, 3)
-        })
-        return await self._handle_response(response)
 
-    async def _delete(self, path: str, headers: Dict[str, str] = {}) -> Any:
-        url = f"{self.base_url}{path}"
-        full_headers = {**self.headers, **headers}
-        t1 = time.time()
-        async with httpx.AsyncClient(headers=full_headers, follow_redirects=True) as client:
-            response = await client.delete(url)
-        L.info({
-            "event": "DELETE",
-            "path": path,
-            "status": response.status_code,
-            "elapsed": round(time.time() - t1, 3)
-        })
-        return await self._handle_response(response)
+    async def _put(self, path: str, payload: Any, headers: Dict[str, str] = {}) -> Result[Any, Exception]:
+        try:
+            url = f"{self.base_url}{path}"
+            full_headers = {**self.headers, **headers}
+            t1 = time.time()
+            async with httpx.AsyncClient(headers=full_headers, follow_redirects=True) as client:
+                response = await client.put(url, json=payload)
+
+            L.info({
+                "event": "PUT",
+                "path": path,
+                "status": response.status_code,
+                "elapsed": round(time.time() - t1, 3)
+            })
+
+            data = await self._handle_response(response)
+            return Ok(data)
+
+        except Exception as e:
+            return Err(e)
+
+
+    async def _delete(self, path: str, headers: Dict[str, str] = {}) -> Result[Any, Exception]:
+        try:
+            url = f"{self.base_url}{path}"
+            full_headers = {**self.headers, **headers}
+            t1 = time.time()
+            async with httpx.AsyncClient(headers=full_headers, follow_redirects=True) as client:
+                response = await client.delete(url)
+
+            L.info({
+                "event": "DELETE",
+                "path": path,
+                "status": response.status_code,
+                "elapsed": round(time.time() - t1, 3)
+            })
+
+            data = await self._handle_response(response)
+            return Ok(data)
+
+        except Exception as e:
+            return Err(e)
