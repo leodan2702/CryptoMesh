@@ -20,6 +20,7 @@ async def test_create_function(get_db):
     )
 
     create_dto = FunctionCreateDTO(
+        name="Test Function",
         microservice_id="ms-1",
         image="test_function_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
@@ -31,6 +32,7 @@ async def test_create_function(get_db):
     response_dto = FunctionResponseDTO.from_model(created)
 
     assert response_dto.function_id == created.function_id
+    assert response_dto.name == "Test Function"
     assert response_dto.image == "test_function_image"
     assert response_dto.resources.cpu == 2
     assert response_dto.storage.capacity == "10GB"
@@ -51,6 +53,7 @@ async def test_get_function(get_db):
     )
 
     create_dto = FunctionCreateDTO(
+        name="Get Function",
         microservice_id="ms-2",
         image="get_function_image",
         resources=ResourcesDTO(cpu=1, ram="1GB"),
@@ -63,6 +66,7 @@ async def test_get_function(get_db):
     response_dto = FunctionResponseDTO.from_model(fetched)
 
     assert response_dto.function_id == created.function_id
+    assert response_dto.name == "Get Function"
     assert response_dto.image == "get_function_image"
 
 
@@ -79,6 +83,7 @@ async def test_update_function(get_db):
     )
 
     create_dto = FunctionCreateDTO(
+        name="Old Function",
         microservice_id="ms-3",
         image="old_function_image",
         resources=ResourcesDTO(cpu=1, ram="1GB"),
@@ -89,6 +94,7 @@ async def test_update_function(get_db):
     created = await service.create_function(create_dto.to_model())
 
     update_dto = FunctionUpdateDTO(
+        name="Updated Function",
         image="updated_function_image",
         deployment_status="deployed"
     )
@@ -99,6 +105,7 @@ async def test_update_function(get_db):
     )
     response_dto = FunctionResponseDTO.from_model(updated_model)
 
+    assert response_dto.name == "Updated Function"
     assert response_dto.image == "updated_function_image"
     assert response_dto.deployment_status == "deployed"
 
@@ -116,6 +123,7 @@ async def test_delete_function(get_db):
     )
 
     create_dto = FunctionCreateDTO(
+        name="Delete Function",
         microservice_id="ms-4",
         image="delete_function_image",
         resources=ResourcesDTO(cpu=2, ram="4GB"),
@@ -144,6 +152,7 @@ async def test_list_functions(get_db):
             sink_path=f"/dst{i}"
         )
         create_dto = FunctionCreateDTO(
+            name=f"Function {i}",
             microservice_id=f"ms-{i}",
             image=f"function_image_{i}",
             resources=ResourcesDTO(cpu=1, ram="1GB"),

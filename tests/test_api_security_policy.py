@@ -1,5 +1,5 @@
 import pytest
-from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO, SecurityPolicyUpdateDTO, SecurityPolicyResponseDTO
+from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO, SecurityPolicyUpdateDTO
 
 # -------------------------------
 # TEST: Crear política de seguridad
@@ -7,12 +7,14 @@ from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO, SecurityPolic
 @pytest.mark.asyncio
 async def test_create_security_policy(client):
     dto = SecurityPolicyDTO(
+        name="Test Policy",
         roles=["security_manager"],
         requires_authentication=True
     )
     response = await client.post("/api/v1/security-policies/", json=dto.model_dump())
     assert response.status_code == 201, f"Error: {response.json()}"
     data = response.json()
+    assert data["name"] == dto.name
     assert data["roles"] == dto.roles
     assert data["requires_authentication"] == dto.requires_authentication
     assert "sp_id" in data
@@ -23,6 +25,7 @@ async def test_create_security_policy(client):
 @pytest.mark.asyncio
 async def test_create_duplicate_security_policy(client):
     dto = SecurityPolicyDTO(
+        name="Duplicate Policy",
         roles=["duplicate_role"],
         requires_authentication=True
     )
@@ -43,6 +46,7 @@ async def test_create_duplicate_security_policy(client):
 @pytest.mark.asyncio
 async def test_get_security_policy(client):
     create_dto = SecurityPolicyDTO(
+        name="Get Policy",
         roles=["ml1_analyst"],
         requires_authentication=True
     )
@@ -54,6 +58,7 @@ async def test_get_security_policy(client):
     assert response.status_code == 200
     data = response.json()
     assert data["sp_id"] == policy_id
+    assert data["name"] == create_dto.name
     assert data["roles"] == create_dto.roles
     assert data["requires_authentication"] == create_dto.requires_authentication
 
@@ -63,6 +68,7 @@ async def test_get_security_policy(client):
 @pytest.mark.asyncio
 async def test_update_security_policy(client):
     create_dto = SecurityPolicyDTO(
+        name="Update Policy",
         roles=["security_manager"],
         requires_authentication=True
     )
@@ -70,6 +76,7 @@ async def test_update_security_policy(client):
     policy_id = create_res.json()["sp_id"]
 
     update_dto = SecurityPolicyUpdateDTO(
+        name="Updated Policy",
         roles=["ml1_analyst"],
         requires_authentication=False
     )
@@ -82,6 +89,7 @@ async def test_update_security_policy(client):
     )
     assert response.status_code == 200
     data = response.json()
+    assert data["name"] == update_dto.name
     assert data["roles"] == update_dto.roles
     assert data["requires_authentication"] == update_dto.requires_authentication
 
@@ -91,6 +99,7 @@ async def test_update_security_policy(client):
 @pytest.mark.asyncio
 async def test_delete_security_policy(client):
     create_dto = SecurityPolicyDTO(
+        name="Temp Policy",
         roles=["temp_role"],
         requires_authentication=False
     )
@@ -102,5 +111,3 @@ async def test_delete_security_policy(client):
 
     get_res = await client.get(f"/api/v1/security-policies/{policy_id}/")
     assert get_res.status_code == 404
-
-

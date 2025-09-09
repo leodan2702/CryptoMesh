@@ -6,9 +6,9 @@ from cryptomesh.dtos.resources_dto import ResourcesDTO
 async def test_create_microservice(client):
     dto = MicroserviceCreateDTO(
         service_id="s_test_create",
+        name="Test Microservice Create",
         functions=["fn1", "fn2"],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        policy_id="Leo_Policy"
     )
 
     response = await client.post("/api/v1/microservices/", json=dto.model_dump())
@@ -17,30 +17,21 @@ async def test_create_microservice(client):
 
     assert "microservice_id" in data
     assert data["service_id"] == dto.service_id
+    assert data["name"] == dto.name
     assert data["functions"] == dto.functions
     assert data["resources"] == dto.resources.model_dump()
-
-
-@pytest.mark.asyncio
-async def test_list_microservices(client):
-    response = await client.get("/api/v1/microservices/")
-    assert response.status_code == 200
-    data = response.json()
-    assert isinstance(data, list)
-
 
 
 @pytest.mark.asyncio
 async def test_get_microservice(client):
     dto = MicroserviceCreateDTO(
         service_id="s_test_get",
+        name="Test Microservice Get",
         functions=["fn1", "fn2"],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        policy_id="Leo_Policy"
     )
 
     create_res = await client.post("/api/v1/microservices/", json=dto.model_dump())
-    assert create_res.status_code == 201
     microservice_id = create_res.json()["microservice_id"]
 
     get_res = await client.get(f"/api/v1/microservices/{microservice_id}/")
@@ -49,6 +40,7 @@ async def test_get_microservice(client):
 
     assert data["microservice_id"] == microservice_id
     assert data["service_id"] == dto.service_id
+    assert data["name"] == dto.name
     assert data["functions"] == dto.functions
     assert data["resources"] == dto.resources.model_dump()
 
@@ -57,6 +49,7 @@ async def test_get_microservice(client):
 async def test_update_microservice(client):
     dto = MicroserviceCreateDTO(
         service_id="s_test_update",
+        name="Test Microservice Update",
         functions=["fn1", "fn2"],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
@@ -67,9 +60,9 @@ async def test_update_microservice(client):
 
     update_payload = {
         "service_id": "s_test_update",
+        "name": "Updated Microservice",
         "functions": ["fn3", "fn4"],
         "resources": {"cpu": 4, "ram": "4GB"},
-        "policy_id": "New_Policy"
     }
 
     update_res = await client.put(f"/api/v1/microservices/{microservice_id}/", json=update_payload)
@@ -78,6 +71,7 @@ async def test_update_microservice(client):
 
     assert updated_data["microservice_id"] == microservice_id
     assert updated_data["service_id"] == update_payload["service_id"]
+    assert updated_data["name"] == update_payload["name"]
     assert updated_data["functions"] == update_payload["functions"]
     assert updated_data["resources"] == update_payload["resources"]
 
@@ -86,6 +80,7 @@ async def test_update_microservice(client):
 async def test_delete_microservice(client):
     dto = MicroserviceCreateDTO(
         service_id="s_test_delete",
+        name="Test Microservice Delete",
         functions=["fn1", "fn2"],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"

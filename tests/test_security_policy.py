@@ -1,100 +1,125 @@
 import pytest
-from cryptomesh.repositories.security_policy_repository import SecurityPolicyRepository
+from cryptomesh.dtos.security_policy_dto import (
+    SecurityPolicyDTO,
+    SecurityPolicyResponseDTO,
+    SecurityPolicyUpdateDTO
+)
 from cryptomesh.models import SecurityPolicyModel
+from cryptomesh.repositories.security_policy_repository import SecurityPolicyRepository
+from cryptomesh.services.security_policy_service import SecurityPolicyService
+from cryptomesh.errors import NotFoundError, ValidationError
 
-# ✅ TEST: Crear una nueva política de seguridad
 @pytest.mark.asyncio
 async def test_create_policy(get_db):
     db = get_db
     repo = SecurityPolicyRepository(collection=db.security_policies)
+    service = SecurityPolicyService(repo)
 
-    policy = SecurityPolicyModel(
-        sp_id="sp_test_create",
+    create_dto = SecurityPolicyDTO(
+        name="Test Policy Create",
         roles=["security_manager"],
         requires_authentication=True
     )
-    result = await repo.create(policy)
-    assert result is not None
-    assert result.sp_id == "sp_test_create"
-    assert result.roles == ["security_manager"]
-    assert result.requires_authentication is True
 
-# ✅ TEST: Obtener una política por ID
+    created = await service.create_policy(create_dto.to_model())
+    response_dto = SecurityPolicyResponseDTO.from_model(created)
+
+    assert response_dto.sp_id == created.sp_id
+    assert response_dto.name == "Test Policy Create"
+    assert "security_manager" in response_dto.roles
+    assert response_dto.requires_authentication is True
+
+
 @pytest.mark.asyncio
 async def test_get_policy(get_db):
     db = get_db
     repo = SecurityPolicyRepository(collection=db.security_policies)
+    service = SecurityPolicyService(repo)
 
-    policy = SecurityPolicyModel(
-        sp_id="sp_test_get",
+    create_dto = SecurityPolicyDTO(
+        name="Test Policy Get",
         roles=["ml1_analyst"],
         requires_authentication=True
     )
-    await repo.create(policy)
-    fetched = await repo.get_by_id("sp_test_get")
-    assert fetched is not None
-    assert fetched.sp_id == "sp_test_get"
-    assert fetched.roles == ["ml1_analyst"]
-    assert fetched.requires_authentication is True
+    created = await service.create_policy(create_dto.to_model())
 
-# ✅ TEST: Actualizar una política existente
+    fetched = await service.get_policy(created.sp_id)
+    response_dto = SecurityPolicyResponseDTO.from_model(fetched)
+
+    assert response_dto.sp_id == created.sp_id
+    assert response_dto.name == "Test Policy Get"
+    assert "ml1_analyst" in response_dto.roles
+
+
 @pytest.mark.asyncio
 async def test_update_policy(get_db):
     db = get_db
     repo = SecurityPolicyRepository(collection=db.security_policies)
+    service = SecurityPolicyService(repo)
 
-    policy = SecurityPolicyModel(
-        sp_id="sp_test_update",
+    create_dto = SecurityPolicyDTO(
+        name="Test Policy Update",
         roles=["old_role"],
         requires_authentication=True
     )
-    await repo.create(policy)
+    created = await service.create_policy(create_dto.to_model())
 
-    updates = {"roles": ["new_role"], "requires_authentication": False}
-    updated = await repo.update({"sp_id": "sp_test_update"}, updates)  # <-- filtro como dict
-    assert updated is not None
-    assert updated.roles == ["new_role"]
-    assert updated.requires_authentication is False
+    update_dto = SecurityPolicyUpdateDTO(
+        roles=["new_role"],
+        requires_authentication=False,
+        name="Updated Policy Name"
+    )
+    updated_model = SecurityPolicyUpdateDTO.apply_updates(update_dto, created)
+    updated = await service.update_policy(created.sp_id, updated_model.__dict__)
+    response_dto = SecurityPolicyResponseDTO.from_model(updated)
 
-# ✅ TEST: Eliminar una política y confirmar que ya no exista
+    assert "new_role" in response_dto.roles
+    assert response_dto.requires_authentication is False
+    assert response_dto.name == "Updated Policy Name"
+
+
 @pytest.mark.asyncio
 async def test_delete_policy(get_db):
     db = get_db
     repo = SecurityPolicyRepository(collection=db.security_policies)
+    service = SecurityPolicyService(repo)
 
-    policy = SecurityPolicyModel(
-        sp_id="sp_test_delete",
+    create_dto = SecurityPolicyDTO(
+        name="Test Policy Delete",
         roles=["temp_role"],
         requires_authentication=False
     )
-    await repo.create(policy)
-    deleted = await repo.delete({"sp_id": "sp_test_delete"})  # <-- filtro como dict
-    assert deleted is True
+    created = await service.create_policy(create_dto.to_model())
 
-    fetched = await repo.get_by_id("sp_test_delete")
-    assert fetched is None
+    result = await service.delete_policy(created.sp_id)
+    assert "deleted" in result["detail"]
 
-# ✅ TEST: Listar todas las políticas de seguridad
+    with pytest.raises(NotFoundError):
+        await service.get_policy(created.sp_id)
+
+
 @pytest.mark.asyncio
 async def test_list_policies(get_db):
     db = get_db
     repo = SecurityPolicyRepository(collection=db.security_policies)
+    service = SecurityPolicyService(repo)
 
-    policy1 = SecurityPolicyModel(
-        sp_id="sp_test_list_1",
+    policy1 = SecurityPolicyDTO(
+        name="Policy List 1",
         roles=["security_manager"],
         requires_authentication=True
     )
-    policy2 = SecurityPolicyModel(
-        sp_id="sp_test_list_2",
+    policy2 = SecurityPolicyDTO(
+        name="Policy List 2",
         roles=["ml1_analyst"],
         requires_authentication=True
     )
-    await repo.create(policy1)
-    await repo.create(policy2)
+    await service.create_policy(policy1.to_model())
+    await service.create_policy(policy2.to_model())
 
-    policies = await repo.get_all()
-    sp_ids = [p.sp_id for p in policies]
-    assert "sp_test_list_1" in sp_ids
-    assert "sp_test_list_2" in sp_ids
+    policies = await service.list_policies()
+    names = [p.name for p in policies]
+    assert "Policy List 1" in names
+    assert "Policy List 2" in names
+
 

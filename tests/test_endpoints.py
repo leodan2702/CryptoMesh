@@ -1,12 +1,13 @@
 import pytest
 from cryptomesh.dtos.endpoints_dto import EndpointCreateDTO, EndpointResponseDTO, EndpointUpdateDTO
 from cryptomesh.dtos.resources_dto import ResourcesDTO
-from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO, SecurityPolicyUpdateDTO
+from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO
 from cryptomesh.services.endpoints_services import EndpointsService
 from cryptomesh.services.security_policy_service import SecurityPolicyService
 from cryptomesh.repositories.endpoints_repository import EndpointsRepository
 from cryptomesh.repositories.security_policy_repository import SecurityPolicyRepository
 from cryptomesh.errors import NotFoundError
+
 
 @pytest.mark.asyncio
 async def test_create_endpoint(get_db):
@@ -17,6 +18,7 @@ async def test_create_endpoint(get_db):
     # Crear política de seguridad
     policy_dto = SecurityPolicyDTO(
         sp_id="security_manager",
+        name="Security Manager Policy",
         roles=["security_manager"],
         requires_authentication=True
     )
@@ -33,7 +35,7 @@ async def test_create_endpoint(get_db):
         name="Test Endpoint",
         image="test_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        security_policy=policy_dto,
+        security_policy=policy_dto.sp_id,  # 👈 string
         policy_id="Leo_Policy"
     )
     created = await endpoints_service.create_endpoint(create_dto.to_model())
@@ -41,6 +43,7 @@ async def test_create_endpoint(get_db):
 
     assert response_dto.endpoint_id == created.endpoint_id
     assert response_dto.name == "Test Endpoint"
+    assert response_dto.security_policy == policy_dto.sp_id
 
 
 @pytest.mark.asyncio
@@ -54,6 +57,7 @@ async def test_get_endpoint(get_db):
     # Crear política de seguridad y endpoint
     policy_dto = SecurityPolicyDTO(
         sp_id="security_manager",
+        name="Security Manager Policy",
         roles=["security_manager"],
         requires_authentication=True
     )
@@ -66,7 +70,7 @@ async def test_get_endpoint(get_db):
         name="Get Endpoint",
         image="test_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        security_policy=policy_dto,
+        security_policy=policy_dto.sp_id,  # 👈 string
         policy_id="Leo_Policy"
     )
     created = await endpoints_service.create_endpoint(create_dto.to_model())
@@ -75,6 +79,7 @@ async def test_get_endpoint(get_db):
 
     assert response_dto.endpoint_id == created.endpoint_id
     assert response_dto.name == "Get Endpoint"
+    assert response_dto.security_policy == policy_dto.sp_id
 
 
 @pytest.mark.asyncio
@@ -88,6 +93,7 @@ async def test_update_endpoint(get_db):
     # Crear política de seguridad y endpoint
     policy_dto = SecurityPolicyDTO(
         sp_id="security_manager",
+        name="Security Manager Policy",
         roles=["security_manager"],
         requires_authentication=True
     )
@@ -100,7 +106,7 @@ async def test_update_endpoint(get_db):
         name="Old Endpoint",
         image="old_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        security_policy=policy_dto,
+        security_policy=policy_dto.sp_id,  # 👈 string
         policy_id="Leo_Policy"
     )
     created = await endpoints_service.create_endpoint(create_dto.to_model())
@@ -131,6 +137,7 @@ async def test_delete_endpoint(get_db):
     # Crear política de seguridad y endpoint
     policy_dto = SecurityPolicyDTO(
         sp_id="security_manager",
+        name="Security Manager Policy",
         roles=["security_manager"],
         requires_authentication=True
     )
@@ -143,7 +150,7 @@ async def test_delete_endpoint(get_db):
         name="To Delete Endpoint",
         image="delete_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        security_policy=policy_dto,
+        security_policy=policy_dto.sp_id,  # 👈 string
         policy_id="Leo_Policy"
     )
     created = await endpoints_service.create_endpoint(create_dto.to_model())
@@ -153,4 +160,3 @@ async def test_delete_endpoint(get_db):
     # Verificar que al buscar el endpoint eliminado se lance NotFoundError
     with pytest.raises(NotFoundError):
         await endpoints_service.get_endpoint(created.endpoint_id)
-

@@ -22,6 +22,7 @@ client = CryptoMeshClient(BASE_URL)
 async def test_create_function():
     function=FunctionCreateDTO(
         microservice_id="m1",
+        name="Test Function",
         image="test_function_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         storage=StorageDTO(
@@ -48,6 +49,7 @@ async def test_create_function():
 async def test_get_function():
     function_create = FunctionCreateDTO(
         microservice_id="m1",
+        name="Test Function",
         image="test_function_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         storage=StorageDTO(
@@ -74,6 +76,7 @@ async def test_get_function():
 async def test_update_function():
     function_create = FunctionCreateDTO(
         microservice_id="m1",
+        name="Test Function",
         image="test_function_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         storage=StorageDTO(
@@ -109,6 +112,7 @@ async def test_update_function():
 async def test_delete_function():
     function_create = FunctionCreateDTO(
         microservice_id="m1",
+        name="Test Function",
         image="test_function_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         storage=StorageDTO(
@@ -132,11 +136,8 @@ async def test_delete_function():
 async def test_create_service():
     client = CryptoMeshClient(BASE_URL)
     create_service = ServiceCreateDTO(
-            security_policy=SecurityPolicyDTO(
-                sp_id="1",
-                requires_authentication=True,
-                roles=["admin"],
-            ),
+            name="Test Service",
+            security_policy="sp1",
             microservices=["m1","m2"],
             resources=ResourcesDTO(cpu=1,ram="1GB"),
             policy_id="test_policy"
@@ -152,11 +153,8 @@ async def test_create_service():
 @pytest.mark.asyncio
 async def test_get_service():
     create_service = ServiceCreateDTO(
-            security_policy=SecurityPolicyDTO(
-                sp_id="1",
-                requires_authentication=True,
-                roles=["admin"],
-            ),
+            name="Test Service",
+            security_policy="sp1",
             microservices=["m1","m2"],
             resources=ResourcesDTO(cpu=1,ram="1GB"),
             policy_id="test_policy"
@@ -170,16 +168,13 @@ async def test_get_service():
     service_get = result.unwrap()
 
     assert service_get.service_id == service_response.service_id
-    assert service_get.security_policy.sp_id == "1"
+    assert service_get.security_policy == "sp1"
 
 @pytest.mark.asyncio
 async def test_update_service():
     create_service = ServiceCreateDTO(
-        security_policy=SecurityPolicyDTO(
-        sp_id="1",
-            requires_authentication=True,
-            roles=["admin"],
-        ),
+        security_policy="sp1",
+        name="Test Service",
         microservices=["m1","m2"],
         resources=ResourcesDTO(cpu=1,ram="1GB"),
         policy_id="test_policy"
@@ -191,11 +186,8 @@ async def test_update_service():
     endpoint = await client.get_service(service_response.service_id)
     
     update_dto = ServiceUpdateDTO(
-        security_policy=SecurityPolicyDTO(
-            sp_id="2",
-            requires_authentication=True,
-            roles=["admin"],
-        ),
+        security_policy="sp2",
+        name="Test Service Updated",
         microservices=["m2","m3"],
         resources=ResourcesUpdateDTO(cpu=2,ram="122MB")
     )
@@ -205,18 +197,15 @@ async def test_update_service():
     service_updated = result.unwrap()
 
     assert service_updated.service_id == service_response.service_id
-    assert service_updated.security_policy.sp_id == update_dto.security_policy.sp_id
+    assert service_updated.security_policy == "sp2"
     assert service_updated.resources.cpu == update_dto.resources.cpu
 
 
 @pytest.mark.asyncio
 async def test_delete_service():
     create_service = ServiceCreateDTO(
-        security_policy=SecurityPolicyDTO(
-        sp_id="1",
-            requires_authentication=True,
-            roles=["admin"],
-        ),
+        security_policy="sp1",
+        name="Test Service",
         microservices=["m1","m2"],
         resources=ResourcesDTO(cpu=1,ram="1GB"),
         policy_id="test_policy"
@@ -235,6 +224,7 @@ async def test_delete_service():
 @pytest.mark.asyncio
 async def test_create_microservice():
     microservice = MicroserviceCreateDTO(
+        name="Test Microservice",
         service_id="s1",
         functions=["f1","f2"],
         resources=ResourcesDTO(cpu=1,ram="1GB"),
@@ -251,6 +241,7 @@ async def test_create_microservice():
 @pytest.mark.asyncio
 async def test_get_microservice():
     microservice = MicroserviceCreateDTO(
+        name="Test Microservice",
         service_id="s1",
         functions=["f1","f2"],
         resources=ResourcesDTO(cpu=1,ram="1GB"),
@@ -272,6 +263,7 @@ async def test_get_microservice():
 @pytest.mark.asyncio
 async def test_update_microservice():
     microservice = MicroserviceCreateDTO(
+        name="Test Microservice",
         service_id="s1",
         functions=["f1","f2"],
         resources=ResourcesDTO(cpu=1,ram="1GB"),
@@ -297,6 +289,7 @@ async def test_update_microservice():
 @pytest.mark.asyncio
 async def test_delete_microservice():
     microservice = MicroserviceCreateDTO(
+        name="Test Microservice",
         service_id="s1",
         functions=["f1","f2"],
         resources=ResourcesDTO(cpu=1,ram="1GB"),
@@ -318,23 +311,11 @@ async def test_delete_microservice():
 # ───────────────────────────────
 @pytest.mark.asyncio
 async def test_create_endpoint():
-    policy_dto = security_policy_dto = SecurityPolicyDTO(
-        sp_id="test_policy",
-        roles=["admin"],
-        requires_authentication=False
-    )
-    await client.create_security_policy(policy_dto)
-
-
     create_dto = EndpointCreateDTO(
         name="endpoint_test",
         image="test-image:latest",
         resources=ResourcesDTO(cpu=1, ram="512MB"),
-        security_policy=SecurityPolicyDTO(
-            sp_id="test_policy",
-            roles=["admin"],
-            requires_authentication=False
-        ),
+        security_policy="sp1",
         policy_id="policy-123"
     )
     result = await client.create_endpoint(create_dto)
@@ -353,11 +334,7 @@ async def test_get_endpoint():
         name=expected_name,
         image="test-image:latest",
         resources=ResourcesDTO(cpu=1, ram="512MB"),
-        security_policy=SecurityPolicyDTO(
-            sp_id="test_policy",
-            roles=["admin"],
-            requires_authentication=False
-        ),
+        security_policy="sp1",
         policy_id="policy-123"
     )    
     # Crear el endpoint
@@ -377,20 +354,12 @@ async def test_get_endpoint():
 @pytest.mark.asyncio
 async def test_update_endpoint():
 
-    # Crear política de seguridad de prueba
-    security_policy_dto = SecurityPolicyDTO(
-        sp_id="test_policy",
-        roles=["admin"],
-        requires_authentication=False
-    )
-    await client.create_security_policy(security_policy_dto)
-
     # DTO de creación de endpoint
     create_dto = EndpointCreateDTO(
         name="endpoint-test",
         image="test-image:latest",
         resources=ResourcesDTO(cpu=1, ram="512MB"),
-        security_policy=security_policy_dto,
+        security_policy="sp1",
         policy_id="policy-123"
     )
 
@@ -428,11 +397,7 @@ async def test_delete_endpoint():
         name="endpoint-to-delete",
         image="test-image:latest",
         resources=ResourcesDTO(cpu=1, ram="512MB"),
-        security_policy=SecurityPolicyDTO(
-            sp_id="test_policy",
-            roles=["admin"],
-            requires_authentication=False
-        ),
+        security_policy="sp1",
         policy_id="policy-123"
     )
     create_result = await client.create_endpoint(create_dto)
@@ -447,6 +412,7 @@ async def test_delete_endpoint():
 @pytest.mark.asyncio
 async def test_create_security_policy():
     policy_dto = SecurityPolicyDTO(
+        name="Test Policy",
         roles=["admin"],
         requires_authentication=False
     )
@@ -461,6 +427,7 @@ async def test_create_security_policy():
 @pytest.mark.asyncio
 async def test_get_security_policy():
     create_security_policy_dto = SecurityPolicyDTO(
+        name="Test Policy",
         roles=["admin"],
         requires_authentication=False
     )
@@ -480,6 +447,7 @@ async def test_get_security_policy():
 @pytest.mark.asyncio
 async def test_update_security_policy():
     create_security_policy_dto = SecurityPolicyDTO(
+        name="Test Policy",
         roles=["admin"],
         requires_authentication=False
     )
@@ -501,6 +469,7 @@ async def test_update_security_policy():
 @pytest.mark.asyncio
 async def test_delete_security_policy():
     create_security_policy_dto = SecurityPolicyDTO(
+        name="Test Policy",
         roles=["admin"],
         requires_authentication=False
     )
