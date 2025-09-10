@@ -7,6 +7,9 @@ from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO, SecurityPolic
 import uuid
 from typing import Optional
 
+
+class DeleteEndpointDTO(BaseModel):
+    detail: str
 # -------------------------------
 # DTO para creación de endpoints
 # -------------------------------

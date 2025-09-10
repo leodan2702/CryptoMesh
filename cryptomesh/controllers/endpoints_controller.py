@@ -1,6 +1,7 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from typing import List
-from cryptomesh.models import EndpointModel
+from cryptomesh.models import EndpointModel,SummonerParams
 from cryptomesh.services.endpoints_services import EndpointsService
 from cryptomesh.repositories.endpoints_repository import EndpointsRepository
 from cryptomesh.repositories.security_policy_repository import SecurityPolicyRepository
@@ -11,16 +12,12 @@ from cryptomesh.errors import (
     CryptoMeshError,
     NotFoundError,
     ValidationError,
-    InvalidYAML,
-    CreationError,
-    UnauthorizedError,
-    FunctionNotFound,
 )
 import time as T
 from cryptomesh.dtos.endpoints_dto import EndpointCreateDTO, EndpointResponseDTO, EndpointUpdateDTO
 
 L = get_logger(__name__)
-router = APIRouter()
+router = APIRouter(prefix="/endpoints")
 
 def get_endpoints_service() -> EndpointsService:
     collection = get_collection("endpoints")
@@ -28,10 +25,16 @@ def get_endpoints_service() -> EndpointsService:
     sp_collection = get_collection("security_policies")
     sp_repository = SecurityPolicyRepository(sp_collection)
     security_policy_service = SecurityPolicyService(sp_repository)
-    return EndpointsService(repository, security_policy_service)
+    x = SummonerParams(
+        ip_addr     = os.environ.get("CRYPTOMESH_SUMMONER_IP_ADDR","localhost"),
+        api_version = int(os.environ.get("CRYPTOMESH_SUMMONER_API_VERSION","3")),
+        port        = int(os.environ.get("CRYPTOMESH_SUMMONER_PORT","15000")),
+        protocol    = os.environ.get("CRYPTOMESH_SUMMONER_PROTOCOL","http")
+    )
+    return EndpointsService(repository, security_policy_service, summoner_params=x)
 
 @router.post(
-    "/endpoints/",
+    "/",
     response_model=EndpointResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
@@ -56,7 +59,7 @@ async def create_endpoint(dto: EndpointCreateDTO, svc: EndpointsService = Depend
     return EndpointResponseDTO.from_model(created)
 
 @router.get(
-    "/endpoints/",
+    "/",
     response_model=List[EndpointResponseDTO],
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -78,7 +81,7 @@ async def list_endpoints(svc: EndpointsService = Depends(get_endpoints_service))
     return [EndpointResponseDTO.from_model(ep) for ep in endpoints]
 
 @router.get(
-    "/endpoints/{endpoint_id}/",
+    "/{endpoint_id}/",
     response_model=EndpointResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -112,7 +115,7 @@ async def get_endpoint(endpoint_id: str, svc: EndpointsService = Depends(get_end
     return EndpointResponseDTO.from_model(endpoint)
 
 @router.put(
-    "/endpoints/{endpoint_id}/",
+    "/{endpoint_id}/",
     response_model=EndpointResponseDTO,
     response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
@@ -150,29 +153,81 @@ async def update_endpoint(endpoint_id: str, dto: EndpointUpdateDTO, svc: Endpoin
     return EndpointResponseDTO.from_model(updated)
 
 @router.delete(
-    "/endpoints/{endpoint_id}/",
+    "/{endpoint_id}/",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar un endpoint por ID",
     description="Elimina un endpoint de la base de datos según su ID."
 )
 async def delete_endpoint(endpoint_id: str, svc: EndpointsService = Depends(get_endpoints_service)):
-    t1 = T.time()
     try:
-        await svc.delete_endpoint(endpoint_id)
+        t1 = T.time()
+        res = await svc.delete_endpoint(endpoint_id)
+        if res.is_err:
+            raise res.unwrap_err()
+        elapsed = round(T.time() - t1, 4)
+
+        L.info({
+            "event": "API.ENDPOINT.DELETED",
+            "endpoint_id": endpoint_id,
+            "time": elapsed
+        })
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=e.to_dict())
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=e.to_dict())
     except CryptoMeshError as e:
         raise HTTPException(status_code=500, detail=e.to_dict())
+    
+
+
+
+
+@router.post(
+    "/deploy",
+    response_model=EndpointResponseDTO,
+    response_model_by_alias=True,
+    status_code=status.HTTP_201_CREATED,
+    summary="Desplegar un nuevo endpoint",
+    description="Desplegar un nuevo endpoint en la infraestructura."
+)
+async def deploy_endpoint(
+    dto:EndpointCreateDTO,
+    svc: EndpointsService = Depends(get_endpoints_service)
+):
+    t1 = T.time()
+    endpoint_id = None
+    try:
+        model   = dto.to_model()
+        created = await svc.create_endpoint(model)
+        endpoint_id = created.endpoint_id
+        res     = await svc.deploy(endpoint_id=endpoint_id)
+        if res.is_err:
+            await svc.delete_endpoint(endpoint_id=model.endpoint_id)
+            raise HTTPException(status_code=500, detail=f"Failed to deploy endpoint: {model.endpoint_id} - {res.unwrap_err()}")
+    except Exception as e:
+        if endpoint_id:
+            res = await svc.delete_endpoint(endpoint_id=endpoint_id)
+        raise HTTPException(status_code=400, detail=str(e))
+
     elapsed = round(T.time() - t1, 4)
     L.info({
-        "event": "API.ENDPOINT.DELETED",
-        "endpoint_id": endpoint_id,
+        "event": "API.ENDPOINT.DEPLOYED",
+        "endpoint_id": created.endpoint_id,
         "time": elapsed
     })
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return EndpointResponseDTO.from_model(created)
+    # res = await Sum
 
-
-
-
+@router.post(
+    "/deploy",
+    response_model=EndpointResponseDTO,
+    response_model_by_alias=True,
+    status_code=status.HTTP_201_CREATED,
+    summary="Desplegar un nuevo endpoint",
+    description="Desplegar un nuevo endpoint en la infraestructura."
+)
+async def deploy_endpoint(
+    dto:EndpointCreateDTO,
+    svc: EndpointsService = Depends(get_endpoints_service)
+):
