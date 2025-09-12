@@ -5,15 +5,8 @@ from cryptomesh.services.functions_services import FunctionsService
 from cryptomesh.repositories.functions_repository import FunctionsRepository
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
-from cryptomesh.errors import (
-    CryptoMeshError,
-    NotFoundError,
-    ValidationError,
-    InvalidYAML,
-    CreationError,
-    UnauthorizedError,
-    FunctionNotFound,
-)
+from cryptomesh.errors import handle_crypto_errors
+
 import time as T
 from cryptomesh.dtos.functions_dto import FunctionCreateDTO, FunctionResponseDTO, FunctionUpdateDTO
 
@@ -33,15 +26,12 @@ def get_functions_service() -> FunctionsService:
     summary="Crear una nueva función",
     description="Crea una nueva función en la base de datos."
 )
+@handle_crypto_errors
 async def create_function(dto:FunctionCreateDTO, svc: FunctionsService = Depends(get_functions_service)):
     t1 = T.time()
-    try:
-        model = dto.to_model()
-        created = await svc.create_function(model)
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    model = dto.to_model()
+    created = await svc.create_function(model)
+    
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION.CREATED",
@@ -58,12 +48,10 @@ async def create_function(dto:FunctionCreateDTO, svc: FunctionsService = Depends
     summary="Obtener todas las funciones",
     description="Recupera todas las funciones almacenadas en la base de datos."
 )
+@handle_crypto_errors
 async def list_functions(svc: FunctionsService = Depends(get_functions_service)):
     t1 = T.time()
-    try:
-        functions = await svc.list_functions()
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    functions = await svc.list_functions()
     elapsed = round(T.time() - t1, 4)
     L.debug({
         "event": "API.FUNCTION.LISTED",
@@ -80,24 +68,11 @@ async def list_functions(svc: FunctionsService = Depends(get_functions_service))
     summary="Obtener una función por ID",
     description="Devuelve una función específica dada su ID única."
 )
+@handle_crypto_errors
 async def get_function(function_id: str, svc: FunctionsService = Depends(get_functions_service)):
     t1 = T.time()
-    try:
-        func = await svc.get_function(function_id)
-        if not func:
-            raise NotFoundError(function_id)
-    except NotFoundError as e:
-        elapsed = round(T.time() - t1, 4)
-        L.warning({
-            "event": "API.FUNCTION.NOT_FOUND",
-            "function_id": function_id,
-            "time": elapsed
-        })
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    func = await svc.get_function(function_id)
+
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION.FETCHED",
@@ -114,28 +89,13 @@ async def get_function(function_id: str, svc: FunctionsService = Depends(get_fun
     summary="Actualizar una función por ID",
     description="Actualiza completamente una función existente."
 )
+@handle_crypto_errors
 async def update_function(function_id: str, dto: FunctionUpdateDTO, svc: FunctionsService = Depends(get_functions_service)):
     t1 = T.time()
-    try:
-        existing = await svc.get_function(function_id)
-        if not existing:
-            raise NotFoundError(function_id)
+    existing = await svc.get_function(function_id)
+    updated_model = FunctionUpdateDTO.apply_updates(dto, existing)
+    updated = await svc.update_function(function_id, updated_model.model_dump(by_alias=True))
 
-        updated_model = FunctionUpdateDTO.apply_updates(dto, existing)
-        updated = await svc.update_function(function_id, updated_model.model_dump(by_alias=True))
-
-    except NotFoundError as e:
-        elapsed = round(T.time() - t1, 4)
-        L.error({
-            "event": "API.FUNCTION.UPDATE.FAIL",
-            "function_id": function_id,
-            "time": elapsed
-        })
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION.UPDATED",
@@ -150,16 +110,11 @@ async def update_function(function_id: str, dto: FunctionUpdateDTO, svc: Functio
     summary="Eliminar una función por ID",
     description="Elimina una función de la base de datos según su ID."
 )
+@handle_crypto_errors
 async def delete_function(function_id: str, svc: FunctionsService = Depends(get_functions_service)):
     t1 = T.time()
-    try:
-        await svc.delete_function(function_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    await svc.delete_function(function_id)
+    
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION.DELETED",

@@ -5,15 +5,7 @@ from cryptomesh.repositories.security_policy_repository import SecurityPolicyRep
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
 from cryptomesh.errors import CryptoMeshError, NotFoundError, ValidationError
-from cryptomesh.errors import (
-    CryptoMeshError,
-    NotFoundError,
-    ValidationError,
-    InvalidYAML,
-    CreationError,
-    UnauthorizedError,
-    FunctionNotFound,
-)
+from cryptomesh.errors import handle_crypto_errors
 from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO, SecurityPolicyResponseDTO, SecurityPolicyUpdateDTO
 import time as T
 
@@ -33,15 +25,12 @@ def get_security_policy_service() -> SecurityPolicyService:
     summary="Crear una política de seguridad",
     description="Crea una nueva política de seguridad en la base de datos."
 )
+@handle_crypto_errors
 async def create_policy(dto: SecurityPolicyDTO, svc: SecurityPolicyService = Depends(get_security_policy_service)):
     t1 = T.time()
-    try:
-        model = dto.to_model()
-        created_policy = await svc.create_policy(model)
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    model = dto.to_model()
+    created_policy = await svc.create_policy(model)
+
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SECURITY_POLICY.CREATED",
@@ -58,24 +47,10 @@ async def create_policy(dto: SecurityPolicyDTO, svc: SecurityPolicyService = Dep
     summary="Obtener una política de seguridad",
     description="Recupera una política de seguridad por su ID."
 )
+@handle_crypto_errors
 async def get_policy(sp_id: str, svc: SecurityPolicyService = Depends(get_security_policy_service)):
     t1 = T.time()
-    try:
-        policy = await svc.get_policy(sp_id)
-        if not policy:
-            raise NotFoundError(sp_id)
-    except NotFoundError as e:
-        elapsed = round(T.time() - t1, 4)
-        L.warning({
-            "event": "API.SECURITY_POLICY.NOT_FOUND",
-            "policy_id": sp_id,
-            "time": elapsed
-        })
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    policy = await svc.get_policy(sp_id)
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SECURITY_POLICY.FETCHED",
@@ -92,12 +67,10 @@ async def get_policy(sp_id: str, svc: SecurityPolicyService = Depends(get_securi
     summary="Obtener todas las políticas de seguridad",
     description="Recupera todas las políticas de seguridad almacenadas en la base de datos."
 )
+@handle_crypto_errors
 async def list_policies(svc: SecurityPolicyService = Depends(get_security_policy_service)):
     t1 = T.time()
-    try:
-        policies = await svc.list_policies()
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    policies = await svc.list_policies()
     elapsed = round(T.time() - t1, 4)
     L.debug({
         "event": "API.SECURITY_POLICY.LISTED",
@@ -114,28 +87,13 @@ async def list_policies(svc: SecurityPolicyService = Depends(get_security_policy
     summary="Actualizar una política de seguridad",
     description="Actualiza una política de seguridad existente."
 )
+@handle_crypto_errors
 async def update_policy(sp_id: str, dto:SecurityPolicyUpdateDTO, svc: SecurityPolicyService = Depends(get_security_policy_service)):
     t1 = T.time()
-    try:
-        existing_policy = await svc.get_policy(sp_id)
-        if not existing_policy:
-            raise NotFoundError(sp_id)
-        
-        updated_model = SecurityPolicyUpdateDTO.apply_updates(dto, existing_policy)
-        saved_policy = await svc.update_policy(sp_id, updated_model.model_dump(by_alias=True))
+    existing_policy = await svc.get_policy(sp_id)
+    updated_model = SecurityPolicyUpdateDTO.apply_updates(dto, existing_policy)
+    saved_policy = await svc.update_policy(sp_id, updated_model.model_dump(by_alias=True))
 
-    except NotFoundError as e:
-        elapsed = round(T.time() - t1, 4)
-        L.error({
-            "event": "API.SECURITY_POLICY.UPDATE.FAIL",
-            "policy_id": sp_id,
-            "time": elapsed
-        })
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SECURITY_POLICY.UPDATED",
@@ -150,16 +108,10 @@ async def update_policy(sp_id: str, dto:SecurityPolicyUpdateDTO, svc: SecurityPo
     summary="Eliminar una política de seguridad",
     description="Elimina una política de seguridad existente."
 )
+@handle_crypto_errors
 async def delete_policy(sp_id: str, svc: SecurityPolicyService = Depends(get_security_policy_service)):
     t1 = T.time()
-    try:
-        await svc.delete_policy(sp_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    await svc.delete_policy(sp_id)
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.SECURITY_POLICY.DELETED",
