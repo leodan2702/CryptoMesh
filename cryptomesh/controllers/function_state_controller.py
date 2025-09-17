@@ -4,15 +4,7 @@ from cryptomesh.services.function_state_service import FunctionStateService
 from cryptomesh.repositories.function_state_repository import FunctionStateRepository
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
-from cryptomesh.errors import (
-    CryptoMeshError,
-    NotFoundError,
-    ValidationError,
-    InvalidYAML,
-    CreationError,
-    UnauthorizedError,
-    FunctionNotFound,
-)
+from cryptomesh.errors import handle_crypto_errors
 from cryptomesh.dtos.function_state_dto import FunctionStateCreateDTO, FunctionStateUpdateDTO, FunctionStateResponseDTO
 import time as T
 
@@ -31,15 +23,12 @@ def get_function_state_service() -> FunctionStateService:
     summary="Crear un nuevo estado de función",
     description="Crea un nuevo registro de estado para una función en la base de datos."
 )
+@handle_crypto_errors
 async def create_function_state(dto: FunctionStateCreateDTO, svc: FunctionStateService = Depends(get_function_state_service)):
     t1 = T.time()
-    try:
-        model = FunctionStateCreateDTO.to_model(dto)
-        created = await svc.create_state(model)
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    model = FunctionStateCreateDTO.to_model(dto)
+    created = await svc.create_state(model)
+
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION_STATE.CREATED",
@@ -56,12 +45,11 @@ async def create_function_state(dto: FunctionStateCreateDTO, svc: FunctionStateS
     summary="Listar todos los estados de función",
     description="Recupera todos los registros de estado de funciones almacenados en la base de datos."
 )
+@handle_crypto_errors
 async def list_function_states(svc: FunctionStateService = Depends(get_function_state_service)):
     t1 = T.time()
-    try:
-        states = await svc.list_states()
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    states = await svc.list_states()
+    
     elapsed = round(T.time() - t1, 4)
     L.debug({
         "event": "API.FUNCTION_STATE.LISTED",
@@ -77,24 +65,11 @@ async def list_function_states(svc: FunctionStateService = Depends(get_function_
     status_code=status.HTTP_200_OK,
     summary="Obtener estado de función por ID"
 )
+@handle_crypto_errors
 async def get_function_state(state_id: str, svc: FunctionStateService = Depends(get_function_state_service)):
     t1 = T.time()
-    try:
-        state = await svc.get_state(state_id)
-        if not state:
-            raise NotFoundError(state_id)
-    except NotFoundError as e:
-        elapsed = round(T.time() - t1, 4)
-        L.warning({
-            "event": "API.FUNCTION_STATE.NOT_FOUND",
-            "state_id": state_id,
-            "time": elapsed
-        })
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    state = await svc.get_state(state_id)
+
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION_STATE.FETCHED",
@@ -110,27 +85,13 @@ async def get_function_state(state_id: str, svc: FunctionStateService = Depends(
     summary="Actualizar estado de función por ID",
     description="Actualiza completamente un registro de estado de función existente."
 )
+@handle_crypto_errors
 async def update_function_state(state_id: str, dto: FunctionStateUpdateDTO, svc: FunctionStateService = Depends(get_function_state_service)):
     t1 = T.time()
-    try:
-        existing = await svc.get_state(state_id)
-        if not existing:
-            raise NotFoundError(state_id)
+    existing = await svc.get_state(state_id)
+    updated_model = FunctionStateUpdateDTO.apply_updates(dto, existing)
+    updated = await svc.update_state(state_id, updated_model.model_dump(by_alias=True))
 
-        updated_model = FunctionStateUpdateDTO.apply_updates(dto, existing)
-        updated = await svc.update_state(state_id, updated_model.model_dump(by_alias=True))
-    except NotFoundError as e:
-        elapsed = round(T.time() - t1, 4)
-        L.error({
-            "event": "API.FUNCTION_STATE.UPDATE.FAIL",
-            "state_id": state_id,
-            "time": elapsed
-        })
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION_STATE.UPDATED",
@@ -145,16 +106,11 @@ async def update_function_state(state_id: str, dto: FunctionStateUpdateDTO, svc:
     summary="Eliminar estado de función por ID",
     description="Elimina un registro de estado de función de la base de datos según su ID."
 )
+@handle_crypto_errors
 async def delete_function_state(state_id: str, svc: FunctionStateService = Depends(get_function_state_service)):
     t1 = T.time()
-    try:
-        await svc.delete_state(state_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    await svc.delete_state(state_id)
+
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.FUNCTION_STATE.DELETED",

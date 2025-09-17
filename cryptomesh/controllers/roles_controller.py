@@ -6,12 +6,7 @@ from cryptomesh.services.roles_service import RolesService
 from cryptomesh.repositories.roles_repository import RolesRepository
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
-from cryptomesh.errors import (
-    CryptoMeshError,
-    NotFoundError,
-    ValidationError
-)
-
+from cryptomesh.errors import handle_crypto_errors
 from cryptomesh.dtos.role_dto import (
     RoleCreateDTO,
     RoleResponseDTO,
@@ -34,15 +29,11 @@ def get_roles_service() -> RolesService:
     summary="Crear un nuevo rol",
     description="Crea un nuevo rol en la base de datos."
 )
+@handle_crypto_errors
 async def create_role(dto: RoleCreateDTO, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
-    try:
-        model = dto.to_model()
-        created = await svc.create_role(model)
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    model = dto.to_model()
+    created = await svc.create_role(model)
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ROLE.CREATED",
@@ -59,12 +50,10 @@ async def create_role(dto: RoleCreateDTO, svc: RolesService = Depends(get_roles_
     summary="Obtener todos los roles",
     description="Recupera todos los roles."
 )
+@handle_crypto_errors
 async def list_roles(svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
-    try:
-        roles = await svc.list_roles()
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    roles = await svc.list_roles()
     elapsed = round(T.time() - t1, 4)
     L.debug({
         "event": "API.ROLE.LISTED",
@@ -81,18 +70,10 @@ async def list_roles(svc: RolesService = Depends(get_roles_service)):
     summary="Obtener rol por ID",
     description="Devuelve un rol específico dado su ID."
 )
+@handle_crypto_errors
 async def get_role(role_id: str, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
-    try:
-        role = await svc.get_role(role_id)
-        if not role:
-            raise NotFoundError(role_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    role = await svc.get_role(role_id)
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ROLE.FETCHED",
@@ -109,21 +90,13 @@ async def get_role(role_id: str, svc: RolesService = Depends(get_roles_service))
     summary="Actualizar rol por ID",
     description="Actualiza un rol existente."
 )
+@handle_crypto_errors
 async def update_role(role_id: str, dto: RoleUpdateDTO, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
-    try:
-        existing = await svc.get_role(role_id)
-        if not existing:
-            raise NotFoundError(role_id)
+    existing = await svc.get_role(role_id)
+    updated_model = RoleUpdateDTO.apply_updates(dto, existing)
+    updated = await svc.update_role(role_id, updated_model.model_dump(by_alias=True))
 
-        updated_model = RoleUpdateDTO.apply_updates(dto, existing)
-        updated = await svc.update_role(role_id, updated_model.model_dump(by_alias=True))
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ROLE.UPDATED",
@@ -138,16 +111,11 @@ async def update_role(role_id: str, dto: RoleUpdateDTO, svc: RolesService = Depe
     summary="Eliminar rol por ID",
     description="Elimina un rol de la base de datos según su ID."
 )
+@handle_crypto_errors
 async def delete_role(role_id: str, svc: RolesService = Depends(get_roles_service)):
     t1 = T.time()
-    try:
-        await svc.delete_role(role_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    await svc.delete_role(role_id)
+    
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ROLE.DELETED",
