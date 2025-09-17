@@ -219,15 +219,15 @@ async def deploy_endpoint(
     return EndpointResponseDTO.from_model(created)
     # res = await Sum
 
-@router.post(
-    "/deploy",
-    response_model=EndpointResponseDTO,
-    response_model_by_alias=True,
-    status_code=status.HTTP_201_CREATED,
-    summary="Desplegar un nuevo endpoint",
-    description="Desplegar un nuevo endpoint en la infraestructura."
+@router.delete(
+    "/detach/{endpoint_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar un endpoint",
+    description="Eliminar un endpoint de la infraestructura."
 )
-async def deploy_endpoint(
-    dto:EndpointCreateDTO,
+async def detach_endpoint(
+    endpoint_id:str,
     svc: EndpointsService = Depends(get_endpoints_service)
 ):
+    res = await svc.detach(endpoint_id=endpoint_id)
+    return None
