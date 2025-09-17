@@ -10,11 +10,7 @@ async def test_create_endpoint(client):
         name="Test Endpoint",
         image="test_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        security_policy=SecurityPolicyDTO(
-            sp_id="security_manager",
-            roles=["security_manager"],
-            requires_authentication=True
-        ),
+        security_policy = "sp1",
         policy_id="TestPolicy"
     )
     response = await client.post("/api/v1/endpoints/", json=dto.model_dump())
@@ -25,7 +21,7 @@ async def test_create_endpoint(client):
     assert data["image"] == dto.image
     assert data["resources"]["cpu"] == dto.resources.cpu
     assert data["resources"]["ram"] == dto.resources.ram
-    assert data["security_policy"]["sp_id"] == dto.security_policy.sp_id
+    assert data["security_policy"] == dto.security_policy
 
 @pytest.mark.asyncio
 async def test_list_endpoints(client):
@@ -41,11 +37,7 @@ async def test_get_endpoint(client):
         name="Get Endpoint",
         image="get_image",
         resources=ResourcesDTO(cpu=1, ram="1GB"),
-        security_policy=SecurityPolicyDTO(
-            sp_id="security_manager",
-            roles=["security_manager"],
-            requires_authentication=True
-        ),
+        security_policy = "sp1",
         policy_id="TestPolicy"
     )
     create_res = await client.post("/api/v1/endpoints/", json=dto.model_dump())
@@ -65,11 +57,7 @@ async def test_update_endpoint(client):
         name="Old Endpoint",
         image="old_image",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        security_policy=SecurityPolicyDTO(
-            sp_id="security_manager",
-            roles=["security_manager"],
-            requires_authentication=True
-        ),
+        security_policy = "sp1",
         policy_id="TestPolicy"
     )
     create_res = await client.post("/api/v1/endpoints/", json=create_dto.model_dump())
@@ -99,11 +87,7 @@ async def test_delete_endpoint(client):
         name="To Delete",
         image="delete_image",
         resources=ResourcesDTO(cpu=1, ram="1GB"),
-        security_policy=SecurityPolicyDTO(
-            sp_id="security_manager",
-            roles=["security_manager"],
-            requires_authentication=True
-        ),
+        security_policy="sp1",
         policy_id="TestPolicy"
     )
     create_res = await client.post("/api/v1/endpoints/", json=create_dto.model_dump())

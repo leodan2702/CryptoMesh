@@ -6,27 +6,29 @@ from cryptomesh.dtos.services_dto import (
 )
 from cryptomesh.dtos.resources_dto import ResourcesDTO, ResourcesUpdateDTO
 from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO
-from cryptomesh.models import ServiceModel
 from cryptomesh.repositories.services_repository import ServicesRepository
 from cryptomesh.services.services_services import ServicesService
 from cryptomesh.services.security_policy_service import SecurityPolicyService
 from cryptomesh.errors import NotFoundError
 
+
 @pytest.mark.asyncio
 async def test_create_service(get_db):
     db = get_db
-    sp_service = SecurityPolicyService(None)  # se puede mockear o usar real si quieres
+    sp_service = SecurityPolicyService(None)
     repo = ServicesRepository(db.services)
     service_svc = ServicesService(repo, sp_service)
 
     policy_dto = SecurityPolicyDTO(
         sp_id="security_manager",
+        name="Security Manager Policy",
         roles=["security_manager"],
         requires_authentication=True
     )
 
     create_dto = ServiceCreateDTO(
-        security_policy=policy_dto,
+        name="Test Service",
+        security_policy=policy_dto.sp_id,  # 👈 ahora string
         microservices=[],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
@@ -36,7 +38,7 @@ async def test_create_service(get_db):
     response_dto = ServiceResponseDTO.from_model(created)
 
     assert response_dto.service_id == created.service_id
-    assert response_dto.security_policy.sp_id == "security_manager"
+    assert response_dto.security_policy == "security_manager"
 
 
 @pytest.mark.asyncio
@@ -48,12 +50,14 @@ async def test_get_service(get_db):
 
     policy_dto = SecurityPolicyDTO(
         sp_id="ml1_analyst",
+        name="ML1 Analyst Policy",
         roles=["ml1_analyst"],
         requires_authentication=True
     )
 
     create_dto = ServiceCreateDTO(
-        security_policy=policy_dto,
+        name="Get Service",
+        security_policy=policy_dto.sp_id,  # 👈 ahora string
         microservices=[],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
@@ -64,7 +68,7 @@ async def test_get_service(get_db):
     response_dto = ServiceResponseDTO.from_model(fetched)
 
     assert response_dto.service_id == created.service_id
-    assert response_dto.security_policy.sp_id == "ml1_analyst"
+    assert response_dto.security_policy == "ml1_analyst"
 
 
 @pytest.mark.asyncio
@@ -76,12 +80,14 @@ async def test_update_service(get_db):
 
     policy_dto = SecurityPolicyDTO(
         sp_id="security_manager",
+        name="Security Manager Policy",
         roles=["security_manager"],
         requires_authentication=True
     )
 
     create_dto = ServiceCreateDTO(
-        security_policy=policy_dto,
+        name="Old Service",
+        security_policy=policy_dto.sp_id,  # 👈 ahora string
         microservices=[],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
@@ -113,12 +119,14 @@ async def test_delete_service(get_db):
 
     policy_dto = SecurityPolicyDTO(
         sp_id="security_manager",
+        name="Security Manager Policy",
         roles=["security_manager"],
         requires_authentication=True
     )
 
     create_dto = ServiceCreateDTO(
-        security_policy=policy_dto,
+        name="To Delete Service",
+        security_policy=policy_dto.sp_id,  # 👈 ahora string
         microservices=[],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
