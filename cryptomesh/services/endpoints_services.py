@@ -30,6 +30,7 @@ class EndpointsService:
     ):
         self.repository = repository
         self.security_policy_service = security_policy_service
+        self.summoner_params = summoner_params
         self.summoner = Summoner(
             ip_addr     = summoner_params.ip_addr,
             port        = summoner_params.port,
@@ -47,6 +48,14 @@ class EndpointsService:
                 "error":str(e)
             })
             return Err(e)
+    
+    async def detach(self,endpoint_id:str)->Result[bool,CryptoMeshError]:
+        try:
+            res1 = self.summoner.delete_container(container_id=endpoint_id,mode=self.summoner_params.mode)
+            res2 = await self.delete_endpoint(endpoint_id=self.get_endpoint)
+            return Ok(res1.is_ok and res2.is_ok)
+        except Exception as e:
+            return CryptoMeshError(message=str(e),code=500)
     async def deploy(self,endpoint_id:str,dependencies:List[str]=[],network_id:str = "axo-net",selected_node:str= None):
         model = await self.get_endpoint(endpoint_id=endpoint_id)
         x_port = random.randrange(start=30000, stop=60000)
