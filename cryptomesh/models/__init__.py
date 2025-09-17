@@ -8,6 +8,7 @@ class SummonerParams(BaseModel):
     port: Optional[int] = 15000
     protocol:Optional[str] = "http"
     api_version:Optional[int] = 3
+    mode:Optional[str] ="docker"
 
 
 class ResourcesModel(BaseModel):
