@@ -145,7 +145,7 @@ async def delete_endpoint(endpoint_id: str, svc: EndpointsService = Depends(get_
 @router.post(
     "/deploy",
     response_model=EndpointResponseDTO,
-    response_model_by_alias=True,
+    # response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
     summary="Desplegar un nuevo endpoint",
     description="Desplegar un nuevo endpoint en la infraestructura."
