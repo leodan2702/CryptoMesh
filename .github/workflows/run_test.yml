@@ -17,22 +17,17 @@ jobs:
     strategy:  
       matrix:  
         python-version: ["3.11"]  
-    # services:
-    #   mongodb:
-    #     image: mongo:6
-    #     ports:
-    #       - 27017:27017
-    #     options: >-
-    #       --health-cmd="mongosh --eval 'db.adminCommand(\"ping\")'"
-    #       --health-interval=10s
-    #       --health-timeout=5s
-    #       --health-retries=5
     steps:  
       - uses: actions/checkout@v3  
       - name: Set up Python ${{ matrix.python-version }}  
         uses: actions/setup-python@v4  
         with:  
           python-version: ${{ matrix.python-version }}  
+      - name: Set Permission
+        run: |
+          sudo mkdir -p /mictlanx/client
+          sudo chown -R $USER:$USER /mictlanx
+          sudo chmod -R 777 /mictlanx
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
