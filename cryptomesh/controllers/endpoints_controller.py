@@ -8,11 +8,8 @@ from cryptomesh.repositories.security_policy_repository import SecurityPolicyRep
 from cryptomesh.services.security_policy_service import SecurityPolicyService
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
-from cryptomesh.errors import (
-    CryptoMeshError,
-    NotFoundError,
-    ValidationError,
-)
+from cryptomesh.errors import handle_crypto_errors
+
 import time as T
 from cryptomesh.dtos.endpoints_dto import EndpointCreateDTO, EndpointResponseDTO, EndpointUpdateDTO
 
@@ -41,15 +38,12 @@ def get_endpoints_service() -> EndpointsService:
     summary="Crear un nuevo endpoint",
     description="Crea un nuevo endpoint en la base de datos."
 )
+@handle_crypto_errors
 async def create_endpoint(dto: EndpointCreateDTO, svc: EndpointsService = Depends(get_endpoints_service)):
     t1 = T.time()
-    try:
-        model = dto.to_model()
-        created = await svc.create_endpoint(model)
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
+    model = dto.to_model()
+    created = await svc.create_endpoint(model)
+
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ENDPOINT.CREATED",
@@ -57,6 +51,7 @@ async def create_endpoint(dto: EndpointCreateDTO, svc: EndpointsService = Depend
         "time": elapsed
     })
     return EndpointResponseDTO.from_model(created)
+
 
 @router.get(
     "/",
@@ -66,13 +61,12 @@ async def create_endpoint(dto: EndpointCreateDTO, svc: EndpointsService = Depend
     summary="Obtener todos los endpoints",
     description="Recupera todos los endpoints almacenados en la base de datos."
 )
+@handle_crypto_errors
 async def list_endpoints(svc: EndpointsService = Depends(get_endpoints_service)):
     t1 = T.time()
-    try:
-        endpoints = await svc.list_endpoints()
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    endpoints = await svc.list_endpoints()
     elapsed = round(T.time() - t1, 4)
+
     L.debug({
         "event": "API.ENDPOINT.LISTED",
         "count": len(endpoints),
@@ -88,24 +82,11 @@ async def list_endpoints(svc: EndpointsService = Depends(get_endpoints_service))
     summary="Obtener un endpoint por ID",
     description="Devuelve un endpoint específico dado su ID único."
 )
+@handle_crypto_errors
 async def get_endpoint(endpoint_id: str, svc: EndpointsService = Depends(get_endpoints_service)):
     t1 = T.time()
-    try:
-        endpoint = await svc.get_endpoint(endpoint_id)
-        if not endpoint:
-            raise NotFoundError(endpoint_id)
-    except NotFoundError as e:
-        elapsed = round(T.time() - t1, 4)
-        L.warning({
-            "event": "API.ENDPOINT.NOT_FOUND",
-            "endpoint_id": endpoint_id,
-            "time": elapsed
-        })
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    endpoint = await svc.get_endpoint(endpoint_id)
+
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ENDPOINT.FETCHED",
@@ -122,28 +103,14 @@ async def get_endpoint(endpoint_id: str, svc: EndpointsService = Depends(get_end
     summary="Actualizar un endpoint por ID",
     description="Actualiza completamente un endpoint existente."
 )
+@handle_crypto_errors
 async def update_endpoint(endpoint_id: str, dto: EndpointUpdateDTO, svc: EndpointsService = Depends(get_endpoints_service)):
     t1 = T.time()
-    try:
-        existing = await svc.get_endpoint(endpoint_id)
-        if not existing:
-            raise NotFoundError(endpoint_id)
+    existing = await svc.get_endpoint(endpoint_id)
 
-        updated_model = EndpointUpdateDTO.apply_updates(dto, existing)
-        updated = await svc.update_endpoint(endpoint_id, updated_model.model_dump(by_alias=True))
+    updated_model = EndpointUpdateDTO.apply_updates(dto, existing)
+    updated = await svc.update_endpoint(endpoint_id, updated_model.model_dump(by_alias=True))
 
-    except NotFoundError as e:
-        elapsed = round(T.time() - t1, 4)
-        L.error({
-            "event": "API.ENDPOINT.UPDATE.FAIL",
-            "endpoint_id": endpoint_id,
-            "time": elapsed
-        })
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ENDPOINT.UPDATED",
@@ -158,28 +125,20 @@ async def update_endpoint(endpoint_id: str, dto: EndpointUpdateDTO, svc: Endpoin
     summary="Eliminar un endpoint por ID",
     description="Elimina un endpoint de la base de datos según su ID."
 )
+@handle_crypto_errors
 async def delete_endpoint(endpoint_id: str, svc: EndpointsService = Depends(get_endpoints_service)):
-    try:
-        t1 = T.time()
-        res = await svc.delete_endpoint(endpoint_id)
-        if res.is_err:
-            raise res.unwrap_err()
-        elapsed = round(T.time() - t1, 4)
+    t1 = T.time()
+    res = await svc.delete_endpoint(endpoint_id)
+    if res.is_err:
+        raise res.unwrap_err()
+    elapsed = round(T.time() - t1, 4)
 
-        L.info({
-            "event": "API.ENDPOINT.DELETED",
-            "endpoint_id": endpoint_id,
-            "time": elapsed
-        })
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
-    
-
+    L.info({
+        "event": "API.ENDPOINT.DELETED",
+        "endpoint_id": endpoint_id,
+        "time": elapsed
+    })
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -191,6 +150,7 @@ async def delete_endpoint(endpoint_id: str, svc: EndpointsService = Depends(get_
     summary="Desplegar un nuevo endpoint",
     description="Desplegar un nuevo endpoint en la infraestructura."
 )
+@handle_crypto_errors
 async def deploy_endpoint(
     dto:EndpointCreateDTO,
     svc: EndpointsService = Depends(get_endpoints_service)
@@ -209,6 +169,8 @@ async def deploy_endpoint(
         if endpoint_id:
             res = await svc.delete_endpoint(endpoint_id=endpoint_id)
         raise HTTPException(status_code=400, detail=str(e))
+    t1 = T.time()
+    await svc.delete_endpoint(endpoint_id)
 
     elapsed = round(T.time() - t1, 4)
     L.info({

@@ -1,6 +1,7 @@
 from typing import TypeVar, Generic, Type, Union, Optional, List
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorCollection
+from pymongo import ReturnDocument
 from pymongo.errors import PyMongoError
 from fastapi import HTTPException
 from cryptomesh.log.logger import get_logger
@@ -47,21 +48,16 @@ class BaseRepository(Generic[T]):
             if isinstance(updates, BaseModel):
                 updates = updates.model_dump(by_alias=True, exclude_unset=True)
 
-            original_doc = await self.collection.find_one(query)
-
-      
-            if original_doc and "security_policy" in original_doc and "security_policy" in updates:
-                original_sp = original_doc["security_policy"] or {}
-                new_sp = updates["security_policy"] or {}
-                
-                merged_sp = {**original_sp, **new_sp}
-                if "sp_id" not in new_sp and "sp_id" in original_sp:
-                    merged_sp["sp_id"] = original_sp["sp_id"]
-                updates["security_policy"] = merged_sp
+            if "security_policy" in updates:
+                sp = updates["security_policy"]
+                if isinstance(sp, dict) and "sp_id" in sp:
+                    updates["security_policy"] = sp["sp_id"]
 
             updated_doc = await self.collection.find_one_and_update(
-                query, {"$set": updates}, return_document=True
-        )
+                query,
+                {"$set": updates},
+                return_document=ReturnDocument.AFTER
+            )
 
             return self.model(**updated_doc) if updated_doc else None
 
@@ -76,4 +72,3 @@ class BaseRepository(Generic[T]):
         except PyMongoError as e:
             L.error({"error": str(e)})
             raise HTTPException(status_code=500, detail="Database error in delete")
-

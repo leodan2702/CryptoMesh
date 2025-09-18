@@ -13,6 +13,7 @@ class SecurityPolicyDTO(BaseModel):
     Se utiliza para creación, actualización y respuesta.
     """
     sp_id: Optional[str] = None
+    name: str
     roles: List[str]
     requires_authentication: bool
 
@@ -25,6 +26,7 @@ class SecurityPolicyDTO(BaseModel):
     def to_model(self) -> SecurityPolicyModel:
         return SecurityPolicyModel(
             sp_id=self.sp_id or str(uuid.uuid4()),
+            name=self.name,
             roles=self.roles,
             requires_authentication=self.requires_authentication,
             created_at=datetime.utcnow()
@@ -34,6 +36,7 @@ class SecurityPolicyDTO(BaseModel):
     def from_model(model: SecurityPolicyModel) -> "SecurityPolicyDTO":
         return SecurityPolicyDTO(
             sp_id=model.sp_id,
+            name=model.name,
             roles=model.roles,
             requires_authentication=model.requires_authentication
         )
@@ -44,6 +47,7 @@ class SecurityPolicyDTO(BaseModel):
 # -------------------------------
 class SecurityPolicyResponseDTO(BaseModel):
     sp_id: str
+    name: str
     roles: List[str]
     requires_authentication: bool
 
@@ -54,6 +58,7 @@ class SecurityPolicyResponseDTO(BaseModel):
         """
         return SecurityPolicyResponseDTO(
             sp_id=model.sp_id,
+            name=model.name,
             roles=model.roles,
             requires_authentication=model.requires_authentication,
         )
@@ -64,6 +69,7 @@ class SecurityPolicyResponseDTO(BaseModel):
 # -------------------------------
 class SecurityPolicyUpdateDTO(BaseModel):
     roles: Optional[List[str]] = None
+    name: Optional[str] = None
     requires_authentication: Optional[bool] = None
 
     @field_validator("roles")
@@ -87,5 +93,6 @@ class SecurityPolicyUpdateDTO(BaseModel):
     def from_model(model: SecurityPolicyModel) -> "SecurityPolicyUpdateDTO":
         return SecurityPolicyUpdateDTO(
             roles=model.roles,
+            name=model.name,
             requires_authentication=model.requires_authentication
         )

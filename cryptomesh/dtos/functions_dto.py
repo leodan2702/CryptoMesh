@@ -10,12 +10,13 @@ import uuid
 # DTO para creación de funciones
 # -------------------------------
 class FunctionCreateDTO(BaseModel):
+    name : str
     microservice_id: str
     image: str
     resources: ResourcesDTO
     storage: StorageDTO
     endpoint_id: str
-    policy_id: str
+    policy_id: Optional[str] = None
 
     def to_model(self, function_id: Optional[str] = None, deployment_status: str = "pending") -> FunctionModel:
         """
@@ -23,6 +24,7 @@ class FunctionCreateDTO(BaseModel):
         """
         return FunctionModel(
             function_id=function_id or str(uuid.uuid4()),
+            name=self.name,
             microservice_id=self.microservice_id,
             image=self.image,
             resources=self.resources.to_model(),
@@ -39,6 +41,7 @@ class FunctionCreateDTO(BaseModel):
         Convierte un FunctionModel a un DTO de creación.
         """
         return FunctionCreateDTO(
+            name=model.name,
             microservice_id=model.microservice_id,
             image=model.image,
             resources=ResourcesDTO.from_model(model.resources),
@@ -53,10 +56,13 @@ class FunctionCreateDTO(BaseModel):
 # -------------------------------
 class FunctionResponseDTO(BaseModel):
     function_id: str
+    name: str
     image: str
     deployment_status: str
     resources: ResourcesDTO
     storage: StorageDTO
+    microservice_id: str
+    endpoint_id: str
 
     @staticmethod
     def from_model(model: FunctionModel) -> "FunctionResponseDTO":
@@ -65,10 +71,13 @@ class FunctionResponseDTO(BaseModel):
         """
         return FunctionResponseDTO(
             function_id=model.function_id,
+            name=model.name,
             image=model.image,
             deployment_status=model.deployment_status,
             resources=ResourcesDTO.from_model(model.resources),
-            storage=StorageDTO.from_model(model.storage)
+            storage=StorageDTO.from_model(model.storage),
+            microservice_id = model.microservice_id,
+            endpoint_id = model.endpoint_id 
         )
 
 
@@ -76,10 +85,12 @@ class FunctionResponseDTO(BaseModel):
 # DTO para actualización de funciones
 # -------------------------------
 class FunctionUpdateDTO(BaseModel):
+    name: Optional[str] = None
     image: Optional[str] = None
     resources: Optional[ResourcesUpdateDTO] = None
     storage: Optional[StorageUpdateDTO] = None
     endpoint_id: Optional[str] = None
+    microservice_id: Optional[str] = None
     deployment_status: Optional[str] = None
 
     @staticmethod
@@ -106,9 +117,11 @@ class FunctionUpdateDTO(BaseModel):
         Convierte un FunctionModel en un DTO de actualización.
         """
         return FunctionUpdateDTO(
+            name=model.name,
             image=model.image,
             resources=ResourcesUpdateDTO.from_model(model.resources),
             storage=StorageUpdateDTO.from_model(model.storage),
             endpoint_id=model.endpoint_id,
+            microservice_id=model.microservice_id,
             deployment_status=model.deployment_status
         )

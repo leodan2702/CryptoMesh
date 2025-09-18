@@ -5,15 +5,7 @@ from cryptomesh.services.microservices_services import MicroservicesService
 from cryptomesh.repositories.microservices_repository import MicroservicesRepository
 from cryptomesh.db import get_collection
 from cryptomesh.log.logger import get_logger
-from cryptomesh.errors import (
-    CryptoMeshError,
-    NotFoundError,
-    ValidationError,
-    InvalidYAML,
-    CreationError,
-    UnauthorizedError,
-    FunctionNotFound,
-)
+from cryptomesh.errors import handle_crypto_errors
 import time as T
 
 from cryptomesh.dtos.microservices_dto import MicroserviceCreateDTO, MicroserviceResponseDTO, MicroserviceUpdateDTO
@@ -34,15 +26,12 @@ def get_microservices_service() -> MicroservicesService:
     summary="Crear un nuevo microservicio",
     description="Crea un nuevo microservicio en la base de datos. El ID debe ser único."
 )
+@handle_crypto_errors
 async def create_microservice(dto: MicroserviceCreateDTO, svc: MicroservicesService = Depends(get_microservices_service)):
     t1 = T.time()
-    try:
-        model = dto.to_model()
-        created = await svc.create_microservice(model)
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    model = dto.to_model()
+    created = await svc.create_microservice(model)
+
     elapsed = round(T.time() - t1, 4)
     L.info({    
         "event": "API.MICROSERVICE.CREATED",
@@ -59,12 +48,10 @@ async def create_microservice(dto: MicroserviceCreateDTO, svc: MicroservicesServ
     summary="Obtener todos los microservicios",
     description="Recupera todos los microservicios almacenados en la base de datos."
 )
+@handle_crypto_errors
 async def list_microservices(svc: MicroservicesService = Depends(get_microservices_service)):
     t1 = T.time()
-    try:
-        microservices = await svc.list_microservices()
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    microservices = await svc.list_microservices()
     elapsed = round(T.time() - t1, 4)
     L.debug({
         "event": "API.MICROSERVICE.LISTED",
@@ -81,24 +68,11 @@ async def list_microservices(svc: MicroservicesService = Depends(get_microservic
     summary="Obtener un microservicio por ID",
     description="Devuelve un microservicio específico dado su ID único."
 )
+@handle_crypto_errors
 async def get_microservice(microservice_id: str, svc: MicroservicesService = Depends(get_microservices_service)):
     t1 = T.time()
-    try:
-        ms = await svc.get_microservice(microservice_id)
-        if not ms:
-            raise NotFoundError(microservice_id)
-    except NotFoundError as e:
-        elapsed = round(T.time() - t1, 4)
-        L.warning({
-            "event": "API.MICROSERVICE.NOT_FOUND",
-            "microservice_id": microservice_id,
-            "time": elapsed
-        })
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    ms = await svc.get_microservice(microservice_id)
+
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.MICROSERVICE.FETCHED",
@@ -115,28 +89,13 @@ async def get_microservice(microservice_id: str, svc: MicroservicesService = Dep
     summary="Actualizar un microservicio por ID",
     description="Actualiza completamente un microservicio existente."
 )
+@handle_crypto_errors
 async def update_microservice(microservice_id: str, dto: MicroserviceUpdateDTO, svc: MicroservicesService = Depends(get_microservices_service)):
     t1 = T.time()
-    try:
-        existing = await svc.get_microservice(microservice_id)
-        if not existing:
-            raise NotFoundError(microservice_id)
+    existing = await svc.get_microservice(microservice_id)
+    updated_model = MicroserviceUpdateDTO.apply_updates(dto, existing)
+    updated_ms = await svc.update_microservice(microservice_id, updated_model.model_dump(by_alias=True))
 
-        updated_model = MicroserviceUpdateDTO.apply_updates(dto, existing)
-        updated_ms = await svc.update_microservice(microservice_id, updated_model.model_dump(by_alias=True))
-
-    except NotFoundError as e:
-        elapsed = round(T.time() - t1, 4)
-        L.error({
-            "event": "API.MICROSERVICE.UPDATE.FAIL",
-            "microservice_id": microservice_id,
-            "time": elapsed
-        })
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.MICROSERVICE.UPDATED",
@@ -151,16 +110,11 @@ async def update_microservice(microservice_id: str, dto: MicroserviceUpdateDTO, 
     summary="Eliminar un microservicio por ID",
     description="Elimina un microservicio de la base de datos según su ID."
 )
+@handle_crypto_errors
 async def delete_microservice(microservice_id: str, svc: MicroservicesService = Depends(get_microservices_service)):
     t1 = T.time()
-    try:
-        await svc.delete_microservice(microservice_id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=e.to_dict())
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-    except CryptoMeshError as e:
-        raise HTTPException(status_code=500, detail=e.to_dict())
+    await svc.delete_microservice(microservice_id)
+
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.MICROSERVICE.DELETED",

@@ -3,10 +3,8 @@ from typing import Optional
 from datetime import datetime
 from cryptomesh.models import EndpointModel
 from cryptomesh.dtos.resources_dto import ResourcesDTO, ResourcesUpdateDTO
-from cryptomesh.dtos.security_policy_dto import SecurityPolicyDTO, SecurityPolicyResponseDTO,SecurityPolicyUpdateDTO
 import uuid
 from typing import Optional
-
 
 class DeleteEndpointDTO(BaseModel):
     detail: str
@@ -21,7 +19,7 @@ class EndpointCreateDTO(BaseModel):
     name: str
     image: str
     resources: ResourcesDTO
-    security_policy: SecurityPolicyDTO
+    security_policy: str
     policy_id: Optional[str] = None  # referencia a la política YAML
 
     def to_model(self, endpoint_id: Optional[str] = None) -> EndpointModel:
@@ -33,7 +31,7 @@ class EndpointCreateDTO(BaseModel):
             name=self.name,
             image=self.image,
             resources= self.resources.to_model(),
-            security_policy= self.security_policy.to_model(),
+            security_policy= self.security_policy,
             created_at=datetime.utcnow(),
             policy_id=self.policy_id
         )
@@ -47,10 +45,11 @@ class EndpointCreateDTO(BaseModel):
             name=model.name,
             image=model.image,
             resources=ResourcesDTO.from_model(model.resources),
-            security_policy=SecurityPolicyDTO.from_model(model.security_policy),
+            security_policy=model.security_policy,
             policy_id=model.policy_id
         )
-
+    
+    
 
 # -------------------------------
 # DTO para respuesta al cliente
@@ -64,7 +63,7 @@ class EndpointResponseDTO(BaseModel):
     name: str
     image: str
     resources: ResourcesDTO
-    security_policy: SecurityPolicyResponseDTO
+    security_policy: str
 
     @staticmethod
     def from_model(model: EndpointModel) -> "EndpointResponseDTO":
@@ -76,7 +75,7 @@ class EndpointResponseDTO(BaseModel):
             name=model.name,
             image=model.image,
             resources=ResourcesDTO.from_model(model.resources),
-            security_policy=SecurityPolicyResponseDTO.from_model(model.security_policy),
+            security_policy=model.security_policy
         )
 
 
@@ -91,7 +90,7 @@ class EndpointUpdateDTO(BaseModel):
     name: Optional[str] = None
     image: Optional[str] = None
     resources: Optional[ResourcesUpdateDTO] = None
-    security_policy: Optional[SecurityPolicyDTO] = None
+    security_policy: Optional[str] = None
 
     @staticmethod
     def apply_updates(dto: "EndpointUpdateDTO", model: EndpointModel) -> EndpointModel:
@@ -104,10 +103,6 @@ class EndpointUpdateDTO(BaseModel):
             if field == "resources" and value is not None:
                 resource_dto = ResourcesUpdateDTO(**value)
                 model.resources = ResourcesUpdateDTO.apply_updates(resource_dto, model.resources)
-
-            elif field == "security_policy" and value is not None:
-                security_policy_dto = SecurityPolicyUpdateDTO(**value)
-                model.security_policy = SecurityPolicyUpdateDTO.apply_updates(security_policy_dto, model.security_policy)
             else:
                 setattr(model, field, value)
         return model
@@ -123,5 +118,5 @@ class EndpointUpdateDTO(BaseModel):
             name=model.name,
             image=model.image,
             resources=ResourcesUpdateDTO.from_model(model.resources),
-            security_policy=SecurityPolicyUpdateDTO.from_model(model.security_policy)
+            security_policy= model.security_policy
         )

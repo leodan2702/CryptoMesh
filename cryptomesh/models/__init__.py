@@ -29,6 +29,7 @@ class RoleModel(BaseModel):
 
 class SecurityPolicyModel(BaseModel):
     sp_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
     roles: List[str]  # Referencias a RoleModel
     requires_authentication: bool
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -38,7 +39,7 @@ class EndpointModel(BaseModel):
     name: str
     image: str
     resources: ResourcesModel # resource_id
-    security_policy: SecurityPolicyModel  # sp_id
+    security_policy: str  # sp_id
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     policy_id: Optional[str] = None #reference to yaml policy
     envs:Optional[Dict[str,str]] = Field(default={})
@@ -52,22 +53,25 @@ class EndpointStateModel(BaseModel):
 
 class ServiceModel(BaseModel):
     service_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    security_policy: SecurityPolicyModel # sp_id
+    name: str
+    security_policy: str # sp_id
     microservices: List[str]  # Lista de microservice_id
     resources: ResourcesModel  # resource_id
     created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
-    policy_id: str
+    policy_id: Optional[str] = None
 
 class MicroserviceModel(BaseModel):
     microservice_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
     service_id: str
     functions: List[str]  # Lista de function_id
     resources: ResourcesModel  # resource_id
     created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
-    policy_id: str
+    policy_id: Optional[str] = None
 
 class FunctionModel(BaseModel):
     function_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
     microservice_id: str
     image: str
     resources: ResourcesModel  #INCRUSTADO
@@ -75,7 +79,7 @@ class FunctionModel(BaseModel):
     endpoint_id: str
     deployment_status: str
     created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
-    policy_id: str
+    policy_id: Optional[str] = None
 
 class FunctionStateModel(BaseModel):
     state_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
