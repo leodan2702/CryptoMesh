@@ -27,7 +27,11 @@ jobs:
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH  # Ensure poetry is on PATH
-
+      - name: Set permissions
+        run: |
+          sudo mkdir -p /mictlanx/client
+          sudo chown -R $USER:$USER /mictlanx/client
+          sudo chmod -R 777 /mictlanx/client
       - name: Configure Poetry
         run: |
           poetry config virtualenvs.create true
@@ -54,16 +58,6 @@ jobs:
           ruff check .  
         continue-on-error: true  
         
-      # - name: Wait for MongoDB to be ready
-      #   run: |
-      #     for i in {1..10}; do
-      #       if mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
-      #         echo "MongoDB is up!"
-      #         break
-      #       fi
-      #       echo "Waiting for MongoDB..."
-      #       sleep 3
-      #     done
 
       - name: Test with pytest  
         run: |  
