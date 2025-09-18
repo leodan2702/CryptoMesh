@@ -26,10 +26,15 @@ services:
       - crypto-mesh-db
       - crypto-mesh-broker
     ports:
-      - "${API_PORT:-19000}:19000"
+      - "${CRYPTO_MESH_PORT:-19000}:19000"
     environment:
+      CRYPTO_MESH_HOST: ${CRYPTOMESH_HOST:-0.0.0.0}
+      CRYPTO_MESH_PORT: ${CRYPTO_MESH_PORT:-19000}
       MONGO_DATABASE_NAME: ${MONGODB_DATABASE_NAME:-cryptomesh}
       MONGODB_URI: ${MONGODB_URI:-mongodb://crypto-mesh-db:27017/cryptomesh}
+      MICTLANX_LOG_PATH: "/app/logs"
+    volumes:
+      - cryptomesh-vol:/app
     restart: unless-stopped
     networks:
       - cryptomesh-net
@@ -61,5 +66,6 @@ services:
       - cryptomesh-net
 volumes:
   mongo-data:
+  cryptomesh-vol:
 networks:
   cryptomesh-net:

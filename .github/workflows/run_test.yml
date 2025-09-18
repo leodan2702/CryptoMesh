@@ -23,11 +23,6 @@ jobs:
         uses: actions/setup-python@v4  
         with:  
           python-version: ${{ matrix.python-version }}  
-      - name: Set Permission
-        run: |
-          sudo mkdir -p /mictlanx/client
-          sudo chown -R $USER:$USER /mictlanx
-          sudo chmod -R 777 /mictlanx
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
@@ -43,7 +38,7 @@ jobs:
 
       - name: Start CryptoMesh backend
         run: |
-          docker compose -f docker-compose.yml up -d
+          docker compose -f docker-compose.yml up -d --build
           echo "CryptoMesh service was deployed..."
           for i in {1..20}; do
             if curl -s http://localhost:19000/docs > /dev/null; then
