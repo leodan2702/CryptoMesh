@@ -87,27 +87,7 @@ class EndpointsService:
             "time": elapsed
         })
         
-        return endpoint
-
-        # --- Manejo de SecurityPolicy incrustada ---
-        sp_id = None
-        if hasattr(endpoint.security_policy, 'sp_id'):
-            sp_id = endpoint.security_policy.sp_id
-        else:
-            sp_id = endpoint.security_policy
-
-        sp = None
-        if sp_id:
-            sp = await self.security_policy_service.get_policy(sp_id)
-
-        endpoint_data = endpoint.model_dump()
-        if sp:
-            endpoint_data['security_policy'] = sp.model_dump()
-        else:
-            endpoint_data['security_policy'] = endpoint.security_policy
-
-
-        
+        return endpoint        
 
     async def update_endpoint(self, endpoint_id: str, updates: dict): 
         t1 = T.time()
