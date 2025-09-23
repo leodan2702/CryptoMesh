@@ -21,17 +21,17 @@ client = CryptoMeshClient(BASE_URL)
 @pytest.mark.asyncio
 async def test_create_function():
     function=FunctionCreateDTO(
-        microservice_id="m1",
-        name="Test Function",
-        image="test_function_image",
-        resources=ResourcesDTO(cpu=2, ram="2GB"),
-        storage=StorageDTO(
-            capacity="10GB",
-            source_path="/src",
-            sink_path="/dst"
+        microservice_id = "m1",
+        name            = "Test Function",
+        image           = "test_function_image",
+        resources       = ResourcesDTO(cpu=3, ram="2GB"),
+        storage         = StorageDTO(
+            capacity    = "10GB",
+            source_path = "/src",
+            sink_path   = "/dst"
         ),
-        endpoint_id="ep-123",
-        policy_id="policy-abc"
+        endpoint_id = "ep-123",
+        policy_id   = "policy-abc"
     )
     result = await client.create_function(function)
     assert result.is_ok

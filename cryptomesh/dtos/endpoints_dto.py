@@ -4,6 +4,10 @@ from datetime import datetime
 from cryptomesh.models import EndpointModel
 from cryptomesh.dtos.resources_dto import ResourcesDTO, ResourcesUpdateDTO
 import uuid
+from typing import Optional
+
+class DeleteEndpointDTO(BaseModel):
+    detail: str
 # -------------------------------
 # DTO para creación de endpoints
 # -------------------------------

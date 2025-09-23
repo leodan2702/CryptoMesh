@@ -3,6 +3,14 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 import uuid
 
+class SummonerParams(BaseModel):
+    ip_addr:Optional[str] = "localhost"
+    port: Optional[int] = 15000
+    protocol:Optional[str] = "http"
+    api_version:Optional[int] = 3
+    mode:Optional[str] ="docker"
+
+
 class ResourcesModel(BaseModel):
     cpu: int
     ram: str
@@ -34,6 +42,7 @@ class EndpointModel(BaseModel):
     security_policy: str  # sp_id
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     policy_id: Optional[str] = None #reference to yaml policy
+    envs:Optional[Dict[str,str]] = Field(default={})
 
 class EndpointStateModel(BaseModel):
     state_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
