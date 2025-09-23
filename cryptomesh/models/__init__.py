@@ -1,5 +1,5 @@
 from datetime import datetime,timezone
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, validator, field_validator
 from typing import List, Dict, Optional
 import uuid
 
@@ -42,6 +42,7 @@ class EndpointModel(BaseModel):
     security_policy: str  # sp_id
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     policy_id: Optional[str] = None #reference to yaml policy
+    active_object_id: Optional[str] = None
     envs:Optional[Dict[str,str]] = Field(default={})
 
 class EndpointStateModel(BaseModel):
@@ -80,6 +81,43 @@ class FunctionModel(BaseModel):
     deployment_status: str
     created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
     policy_id: Optional[str] = None
+
+class ActiveObjectModel(BaseModel):
+    """Serializable metafata stored alongside every active object"""
+    model_config = ConfigDict(validate_assignment = True)
+    active_object_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+    #class-level defaults (paths can be overriden via env-vars)
+    path: Optional[str] = "/axo/data"
+    source_path: Optional[str] = "/axo/source"
+    sink_path: Optional[str] = "/axo/sink"
+
+    #stored fields
+    axo_is_read_only: bool = False
+
+    axo_key: str = Field(default_factory = lambda: str(uuid.uuid4()))
+    axo_bucket_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    axo_source_bucket_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    axo_sink_bucket_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    axo_module: str
+    axo_class_name: str
+    axo_version: int = 0
+
+    axo_endpoint_id: Optional[str] = None
+    axo_dependencies: List[str] = Field(default_factory=list)
+    
+    axo_uri: Optional[str] = None
+    axo_alias: Optional[str] = None
+
+    created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
+
+    @field_validator("axo_version")
+    @classmethod
+    def validate_version(cls, v):
+        if v < 0:
+            raise ValueError("Version must be >= 0")
+        return v
+
 
 class FunctionStateModel(BaseModel):
     state_id: str = Field(default_factory=lambda: str(uuid.uuid4()))

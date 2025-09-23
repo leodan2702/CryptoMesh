@@ -210,12 +210,7 @@ class EndpointsService:
             "time": elapsed
         })
         
-        return endpoint
-
-    
-
-
-        
+        return endpoint        
 
     async def update_endpoint(self, endpoint_id: str, updates: dict): 
         t1 = T.time()
