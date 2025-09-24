@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Dict, List, Optional
 import uuid
 from cryptomesh.models import ActiveObjectModel
 
@@ -25,6 +25,8 @@ class ActiveObjectCreateDTO(BaseModel):
     path: Optional[str] = "/axo/data"
     source_path: Optional[str] = "/axo/source"
     sink_path: Optional[str] = "/axo/sink"
+    axo_code: Optional[str] = None
+    axo_schema: Optional[Dict[str, object]] = None
 
     def to_model(self, active_object_id: Optional[str] = None) -> ActiveObjectModel:
         """
@@ -46,7 +48,9 @@ class ActiveObjectCreateDTO(BaseModel):
             axo_alias=self.axo_alias,
             path=self.path,
             source_path=self.source_path,
-            sink_path=self.sink_path
+            sink_path=self.sink_path,
+            axo_code=self.axo_code,
+            axo_schema=self.axo_schema
         )
 
     @staticmethod
@@ -69,7 +73,9 @@ class ActiveObjectCreateDTO(BaseModel):
             axo_alias=model.axo_alias,
             path=model.path,
             source_path=model.source_path,
-            sink_path=model.sink_path
+            sink_path=model.sink_path,
+            axo_code=model.axo_code,
+            axo_schema=model.axo_schema
         )
 
 
@@ -97,6 +103,8 @@ class ActiveObjectResponseDTO(BaseModel):
     path: str
     source_path: str
     sink_path: str
+    axo_code: Optional[str]
+    axo_schema: Optional[Dict[str, object]] = None
 
     @staticmethod
     def from_model(model: ActiveObjectModel) -> "ActiveObjectResponseDTO":
@@ -116,7 +124,9 @@ class ActiveObjectResponseDTO(BaseModel):
             axo_alias=model.axo_alias,
             path=model.path,
             source_path=model.source_path,
-            sink_path=model.sink_path
+            sink_path=model.sink_path,
+            axo_code=model.axo_code,
+            axo_schema=model.axo_schema
         )
 
 
@@ -143,6 +153,8 @@ class ActiveObjectUpdateDTO(BaseModel):
     path: Optional[str] = None
     source_path: Optional[str] = None
     sink_path: Optional[str] = None
+    axo_code: Optional[str] = None
+    axo_schema: Optional[Dict[str, object]] = None
 
     @staticmethod
     def apply_updates(dto: "ActiveObjectUpdateDTO", model: ActiveObjectModel) -> ActiveObjectModel:
@@ -171,5 +183,7 @@ class ActiveObjectUpdateDTO(BaseModel):
             axo_alias=model.axo_alias,
             path=model.path,
             source_path=model.source_path,
-            sink_path=model.sink_path
+            sink_path=model.sink_path,
+            axo_code=model.axo_code,
+            axo_schema=model.axo_schema
         )

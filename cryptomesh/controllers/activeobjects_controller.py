@@ -125,3 +125,24 @@ async def delete_active_object(active_object_id: str, svc: ActiveObjectsService 
         "time": elapsed
     })
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.get("/active-objects/{active_object_id}/schema")
+async def get_oa_schema(active_object_id: str,  svc: ActiveObjectsService = Depends(get_activeobjects_service)):
+    oa = await svc.get_active_object(active_object_id)
+    if not oa:
+        raise HTTPException(status_code=404, detail="OA not found")
+
+    # Si ya existe el schema
+    if oa.axo_schema:
+        return oa.axo_schema
+
+    if not oa.axo_code:
+        raise HTTPException(status_code=400, detail="OA has no code to extract schema")
+
+    schema = ActiveObjectsService.extract_schema_from_code(oa.axo_code)
+
+    
+    await svc.update_active_object(oa.active_object_id, {"axo_schema": schema})
+
+    return schema
+
