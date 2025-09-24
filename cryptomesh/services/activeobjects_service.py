@@ -152,7 +152,7 @@ class ActiveObjectsService:
         for node in tree.body:
             if isinstance(node, ast.ClassDef):
                 for func in node.body:
-                    if isinstance(func, ast.FunctionDef):
+                    if isinstance(func, (ast.FunctionDef, ast.AsyncFunctionDef)):
                         args = [arg.arg for arg in func.args.args if arg.arg != "self"]
 
                         if func.name == "__init__":
