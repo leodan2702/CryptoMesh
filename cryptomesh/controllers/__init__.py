@@ -8,3 +8,4 @@ from cryptomesh.controllers.endpoint_state_controller import router as endpoint_
 from cryptomesh.controllers.function_state_controller import router as function_state_router
 from cryptomesh.controllers.function_result_controller import router as function_result_router
 from cryptomesh.controllers.activeobjects_controller import router as activeobjects_router
+from cryptomesh.controllers.hierarchy_controller import router as hierarchy_router
