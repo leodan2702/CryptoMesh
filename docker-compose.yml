@@ -20,7 +20,7 @@ services:
 
   crypto-mesh-api:
     build: .
-    image: cryptomesh-api:latest
+    image: leogarcia10/cryptomesh:api-0.0.1a0
     container_name: crypto-mesh-api
     depends_on:
       - crypto-mesh-db
