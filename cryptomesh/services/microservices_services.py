@@ -144,3 +144,15 @@ class MicroservicesService:
         })
         return {"detail": f"Microservice '{microservice_id}' deleted"}
 
+    async def list_by_service(self, service_id: str) -> List[MicroserviceModel]:
+        """
+        Devuelve todos los microservicios que pertenecen a un servicio especifico
+        """
+        try:
+            return await self.repository.get_by_filter({"service_id": service_id})
+        except Exception as e:
+            L.error({
+                "event": "SERVICE.MICROSERVICES.LIST_BY_SERVICE.FAIL","service_id": service_id, "reason": str(e)
+            })
+            raise CryptoMeshError(f"Failed to list microservices for service '{service_id}'")
+

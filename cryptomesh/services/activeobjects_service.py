@@ -32,6 +32,18 @@ class ActiveObjectsService:
                 "time": elapsed
             })
             raise ValidationError(f"ActiveObject '{active_object.active_object_id}' already exists")
+        
+        if active_object.axo_code:
+            try:
+                active_object.axo_schema = self.extract_schema_from_code(active_object.axo_code)
+            except Exception as e:
+                L.error({
+                    "event": "ACTIVE_OBJECT.CREATE.FAIL",
+                    "reason": "Failed to extract schema",
+                    "active_object_id": active_object.active_object_id,
+                    "time": elapsed
+                })
+                raise CryptoMeshError(f"Failed to create ActiveObject '{active_object.active_object_id}'")
 
         created = await self.repository.create(active_object)
         elapsed = round(T.time() - t1, 4)
@@ -85,7 +97,8 @@ class ActiveObjectsService:
 
     async def update_active_object(self, active_object_id: str, updates: dict) -> ActiveObjectModel:
         t1 = T.time()
-        if not await self.repository.get_by_id(active_object_id, id_field="active_object_id"):
+        ao_exist = await self.repository.get_by_id(active_object_id, id_field="active_object_id")
+        if not ao_exist:
             elapsed = round(T.time() - t1, 4)
             L.warning({
                 "event": "ACTIVE_OBJECT.UPDATE.NOT_FOUND",
@@ -93,6 +106,19 @@ class ActiveObjectsService:
                 "time": elapsed
             })
             raise NotFoundError(active_object_id)
+
+        #extraer schema
+        if "axo_code" in updates and updates["axo_code"]:
+            try:
+                updates["axo_schema"] = self.extract_schema_from_code(updates["axo_code"])
+            except Exception as e:
+                L.error({
+                    "event": "ACTIVE_OBJECT.UPDATE.FAIL",
+                    "active_object_id": active_object_id,
+                    "reason": str(e),
+                })
+                raise CryptoMeshError(f"Failed to update ActiveObject '{active_object_id}'")
+
 
         updated = await self.repository.update({"active_object_id": active_object_id}, updates)
         elapsed = round(T.time() - t1, 4)
@@ -142,9 +168,20 @@ class ActiveObjectsService:
         })
         return {"detail": f"ActiveObject '{active_object_id}' deleted"}
 
+    async def list_by_microservice(self, microservice_id: str) -> List[ActiveObjectModel]:
+        try:
+            return await self.repository.get_by_filter({"axo_microservice_id": microservice_id})
+        except Exception as e:
+            L.error({
+                "event": "ACTIVE_OBJECT.LIST_BY_MICROSERVICE.FAIL",
+                "microservice_id": microservice_id,
+                "reason": str(e)
+            })
+            raise CryptoMeshError(f"Failed to list ActiveObjects by microservice '{microservice_id}'")
 
 
 
+    @staticmethod
     def extract_schema_from_code(code: str):
         tree = ast.parse(code)
         schema = {"init": [], "methods": {}}
