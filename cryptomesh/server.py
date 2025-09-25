@@ -39,6 +39,7 @@ app.include_router(Controllers.microservices_router, prefix=config.CRYPTO_MESH_A
 app.include_router(Controllers.functions_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Functions"])
 app.include_router(Controllers.endpoint_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Endpoints"])
 app.include_router(Controllers.activeobjects_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Active Objects"])
+app.include_router(Controllers.hierarchy_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Hierarchy"])
 app.include_router(Controllers.service_policy_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Security Policy"])
 app.include_router(Controllers.roles_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Roles"])
 app.include_router(Controllers.endpoint_state_router, prefix=config.CRYPTO_MESH_API_PREFIX, tags=["Endpoint State"])
