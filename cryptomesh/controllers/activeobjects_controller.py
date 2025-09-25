@@ -8,8 +8,22 @@ from cryptomesh.log.logger import get_logger
 from cryptomesh.errors import handle_crypto_errors
 import time as T
 
+from mictlanx import AsyncClient
+# from axo import 
 from cryptomesh.dtos.activeobject_dto import ActiveObjectCreateDTO, ActiveObjectResponseDTO, ActiveObjectUpdateDTO
+import os
 
+MICTLANX_URI =os.environ.get("MICTLANX_URI", "mictlanx://mictlanx-router-0@localhost:60666?/api_version=4&protocol=http")
+
+
+MICTLANX = AsyncClient(
+    uri=MICTLANX_URI,
+    log_output_path= os.environ.get("MICTLANX_LOG_PATH", "/log/cryptomesh-mictlanx.log"),
+    capacity_storage="4GB",
+    client_id="cryptomesh",
+    debug=True,
+    eviction_policy="LRU",
+)
 router = APIRouter()
 L = get_logger(__name__)
 
@@ -31,6 +45,21 @@ def get_activeobjects_service() -> ActiveObjectsService:
 async def create_active_object(dto: ActiveObjectCreateDTO, svc: ActiveObjectsService = Depends(get_activeobjects_service)):
     t1 = T.time()
     model = dto.to_model()
+    scheme       = model.axo_schema
+    code         = model.axo_code
+    ao_bucket_id = ""
+    axo_key = dto.axo_key
+    put_source_code_result = MICTLANX.put(
+        bucket_id=ao_bucket_id,
+        key=f"{axo_key}_source_code",
+        value=code.encode('utf-8'),
+
+        tags={
+
+        }
+    )
+
+
     created = await svc.create_active_object(model)
 
     elapsed = round(T.time() - t1, 4)
