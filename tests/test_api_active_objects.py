@@ -11,7 +11,8 @@ async def test_create_active_object(client):
         axo_module="test.module",
         axo_class_name="TestClass",
         axo_version=1,
-        axo_alias="Test Alias"
+        axo_alias="Test Alias",
+        axo_microservice_id="microservice-1"  # campo obligatorio agregado
     )
     response = await client.post("/api/v1/active-objects/", json=dto.model_dump())
     assert response.status_code == 201
@@ -36,6 +37,7 @@ async def test_get_active_object(client):
         axo_module="get.module",
         axo_class_name="GetClass",
         axo_version=1,
+        axo_microservice_id="microservice-1"  # campo obligatorio agregado
     )
     create_res = await client.post("/api/v1/active-objects/", json=dto.model_dump())
     active_object_id = create_res.json()["active_object_id"]
@@ -54,6 +56,7 @@ async def test_update_active_object(client):
         axo_module="old.module",
         axo_class_name="OldClass",
         axo_version=1,
+        axo_microservice_id="microservice-1"  # campo obligatorio agregado
     )
     create_res = await client.post("/api/v1/active-objects/", json=create_dto.model_dump())
     active_object_id = create_res.json()["active_object_id"]
@@ -77,6 +80,7 @@ async def test_delete_active_object(client):
     create_dto = ActiveObjectCreateDTO(
         axo_module="delete.module",
         axo_class_name="DeleteClass",
+        axo_microservice_id="microservice-1"  # campo obligatorio agregado
     )
     create_res = await client.post("/api/v1/active-objects/", json=create_dto.model_dump())
     active_object_id = create_res.json()["active_object_id"]
