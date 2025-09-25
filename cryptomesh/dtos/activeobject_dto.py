@@ -19,6 +19,7 @@ class ActiveObjectCreateDTO(BaseModel):
     axo_class_name: str
     axo_version: int = 0
     axo_endpoint_id: Optional[str] = None
+    axo_microservice_id: str
     axo_dependencies: Optional[List[str]] = []
     axo_uri: Optional[str] = None
     axo_alias: Optional[str] = None
@@ -43,6 +44,7 @@ class ActiveObjectCreateDTO(BaseModel):
             axo_class_name=self.axo_class_name,
             axo_version=self.axo_version,
             axo_endpoint_id=self.axo_endpoint_id,
+            axo_microservice_id=self.axo_microservice_id,
             axo_dependencies=self.axo_dependencies or [],
             axo_uri=self.axo_uri,
             axo_alias=self.axo_alias,
@@ -68,6 +70,7 @@ class ActiveObjectCreateDTO(BaseModel):
             axo_class_name=model.axo_class_name,
             axo_version=model.axo_version,
             axo_endpoint_id=model.axo_endpoint_id,
+            axo_microservice_id=model.axo_microservice_id,
             axo_dependencies=model.axo_dependencies,
             axo_uri=model.axo_uri,
             axo_alias=model.axo_alias,
@@ -97,6 +100,7 @@ class ActiveObjectResponseDTO(BaseModel):
     axo_class_name: str
     axo_version: int
     axo_endpoint_id: Optional[str]
+    axo_microservice_id: str
     axo_dependencies: List[str]
     axo_uri: Optional[str]
     axo_alias: Optional[str]
@@ -119,6 +123,7 @@ class ActiveObjectResponseDTO(BaseModel):
             axo_class_name=model.axo_class_name,
             axo_version=model.axo_version,
             axo_endpoint_id=model.axo_endpoint_id,
+            axo_microservice_id=model.axo_microservice_id,
             axo_dependencies=model.axo_dependencies,
             axo_uri=model.axo_uri,
             axo_alias=model.axo_alias,
@@ -147,6 +152,7 @@ class ActiveObjectUpdateDTO(BaseModel):
     axo_class_name: Optional[str] = None
     axo_version: Optional[int] = None
     axo_endpoint_id: Optional[str] = None
+    axo_microservice_id: Optional[str] = None
     axo_dependencies: Optional[List[str]] = None
     axo_uri: Optional[str] = None
     axo_alias: Optional[str] = None
@@ -178,6 +184,7 @@ class ActiveObjectUpdateDTO(BaseModel):
             axo_class_name=model.axo_class_name,
             axo_version=model.axo_version,
             axo_endpoint_id=model.axo_endpoint_id,
+            axo_microservice_id=model.axo_microservice_id,
             axo_dependencies=model.axo_dependencies,
             axo_uri=model.axo_uri,
             axo_alias=model.axo_alias,

@@ -104,6 +104,8 @@ class ActiveObjectModel(BaseModel):
     axo_version: int = 0
 
     axo_endpoint_id: Optional[str] = None
+    axo_microservice_id: str
+    
     axo_dependencies: List[str] = Field(default_factory=list)
     
     axo_uri: Optional[str] = None
