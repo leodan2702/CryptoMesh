@@ -6,5 +6,6 @@ for i in {1..20}; do
         echo "✅ CryptoMesh service is successfully deployed"
         break
     fi
+    echo "Waiting for service... $URL"
     sleep 3
 done
