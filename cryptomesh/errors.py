@@ -72,7 +72,6 @@ def handle_crypto_errors(func: Callable) -> Callable:
     @wraps(func)
     async def wrapper(*args, **kwargs) -> Any:
         try:
-            print("Handling crypto errors")
             return await func(*args, **kwargs)
         except CryptoMeshError as e:
             L.error({
