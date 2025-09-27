@@ -12,10 +12,3 @@ echo "CryptoMesh service was deployed..."
 API="http://localhost:19000/docs"
 DEADLINE=$((SECONDS + 180))   # timeout after 180s; adjust as needed
 
-# for i in {1..20}; do
-#     if curl -s http://localhost:19000/docs > /dev/null; then
-#         echo "✅ CryptoMesh service is successfully deployed"
-#         break
-#     fi
-#     sleep 3
-# done
