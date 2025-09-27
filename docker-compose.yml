@@ -33,6 +33,7 @@ services:
       MONGO_DATABASE_NAME: ${MONGODB_DATABASE_NAME:-cryptomesh}
       MONGODB_URI: ${MONGODB_URI:-mongodb://crypto-mesh-db:27017/cryptomesh}
       MICTLANX_LOG_PATH: "/app/logs"
+      CRYPTOMESH_SUMMONER_IP_ADDR: mictlanx-summoner-0
     volumes:
       - cryptomesh-vol:/app
     restart: unless-stopped

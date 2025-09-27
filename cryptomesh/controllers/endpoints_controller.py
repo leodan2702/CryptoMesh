@@ -155,7 +155,6 @@ async def deploy_endpoint(
     dto:EndpointCreateDTO,
     svc: EndpointsService = Depends(get_endpoints_service)
 ):
-    t1 = T.time()
     endpoint_id = None
     try:
         model   = dto.to_model()
@@ -167,11 +166,17 @@ async def deploy_endpoint(
             raise HTTPException(status_code=500, detail=f"Failed to deploy endpoint: {model.endpoint_id} - {res.unwrap_err()}")
     except Exception as e:
         if endpoint_id:
-            res = await svc.delete_endpoint(endpoint_id=endpoint_id)
-        raise HTTPException(status_code=400, detail=str(e))
-    t1 = T.time()
-    await svc.delete_endpoint(endpoint_id)
+            try:
+                await svc.delete_endpoint(endpoint_id=endpoint_id)
+            except Exception as e:
+                L.error({
+                    "event": "ENDPOINT.DELETE.FAIL",
+                    "endpoint_id": endpoint_id,
+                    "error": str(e)
+                })
+        raise e
 
+    t1 = T.time()
     elapsed = round(T.time() - t1, 4)
     L.info({
         "event": "API.ENDPOINT.DEPLOYED",
