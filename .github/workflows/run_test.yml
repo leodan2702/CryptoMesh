@@ -45,16 +45,7 @@ jobs:
 
       - name: Start CryptoMesh backend
         run: |
-          docker compose -f docker-compose.yml up -d --build
-          echo "CryptoMesh service was deployed..."
-          for i in {1..20}; do
-            if curl -s http://localhost:19000/docs > /dev/null; then
-              echo "✅ CryptoMesh service is successfully deployed"
-              break
-            fi
-            sleep 3
-          done
-          ./deploy_router.sh # Deploy the router after the main service is up
+          ./deploy.sh
       - name: Lint with Ruff  
         run: |  
           pip install ruff  

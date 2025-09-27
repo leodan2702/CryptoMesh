@@ -1,11 +1,12 @@
 services:
   mictlanx-router-0:
     image: nachocode/mictlanx:router-0.1.0a0
+    container_name: mictlanx-router-0
     restart: unless-stopped
     env_file:
       - .env.mictlanx.dev
     networks:
-      - mictlanx
+      - cryptomesh-net
     ports:
       - "60666:60666"
     volumes:
@@ -49,13 +50,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - mictlanx-summoner-0:/mictlanx
     networks:
-      - mictlanx
+      - cryptomesh-net
 
   mictlanx-rm-0:
     image: ${MICTLANX_RM_IMAGE:-nachocode/mictlanx:rm-0.1.0a0}
     container_name: mictlanx-rm-0
     restart: unless-stopped
-    networks: [mictlanx]
+    networks: [cryptomesh-net]
     ports:
       - "5555:5555"
     volumes:
@@ -112,7 +113,7 @@ services:
       TICK_PEERS_HANDSHAKE: "5s"
       RECOVER_TICK_TIMEOUT: "10sec"
       # RECOVER_TICK_TIMEOUT: "1m"
-      SUMMONER_NETWORK_ID: "mictlanx"
+      SUMMONER_NETWORK_ID: "cryptomesh-net"
 
 volumes:
   mictlanx-summoner-0:
@@ -120,5 +121,5 @@ volumes:
   mictlanx-rm-db:
 
 networks:
-  mictlanx:
+  cryptomesh-net:
     external: true
