@@ -32,6 +32,9 @@ jobs:
           sudo mkdir -p /mictlanx/client
           sudo chown -R $USER:$USER /mictlanx/client
           sudo chmod -R 777 /mictlanx/client
+          sudo mkdir -p /log
+          sudo chown -R $USER:$USER /log
+          sudo chmod -R 777 /log
       - name: Configure Poetry
         run: |
           poetry config virtualenvs.create true
