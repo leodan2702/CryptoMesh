@@ -111,6 +111,7 @@ class ActiveObjectModel(BaseModel):
 
     axo_code: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
+    
     axo_schema: Optional[Dict[str, object]] = Field(
         default=None,
         description="JSON schema of constructor args and methods extracted from axo_code"

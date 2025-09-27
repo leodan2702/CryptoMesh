@@ -1,5 +1,5 @@
 import time as T
-from typing import List
+from typing import List,Dict
 import ast
 from cryptomesh.models import ActiveObjectModel
 from cryptomesh.repositories.activeobjects_repository import ActiveObjectsRepository
@@ -10,6 +10,9 @@ from cryptomesh.errors import (
     ValidationError,
     CreationError,
 )
+from cryptomesh.dtos import SchemaDTO
+from cryptomesh.utils import Utils
+
 
 L = get_logger(__name__)
 
@@ -143,21 +146,3 @@ class ActiveObjectsService:
         return {"detail": f"ActiveObject '{active_object_id}' deleted"}
 
 
-
-
-    def extract_schema_from_code(code: str):
-        tree = ast.parse(code)
-        schema = {"init": [], "methods": {}}
-
-        for node in tree.body:
-            if isinstance(node, ast.ClassDef):
-                for func in node.body:
-                    if isinstance(func, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        args = [arg.arg for arg in func.args.args if arg.arg != "self"]
-
-                        if func.name == "__init__":
-                            schema["init"] = args
-                        else:
-                            schema["methods"][func.name] = args
-
-        return schema
