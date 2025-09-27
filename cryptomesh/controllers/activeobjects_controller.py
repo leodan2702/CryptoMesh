@@ -67,6 +67,10 @@ async def create_active_object(
     
     # For now keep the dict but when we have more time we create a DTO
     # to handle this metadata
+    L.debug({
+        "event": "API.ACTIVE_OBJECT.CREATING",
+        **dto.model_dump()
+    })
     attrs = {
         "_acx_metadata": MetadataX(
             axo_is_read_only     = False,
@@ -78,7 +82,7 @@ async def create_active_object(
             axo_source_bucket_id = dto.axo_source_bucket_id,
             axo_alias            = dto.axo_alias,
             axo_class_name       = dto.axo_class_name,
-            axo_dependencies     = dto.axp_dependencies,
+            axo_dependencies     = dto.axo_dependencies,
             axo_endpoint_id      = dto.axo_endpoint_id,
             axo_module           = dto.axo_module,
             axo_uri              = dto.axo_uri,
@@ -104,25 +108,10 @@ async def create_active_object(
     L.debug({
         "event": "AXO_BLOB.CREATED",
         "ok":res.is_ok,
-        **dto.model_dump()
-        # "bucket_id": source_code_blob.metadata.bucket_id,
-        # "key": source_code_blob.metadata.key,
-        # "size": len(source_code_blob.data),
-        # "uri":dto.axo_uri
+        **dto.model_dump(),
+        "response_time": round(T.time() - t1, 4)
     })
 
-    # attrs_blob             = 
-    # axo_blobs              = AxoObjectBlobs(source_code_blob=source_code_blob,attrs_blob=attrs_blob)
-    # put_source_code_result = await axo_storage.put_blobs(bucket_id=ao_bucket_id,key=axo_key,blobs = axo_blobs)
-    # put_source_code_result = MICTLANX.put(
-    #     bucket_id=ao_bucket_id,
-    #     key=f"{axo_key}_source_code",
-    #     value=code.encode('utf-8'),
-
-    #     tags={
-
-    #     }
-    # )
 
 
     created = await svc.create_active_object(model)

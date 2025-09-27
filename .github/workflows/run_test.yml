@@ -54,7 +54,7 @@ jobs:
             fi
             sleep 3
           done
-        
+          ./deploy_router.sh # Deploy the router after the main service is up
       - name: Lint with Ruff  
         run: |  
           pip install ruff  
