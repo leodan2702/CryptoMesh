@@ -25,7 +25,7 @@ services:
     container_name: crypto-mesh-api
     depends_on:
       - crypto-mesh-db
-      - crypto-mesh-broker
+      # - crypto-mesh-broker
     ports:
       - "${CRYPTO_MESH_PORT:-19000}:19000"
     environment:
