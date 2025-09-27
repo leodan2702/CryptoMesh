@@ -19,7 +19,6 @@ async def test_create_microservice(get_db):
         service_id="s_test_create",
         name="Test Microservice Create",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        functions=["func1", "func2"],
         policy_id="Leo_Policy"
     )
 
@@ -29,7 +28,6 @@ async def test_create_microservice(get_db):
     assert response_dto.microservice_id == created.microservice_id
     assert response_dto.service_id == "s_test_create"
     assert response_dto.name == "Test Microservice Create"
-    assert "func1" in response_dto.functions
     assert response_dto.resources.cpu == 2
     assert response_dto.resources.ram == "2GB"
 
@@ -43,7 +41,6 @@ async def test_get_microservice(get_db):
         service_id="s_test_get",
         name="Test Microservice Get",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        functions=["func1", "func2"],
         policy_id="Leo_Policy"
     )
     created = await service.create_microservice(create_dto.to_model())
@@ -66,14 +63,12 @@ async def test_update_microservice(get_db):
         service_id="s_test_update",
         name="Test Microservice Update",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        functions=["func1", "func2"],
         policy_id="Leo_Policy"
     )
     created = await service.create_microservice(create_dto.to_model())
 
     update_dto = MicroserviceUpdateDTO(
         name="Updated Name",
-        functions=["func3", "func4"],
         resources=ResourcesUpdateDTO(cpu=4, ram="4GB")
     )
     updated_model = MicroserviceUpdateDTO.apply_updates(update_dto, created)
@@ -82,8 +77,6 @@ async def test_update_microservice(get_db):
     response_dto = MicroserviceResponseDTO.from_model(updated)
 
     assert response_dto.name == "Updated Name"
-    assert "func3" in response_dto.functions
-    assert "func4" in response_dto.functions
     assert response_dto.resources.cpu == 4
     assert response_dto.resources.ram == "4GB"
 
@@ -97,7 +90,6 @@ async def test_delete_microservice(get_db):
         service_id="s_test_delete",
         name="Test Microservice Delete",
         resources=ResourcesDTO(cpu=2, ram="2GB"),
-        functions=["func1"],
         policy_id="Leo_Policy"
     )
     created = await service.create_microservice(create_dto.to_model())

@@ -16,7 +16,6 @@ class MicroserviceCreateDTO(BaseModel):
     service_id: str
     name: str
     resources: ResourcesDTO
-    functions: Optional[List[str]] = []  # Lista de funciones asociadas (opcional)
     policy_id: Optional[str] = None
 
     def to_model(self, microservice_id: Optional[str] = None) -> MicroserviceModel:
@@ -27,7 +26,6 @@ class MicroserviceCreateDTO(BaseModel):
             microservice_id=microservice_id or str(uuid.uuid4()),
             name = self.name,
             service_id=self.service_id,
-            functions=self.functions or [],
             resources=self.resources.to_model(),
             created_at=datetime.utcnow(),
             policy_id=self.policy_id
@@ -42,7 +40,6 @@ class MicroserviceCreateDTO(BaseModel):
             service_id=model.service_id,
             name = model.name,
             resources=ResourcesDTO.from_model(model.resources),
-            functions=model.functions,
             policy_id=model.policy_id
         )
 
@@ -58,7 +55,6 @@ class MicroserviceResponseDTO(BaseModel):
     microservice_id: str
     name: str
     service_id: str
-    functions: List[str]
     resources: ResourcesDTO
 
     @staticmethod
@@ -70,7 +66,6 @@ class MicroserviceResponseDTO(BaseModel):
             microservice_id=model.microservice_id,
             name = model.name,
             service_id=model.service_id,
-            functions=model.functions,
             resources=ResourcesDTO.from_model(model.resources),
         )
 
@@ -86,7 +81,6 @@ class MicroserviceUpdateDTO(BaseModel):
     name: Optional[str] = None
     service_id: Optional[str] = None
     resources: Optional[ResourcesUpdateDTO] = None
-    functions: Optional[List[str]] = None
 
     @staticmethod
     def apply_updates(dto: "MicroserviceUpdateDTO", model: MicroserviceModel) -> MicroserviceModel:
@@ -112,5 +106,5 @@ class MicroserviceUpdateDTO(BaseModel):
             name = model.name,
             service_id=model.service_id,
             resources=ResourcesUpdateDTO.from_model(model.resources),
-            functions=model.functions
+            
         )

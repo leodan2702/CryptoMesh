@@ -29,7 +29,6 @@ async def test_create_service(get_db):
     create_dto = ServiceCreateDTO(
         name="Test Service",
         security_policy=policy_dto.sp_id,  # 👈 ahora string
-        microservices=[],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
@@ -58,7 +57,6 @@ async def test_get_service(get_db):
     create_dto = ServiceCreateDTO(
         name="Get Service",
         security_policy=policy_dto.sp_id,  # 👈 ahora string
-        microservices=[],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
@@ -88,7 +86,6 @@ async def test_update_service(get_db):
     create_dto = ServiceCreateDTO(
         name="Old Service",
         security_policy=policy_dto.sp_id,  # 👈 ahora string
-        microservices=[],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
@@ -96,7 +93,6 @@ async def test_update_service(get_db):
     created = await service_svc.create_service(create_dto.to_model(service_id="s_test_update"))
 
     update_dto = ServiceUpdateDTO(
-        microservices=["ms1", "ms2"],
         resources=ResourcesUpdateDTO(cpu=4, ram="4GB")
     )
 
@@ -104,8 +100,7 @@ async def test_update_service(get_db):
     updated = await service_svc.update_service(created.service_id, updated_model.model_dump())
     response_dto = ServiceResponseDTO.from_model(updated)
 
-    assert "ms1" in response_dto.microservices
-    assert "ms2" in response_dto.microservices
+
     assert response_dto.resources.cpu == 4
     assert response_dto.resources.ram == "4GB"
 
@@ -127,7 +122,6 @@ async def test_delete_service(get_db):
     create_dto = ServiceCreateDTO(
         name="To Delete Service",
         security_policy=policy_dto.sp_id,  # 👈 ahora string
-        microservices=[],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )

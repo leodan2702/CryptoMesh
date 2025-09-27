@@ -6,7 +6,6 @@ async def test_create_service(client):
     payload = {
         "name": "Test Service",
         "security_policy": "sp1",
-        "microservices": ["MS1", "MS2"],
         "resources": {"cpu": 2, "ram": "2GB"},
         "policy_id": "policy_test_1"
     }
@@ -16,7 +15,6 @@ async def test_create_service(client):
     assert "service_id" in data
     assert data["security_policy"] == payload["security_policy"]
     assert data["resources"] == payload["resources"]
-    assert data["microservices"] == payload["microservices"]
 
 @pytest.mark.asyncio
 async def test_create_duplicate_service(client):
@@ -24,7 +22,6 @@ async def test_create_duplicate_service(client):
         "name": "Duplicate Service",
         "service_id": "DUPLICATE_TEST_ID",
         "security_policy": "sp2",
-        "microservices": [],
         "resources": {"cpu": 4, "ram": "4GB"},
         "policy_id": "policy_test_2"
     }
@@ -39,7 +36,6 @@ async def test_get_service(client):
     payload = {
         "name": "Get Service",
         "security_policy": "sp3",
-        "microservices": [],
         "resources": {"cpu": 2, "ram": "2GB"},
         "policy_id": "policy_test_3"
     }
@@ -53,7 +49,6 @@ async def test_get_service(client):
     assert data["service_id"] == service_id
     assert data["security_policy"] == payload["security_policy"]
     assert data["resources"] == payload["resources"]
-    assert data["microservices"] == payload["microservices"]
 
 
 @pytest.mark.asyncio
@@ -61,7 +56,6 @@ async def test_update_service(client):
     payload = {
         "name": "Update Service",
         "security_policy": "sp4",
-        "microservices": [],
         "resources": {"cpu": 2, "ram": "2GB"},
         "policy_id": "policy_test_4"
     }
@@ -71,7 +65,6 @@ async def test_update_service(client):
 
     update_payload = {
         "security_policy": "sp_updated",
-        "microservices": ["MS3"],
         "resources": {"cpu": 4, "ram": "4GB"}
     }
     response = await client.put(f"/api/v1/services/{service_id}/", json=update_payload)
@@ -80,7 +73,7 @@ async def test_update_service(client):
     assert data["service_id"] == service_id
     assert data["security_policy"] == update_payload["security_policy"]
     assert data["resources"] == update_payload["resources"]
-    assert data["microservices"] == update_payload["microservices"]
+
 
 
 @pytest.mark.asyncio
@@ -88,7 +81,6 @@ async def test_delete_service(client):
     payload = {
         "name": "Delete Service",
         "security_policy": "sp5",
-        "microservices": [],
         "resources": {"cpu": 2, "ram": "2GB"},
         "policy_id": "policy_test_5"
     }
