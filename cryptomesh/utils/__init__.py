@@ -13,7 +13,7 @@ class Utils:
         """
         # 1. Initialize the schema with the default class name.
         schema = SchemaDTO(
-            class_name="AxoObjectClass",
+            class_name="GenericActiveObject",
             init=[],
             methods={}
         )

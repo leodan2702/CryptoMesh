@@ -40,9 +40,9 @@ def test_extract_schema_no_class_found():
 
     # Act
     result = Utils.extract_schema_from_code(code_without_class)
-
+    expected_class_name = "GenericActiveObject"
     # Assert
-    assert result.class_name == "AxoObjectClass"
+    assert result.class_name == expected_class_name
     assert result.init == []
     assert result.methods == {}
 
@@ -56,10 +56,11 @@ def test_extract_schema_with_syntax_error():
 
     # Act
     result = Utils.extract_schema_from_code(invalid_code)
+    expected_class_name = "GenericActiveObject"
 
     # Assert
     assert isinstance(result, SchemaDTO)
-    assert result.class_name == "AxoObjectClass"
+    assert result.class_name == expected_class_name
     assert result.init == []
     assert result.methods == {}
 
@@ -70,19 +71,19 @@ def test_extract_schema_only_processes_first_class():
     """
     # Arrange
     code_with_two_classes = """
-    class FirstClass:
-        def __init__(self, name):
-            self.name = name
+class FirstClass:
+    def __init__(self, name):
+        self.name = name
 
-    class SecondClass:
-        def process(self):
-            pass
-    """
+class SecondClass:
+    def process(self):
+        pass
+"""
     # Act
     result = Utils.extract_schema_from_code(code_with_two_classes)
-
+    expected_class_name ="FirstClass"
     # Assert
-    assert result.class_name == "FirstClass"
+    assert result.class_name == expected_class_name
     assert result.init == ["name"]
     assert "process" not in result.methods
 
@@ -93,14 +94,16 @@ def test_extract_schema_class_with_no_init():
     """
     # Arrange
     code = """
-    class Helper:
-        def do_work(self, task_id):
-            print(f"Working on {task_id}")
-    """
+class Helper:
+    def do_work(self, task_id):
+        print(f"Working on {task_id}")
+"""
     # Act
     result = Utils.extract_schema_from_code(code)
+    print(result)
+    expected_class_name = "Helper"
 
-    # Assert
-    assert result.class_name == "Helper"
+    # # Assert
+    assert result.class_name == expected_class_name
     assert result.init == [] # Should be an empty list
     assert result.methods["do_work"] == ["task_id"]
