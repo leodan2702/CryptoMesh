@@ -9,6 +9,6 @@ docker compose -f ./docker-compose.yml down || true
 docker compose -f docker-compose.yml up -d --build
 echo "CryptoMesh service was deployed..."
 
-API="http://localhost:19000/docs"
-DEADLINE=$((SECONDS + 180))   # timeout after 180s; adjust as needed
+# API="http://localhost:19000/docs"
+# DEADLINE=$((SECONDS + 180))   # timeout after 180s; adjust as needed
 
