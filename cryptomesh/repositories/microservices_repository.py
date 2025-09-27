@@ -15,6 +15,6 @@ class MicroservicesRepository(BaseRepository[MicroserviceModel]):
         docs = []
         cursor = self.collection.find(filter)
         async for doc in cursor:
-            docs.append(ActiveObjectModel(**doc))
+            docs.append(MicroserviceModel(**doc))
         return docs
 

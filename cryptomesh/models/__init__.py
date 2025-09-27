@@ -1,6 +1,6 @@
 from datetime import datetime,timezone
 from pydantic import BaseModel, Field, ConfigDict, validator, field_validator
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional,Any
 import uuid
 
 class SummonerParams(BaseModel):
@@ -56,7 +56,6 @@ class ServiceModel(BaseModel):
     service_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     security_policy: str # sp_id
-    microservices: List[str]  # Lista de microservice_id
     resources: ResourcesModel  # resource_id
     created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
     policy_id: Optional[str] = None
@@ -65,22 +64,27 @@ class MicroserviceModel(BaseModel):
     microservice_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     service_id: str
-    functions: List[str]  # Lista de function_id
     resources: ResourcesModel  # resource_id
     created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
     policy_id: Optional[str] = None
 
+
+class ParameterSpec(BaseModel):
+    """Esquema de un parámetro de función"""
+    name: str                           # nombre del parámetro
+    type: str                           # tipo esperado (str, int, DiGraph, etc.)
+    description: Optional[str] = None   # descripción opcional
+    required: bool = True               # si es obligatorio
+    default: Optional[Any] = None       # valor por defecto
+
 class FunctionModel(BaseModel):
     function_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    microservice_id: str
-    image: str
-    resources: ResourcesModel  #INCRUSTADO
-    storage: StorageModel      #INCRUSTADO
-    endpoint_id: str
-    deployment_status: str
-    created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
-    policy_id: Optional[str] = None
+    name: str                          # ej. "run"
+    init_params: List[ParameterSpec] = Field(default_factory=list)  # kwargs de __init__
+    call_params: List[ParameterSpec] = Field(default_factory=list)   # kwargs de la función
+    
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
 
 class ActiveObjectModel(BaseModel):
     """Serializable metafata stored alongside every active object"""
@@ -102,7 +106,6 @@ class ActiveObjectModel(BaseModel):
     axo_module: str
     axo_class_name: str
     axo_version: int = 0
-
     axo_endpoint_id: Optional[str] = None
     axo_microservice_id: str
     
@@ -110,13 +113,12 @@ class ActiveObjectModel(BaseModel):
     
     axo_uri: Optional[str] = None
     axo_alias: Optional[str] = None
-
     axo_code: Optional[str] = None
-    created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
     axo_schema: Optional[Dict[str, object]] = Field(
         default=None,
         description="JSON schema of constructor args and methods extracted from axo_code"
     )
+    functions: List[FunctionModel] = Field(default_factory=list)
 
     created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
 
@@ -126,6 +128,16 @@ class ActiveObjectModel(BaseModel):
         if v < 0:
             raise ValueError("Version must be >= 0")
         return v
+
+    @field_validator("functions", mode="before")
+    @classmethod
+    def validate_functions(cls, v):
+        if not v:
+            return []
+        return [
+            f if isinstance(f, FunctionModel) else FunctionModel(**f)
+            for f in v
+        ]
 
 
 class FunctionStateModel(BaseModel):
