@@ -1,3 +1,4 @@
+# cryptomesh/controllers/hierarchy_controller.py
 from fastapi import APIRouter, Depends
 from typing import List
 
@@ -5,7 +6,8 @@ from cryptomesh.dtos.hierarchy_dto import (
     ServiceHierarchyDTO,
     MicroserviceHierarchyDTO,
     ActiveObjectHierarchyDTO,
-    MethodHierarchyDTO
+    FunctionHierarchyDTO,
+    ParameterDTO,
 )
 from cryptomesh.services.services_services import ServicesService
 from cryptomesh.services.microservices_services import MicroservicesService
@@ -20,6 +22,9 @@ from cryptomesh.log.logger import get_logger
 L = get_logger(__name__)
 router = APIRouter()
 
+# -------------------------------
+# Factories para inyección de dependencias
+# -------------------------------
 def get_services_service() -> ServicesService:
     collection = get_collection("services")
     repo = ServicesRepository(collection)
@@ -35,7 +40,10 @@ def get_active_objects_service() -> ActiveObjectsService:
     repo = ActiveObjectsRepository(collection)
     return ActiveObjectsService(repo)
 
-# --- Endpoint de jerarquía ---
+
+# -------------------------------
+# Endpoint de jerarquía
+# -------------------------------
 @router.get("/hierarchy", response_model=List[ServiceHierarchyDTO])
 async def get_hierarchy(
     services_service: ServicesService = Depends(get_services_service),
@@ -44,37 +52,51 @@ async def get_hierarchy(
 ):
     """
     Devuelve la jerarquía completa:
-    Service -> Microservice -> ActiveObject -> Métodos
+    Service -> Microservice -> ActiveObject -> Functions -> Params
     """
-    hierarchy = []
+    hierarchy: List[ServiceHierarchyDTO] = []
 
     services = await services_service.list_services()
 
     for svc in services:
         svc_microservices = await microservices_service.list_by_service(svc.service_id)
-        microservices_dto = []
+        microservices_dto: List[MicroserviceHierarchyDTO] = []
 
         for ms in svc_microservices:
             ms_active_objects = await active_objects_service.list_by_microservice(ms.microservice_id)
-            active_objects_dto = []
+            active_objects_dto: List[ActiveObjectHierarchyDTO] = []
 
             for ao in ms_active_objects:
-                schema = ao.axo_schema or {"init": [], "methods": {}}
-                methods = []
+                functions_dto: List[FunctionHierarchyDTO] = []
 
-                # Método __init__
-                if schema.get("init"):
-                    methods.append(MethodHierarchyDTO(name="__init__", parameters=schema["init"]))
+                for f in ao.functions:
+                    # Convertimos init y call params en DTOs
+                    init_params = [
+                        ParameterDTO(**p.model_dump()) if hasattr(p, "model_dump") else ParameterDTO(**p)
+                        for p in f.init_params
+                    ]
+                    call_params = [
+                        ParameterDTO(**p.model_dump()) if hasattr(p, "model_dump") else ParameterDTO(**p)
+                        for p in f.call_params
+                    ]
 
-                # Otros métodos
-                for m_name, params in schema.get("methods", {}).items():
-                    methods.append(MethodHierarchyDTO(name=m_name, parameters=params))
+                    functions_dto.append(
+                        FunctionHierarchyDTO(
+                            function_id=f.function_id,
+                            name=f.name,
+                            init_params=init_params,
+                            call_params=call_params,
+                        )
+                    )
+
 
                 active_objects_dto.append(
                     ActiveObjectHierarchyDTO(
                         active_object_id=ao.active_object_id,
                         object_name=ao.axo_class_name,
-                        methods=methods
+                        alias=ao.axo_alias,
+                        version=ao.axo_version,
+                        functions=functions_dto,
                     )
                 )
 
@@ -82,7 +104,7 @@ async def get_hierarchy(
                 MicroserviceHierarchyDTO(
                     microservice_id=ms.microservice_id,
                     microservice_name=ms.name,
-                    active_objects=active_objects_dto
+                    active_objects=active_objects_dto,
                 )
             )
 
@@ -90,7 +112,7 @@ async def get_hierarchy(
             ServiceHierarchyDTO(
                 service_id=svc.service_id,
                 service_name=svc.name,
-                microservices=microservices_dto
+                microservices=microservices_dto,
             )
         )
 

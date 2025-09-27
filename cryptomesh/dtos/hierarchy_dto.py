@@ -1,32 +1,31 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any
 
-# -------------------------------
-# DTO para métodos de un ActiveObject
-# -------------------------------
-class MethodHierarchyDTO(BaseModel):
-    name: str  # nombre del método
-    parameters: List[str] = []  # nombres de los parámetros
+class ParameterDTO(BaseModel):
+    name: str
+    type: Optional[str] = None
+    description: Optional[str] = None
+    required: bool = False
+    default: Optional[Any] = None
 
-# -------------------------------
-# DTO para ActiveObject en la jerarquía
-# -------------------------------
+class FunctionHierarchyDTO(BaseModel):
+    function_id: str
+    name: str
+    init_params: List[ParameterDTO] = []
+    call_params: List[ParameterDTO] = []
+
 class ActiveObjectHierarchyDTO(BaseModel):
     active_object_id: str
     object_name: str
-    methods: List[MethodHierarchyDTO] = []
+    alias: Optional[str] = None
+    version: int
+    functions: List[FunctionHierarchyDTO] = []
 
-# -------------------------------
-# DTO para Microservice en la jerarquía
-# -------------------------------
 class MicroserviceHierarchyDTO(BaseModel):
     microservice_id: str
     microservice_name: str
     active_objects: List[ActiveObjectHierarchyDTO] = []
 
-# -------------------------------
-# DTO para Service en la jerarquía
-# -------------------------------
 class ServiceHierarchyDTO(BaseModel):
     service_id: str
     service_name: str

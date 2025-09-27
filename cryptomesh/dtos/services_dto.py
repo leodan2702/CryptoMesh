@@ -15,7 +15,6 @@ class ServiceCreateDTO(BaseModel):
     """
     name: str
     security_policy: str  # Política de seguridad aplicada
-    microservices: Optional[List[str]] = None  # Lista de microservice_id iniciales
     resources: ResourcesDTO  # Recursos asignados al servicio
     policy_id: Optional[str] = None  # ID de la política YAML
 
@@ -27,7 +26,6 @@ class ServiceCreateDTO(BaseModel):
             service_id=service_id or str(uuid.uuid4()),
             name=self.name,
             security_policy=self.security_policy,
-            microservices=self.microservices or [],
             resources=self.resources.to_model(),
             created_at=datetime.utcnow(),
             policy_id=self.policy_id
@@ -41,7 +39,6 @@ class ServiceCreateDTO(BaseModel):
         return ServiceCreateDTO(
             name=model.name,
             security_policy=model.security_policy,
-            microservices=model.microservices,
             resources=ResourcesDTO.from_model(model.resources),
             policy_id=model.policy_id
         )
@@ -57,7 +54,6 @@ class ServiceResponseDTO(BaseModel):
     """
     service_id: str
     name: str
-    microservices: List[str]
     resources: ResourcesDTO
     security_policy: str
 
@@ -69,7 +65,6 @@ class ServiceResponseDTO(BaseModel):
         return ServiceResponseDTO(
             service_id=model.service_id,
             name=model.name,
-            microservices=model.microservices,
             resources=ResourcesDTO.from_model(model.resources),
             security_policy=model.security_policy
         )
@@ -85,7 +80,6 @@ class ServiceUpdateDTO(BaseModel):
     """
     name: Optional[str] = None
     resources: Optional[ResourcesUpdateDTO] = None
-    microservices: Optional[List[str]] = None
     security_policy: Optional[str] = None
 
     @staticmethod
@@ -111,6 +105,5 @@ class ServiceUpdateDTO(BaseModel):
         return ServiceUpdateDTO(
             name=model.name,
             resources=ResourcesUpdateDTO.from_model(model.resources),
-            microservices=model.microservices,
             security_policy= model.security_policy
         )
