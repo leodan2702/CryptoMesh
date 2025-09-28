@@ -21,7 +21,8 @@ dependencies = [
     "matplotlib (>=3.10.5,<4.0.0)",
     "seaborn (>=0.13.2,<0.14.0)",
     "jupyter (>=1.1.1,<2.0.0)",
-    "axo @ https://test-files.pythonhosted.org/packages/71/8f/470c688332282a7d1f4b1afb002ab5e1ea3386bacdce5e41be6e2acd94fd/axo-0.0.4a2.tar.gz",
+    "axo (==0.0.4a2)",
+    "mictlanx (==0.1.0a2)",
 ]
 
 

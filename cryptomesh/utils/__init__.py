@@ -1,21 +1,49 @@
 
 import ast
-from typing import List, Dict
+from typing import List, Optional
 from pydantic import ValidationError
 from cryptomesh.dtos import SchemaDTO
 from cryptomesh.log.logger import get_logger
-from cryptomesh.dtos import ParameterSpecDTO
+# from cryptomesh.dtos import ParameterSpec
+from cryptomesh.models import ParameterSpec
 from cryptomesh.models import FunctionModel
 L = get_logger(__name__)
 
 class Utils:
     @staticmethod
-    def _extract_params_from_func(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> List[ParameterSpecDTO]:
+    def get_class_name_from_code(code_str: str) -> Optional[str]:
+        """
+        Parses a string of Python code to find and return the name of the first class definition.
+
+        Args:
+            code_str: A string containing Python code.
+
+        Returns:
+            The name of the class as a string, or None if no class is found or the code is invalid.
+        """
+        try:
+            # Create an Abstract Syntax Tree from the code
+            tree = ast.parse(code_str)
+            
+            # Iterate through the top-level nodes in the code's body
+            for node in tree.body:
+                # Check if the node is a class definition
+                if isinstance(node, ast.ClassDef):
+                    return node.name
+            return "GenericAO"  # Default name if no class found
+        except SyntaxError:
+            # The provided string is not valid Python code
+            return "GenericAO"
+            
+        # No class definition was found in the code
+        return None
+    @staticmethod
+    def _extract_params_from_func(func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> List[ParameterSpec]:
         """
         Private helper to extract a list of ParameterSpec from a function's AST node.
         This centralizes the parameter parsing logic.
         """
-        params: List[ParameterSpecDTO] = []
+        params: List[ParameterSpec] = []
         total_args = func_node.args.args
         defaults = func_node.args.defaults
         num_required = len(total_args) - len(defaults)
@@ -40,7 +68,7 @@ class Utils:
                     # In case the default value is complex (e.g., a function call)
                     default_value = None
 
-            params.append(ParameterSpecDTO(
+            params.append(ParameterSpec(
                 name=arg.arg,
                 type=param_type,
                 required=is_required,
@@ -102,7 +130,7 @@ class Utils:
             raise ValidationError(f"Invalid axo_code syntax: {e}")
 
         functions: List[FunctionModel] = []
-        init_params: List[ParameterSpecDTO] = []
+        init_params: List[ParameterSpec] = []
 
         for node in tree.body:
             if isinstance(node, ast.ClassDef):

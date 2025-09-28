@@ -16,6 +16,7 @@ from axo.models import MetadataX
 from cryptomesh.dtos.activeobject_dto import ActiveObjectCreateDTO, ActiveObjectResponseDTO, ActiveObjectUpdateDTO
 import os
 from cryptomesh.utils import Utils
+from uuid import uuid4
 
 MICTLANX_URI =os.environ.get("MICTLANX_URI", "mictlanx://mictlanx-router-0@localhost:60666?/api_version=4&protocol=http")
 
@@ -33,9 +34,9 @@ def axo_storage_service() -> MictlanXStorageService:
     )
 
 
-def axo_storage_service(client: AxoStorage = Depends(axo_storage_service)) -> AxoStorage:
+def axo_storage_service(storage: AxoStorage = Depends(axo_storage_service)) -> AxoStorage:
     return AxoStorage(
-        storage = MictlanXStorageService(client=client)
+        storage = storage
     )
 
 
@@ -69,8 +70,10 @@ async def create_active_object(
     model            = dto.to_model()
     scheme           = model.axo_schema
     code             = model.axo_code
-    ao_bucket_id     = ""
+    axo_bucket_id    = dto.axo_bucket_id or uuid4().hex
     axo_key          = dto.axo_alias
+    axo_class_name   = Utils.get_class_name_from_code(code)
+    dto.axo_class_name = axo_class_name
     
     
     # For now keep the dict but when we have more time we create a DTO
@@ -84,35 +87,42 @@ async def create_active_object(
             axo_is_read_only     = False,
             # This is the hack to related the source code with the attrs
             axo_key              = dto.axo_alias,
-            
-            axo_bucket_id        = dto.axo_bucket_id,
-            axo_sink_bucket_id   = dto.axo_sink_bucket_id,
-            axo_source_bucket_id = dto.axo_source_bucket_id,
+            axo_bucket_id        = axo_bucket_id,
+            axo_sink_bucket_id   = dto.axo_sink_bucket_id or uuid4().hex,
+            axo_source_bucket_id = dto.axo_source_bucket_id or uuid4().hex,
             axo_alias            = dto.axo_alias,
-            axo_class_name       = dto.axo_class_name,
+            axo_class_name       = axo_class_name,
             axo_dependencies     = dto.axo_dependencies,
             axo_endpoint_id      = dto.axo_endpoint_id,
-            axo_module           = dto.axo_module,
+            axo_module           = dto.axo_module or "GenericModule",
             axo_uri              = dto.axo_uri,
-            axo_version          = dto.axo_version
+            axo_version          = dto.axo_version,
         ),
         "_acx_local":False,
         "_acx_remote":True
     }
     # print("HERE")
     blobs = AxoObjectBlob.from_code_and_attrs(
-        bucket_id = ao_bucket_id,
+        bucket_id = axo_bucket_id,
         key       = axo_key,
         code      = code,
         attrs     = attrs,
     )
     res = await axo_storage.put_blobs(
-        bucket_id  = ao_bucket_id,
+        bucket_id  = axo_bucket_id,
         key        = axo_key,
         blobs      = blobs,
         class_name = dto.axo_class_name
     )
+    if res.is_err:
+        L.error({
+            "event": "AXO_BLOB.CREATE.ERROR",
+            "reason": res.unwrap_err(),
+            **dto.model_dump(),
+            "response_time": round(T.time() - t1, 4)
+        })
 
+        # raise HTTPException(status_code=500, detail="Failed to store ActiveObject code in AxoStorage")
     L.debug({
         "event": "AXO_BLOB.CREATED",
         "ok":res.is_ok,
