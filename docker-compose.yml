@@ -20,32 +20,32 @@ services:
   #   restart: unless-stopped
 
   crypto-mesh-api:
-    build: .
-    image: cryptomesh-api:latest
+    image: cryptomesh:api
+    # build: .
     container_name: crypto-mesh-api
     depends_on:
       - crypto-mesh-db
       # - crypto-mesh-broker
+    command: ["uvicorn", "cryptomesh.server:app", "--host", "0.0.0.0", "--port", "19000"]
     ports:
-      # - "${CRYPTO_MESH_PORT:-19000}:19000"
-      - 19000:19000
+      - "${CRYPTO_MESH_PORT:-19000}:19000"
     environment:
       CRYPTO_MESH_HOST: ${CRYPTOMESH_HOST:-0.0.0.0}
-      CRYPTO_MESH_PORT: "19000"
-      # CRYPTO_MESH_PORT: ${CRYPTO_MESH_PORT:-19000}
+      CRYPTO_MESH_PORT: ${CRYPTO_MESH_PORT:-19000}
       MONGO_DATABASE_NAME: ${MONGODB_DATABASE_NAME:-cryptomesh}
       MONGODB_URI: ${MONGODB_URI:-mongodb://crypto-mesh-db:27017/cryptomesh}
       MICTLANX_LOG_PATH: "/app/logs"
       MICTLANX_URI: "mictlanx://mictlanx-router-0@mictlanx-router-0:60666?/api_version=4&protocol=http"
-    volumes:
-      - cryptomesh-vol:/app
+      AXO_LOG_PATH: "/app/logs"
+    # volumes:
+      # - cryptomesh-vol:/app
     restart: unless-stopped
     networks:
       - cryptomesh-net
 
 volumes:
   mongo-data:
-  cryptomesh-vol:
+  # cryptomesh-vol:
 networks:
   cryptomesh-net:
     external: True
