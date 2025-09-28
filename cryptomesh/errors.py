@@ -1,7 +1,8 @@
 from fastapi import HTTPException
 from typing import Any, Callable
 from functools import wraps
-
+from cryptomesh.log.logger import get_logger
+L = get_logger(__name__)
 
 
 class CryptoMeshError(Exception):
@@ -73,7 +74,17 @@ def handle_crypto_errors(func: Callable) -> Callable:
         try:
             return await func(*args, **kwargs)
         except CryptoMeshError as e:
+            L.error({
+                "error": e.message,
+                "code": e.code,
+                "type": type(e).__name__,
+                "exception": str(e)
+            })
             raise e.to_http_exception()
         except Exception as e:
+            L.error({
+                "type": type(e).__name__,
+                "exception": str(e)
+            })
             raise CryptoMeshError.from_exception(e).to_http_exception()
     return wrapper
