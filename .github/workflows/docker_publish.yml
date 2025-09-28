@@ -1,0 +1,40 @@
+name: Docker Publish
+
+on:
+  push:
+    tags:
+      - 'v*'  # Se ejecuta solo al crear tags que empiezan con 'v'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: leogarcia10/cryptomesh
+
+    steps:
+      # Checar repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Configurar Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+
+      # Construir la imagen
+      - name: Build Docker image
+        run: |
+          chmod +x build.sh
+          TAG="${GITHUB_REF#refs/tags/}"
+          ./build.sh "$TAG"
+
+      # Publicar en Docker Hub
+      - name: Push Docker image
+        run: |
+          chmod +x publish.sh
+          TAG="${GITHUB_REF#refs/tags/}"
+          ./publish.sh "$TAG"

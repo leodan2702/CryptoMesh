@@ -34,5 +34,8 @@ COPY . .
 # Crear carpeta de logs con permisos correctos
 RUN mkdir -p /app/logs && chown -R appuser:appuser /app/logs && mkdir /log && chmod -R 755 /log
 
+# Crear carpeta de logs con permisos correctos para mictlanx
+RUN mkdir -p /mictlanx && chown -R appuser:appuser /mictlanx
+
 # Cambiar a usuario no root
 USER appuser
