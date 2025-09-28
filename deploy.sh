@@ -7,7 +7,7 @@ echo "Deploying MictlanX router..."
 
 docker compose -f ./docker-compose.yml down || true
 echo "Building and deploying CryptoMesh service..."
-chmod +x ./reabuild.sh && ./rebuild.sh
+chmod +x ./rebuild.sh && ./rebuild.sh
 docker compose -f docker-compose.yml up -d --build
 echo "CryptoMesh service was deployed..."
 
