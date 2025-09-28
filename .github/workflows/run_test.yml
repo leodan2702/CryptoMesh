@@ -32,6 +32,9 @@ jobs:
           sudo mkdir -p /mictlanx/client
           sudo chown -R $USER:$USER /mictlanx/client
           sudo chmod -R 777 /mictlanx/client
+          sudo mkdir -p /log
+          sudo chown -R $USER:$USER /log
+          sudo chmod -R 777 /log
       - name: Configure Poetry
         run: |
           poetry config virtualenvs.create true
@@ -42,23 +45,16 @@ jobs:
 
       - name: Start CryptoMesh backend
         run: |
-          docker compose -f docker-compose.yml up -d --build
-          echo "CryptoMesh service was deployed..."
-          for i in {1..20}; do
-            if curl -s http://localhost:19000/docs > /dev/null; then
-              echo "✅ CryptoMesh service is successfully deployed"
-              break
-            fi
-            sleep 3
-          done
-        
+          ./deploy.sh
       - name: Lint with Ruff  
         run: |  
           pip install ruff  
           ruff check .  
         continue-on-error: true  
-        
-
+      - name: Wait for Cryptomesh service to be ready
+        run: |
+          chmod +x ./wait_cryptomesh.sh
+          ./wait_cryptomesh.sh http://localhost:19000/docs # Use your service's health endpoint
       - name: Test with pytest  
         run: |  
           poetry run coverage run -m pytest  -v -s  

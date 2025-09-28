@@ -8,7 +8,39 @@ from cryptomesh.log.logger import get_logger
 from cryptomesh.errors import handle_crypto_errors
 import time as T
 
+from mictlanx import AsyncClient
+from axo.storage.types import AxoStorageMetadata,AxoObjectBlob,AxoObjectBlobs
+from axo.storage import AxoStorage
+from axo.storage.services import MictlanXStorageService
+from axo.models import MetadataX
 from cryptomesh.dtos.activeobject_dto import ActiveObjectCreateDTO, ActiveObjectResponseDTO, ActiveObjectUpdateDTO
+import os
+from cryptomesh.utils import Utils
+
+MICTLANX_URI =os.environ.get("MICTLANX_URI", "mictlanx://mictlanx-router-0@localhost:60666?/api_version=4&protocol=http")
+
+def axo_storage_service() -> MictlanXStorageService:
+    MICTLANX = AsyncClient(
+        uri              = MICTLANX_URI,
+        log_output_path  = os.environ.get("MICTLANX_LOG_PATH", "/log/cryptomesh-mictlanx.log"),
+        capacity_storage = "4GB",
+        client_id        = "cryptomesh",
+        debug            = True,
+        eviction_policy  = "LRU",
+    )
+    return MictlanXStorageService(
+        client=MICTLANX
+    )
+
+
+def axo_storage_service(client: AxoStorage = Depends(axo_storage_service)) -> AxoStorage:
+    return AxoStorage(
+        storage = MictlanXStorageService(client=client)
+    )
+
+
+
+
 
 router = APIRouter()
 L = get_logger(__name__)
@@ -28,9 +60,68 @@ def get_activeobjects_service() -> ActiveObjectsService:
     description="Crea un nuevo ActiveObject en la base de datos. El ID debe ser único."
 )
 @handle_crypto_errors
-async def create_active_object(dto: ActiveObjectCreateDTO, svc: ActiveObjectsService = Depends(get_activeobjects_service)):
-    t1 = T.time()
-    model = dto.to_model()
+async def create_active_object(
+    dto: ActiveObjectCreateDTO, 
+    svc: ActiveObjectsService = Depends(get_activeobjects_service),
+    axo_storage: AxoStorage = Depends(axo_storage_service)
+):
+    t1               = T.time()
+    model            = dto.to_model()
+    scheme           = model.axo_schema
+    code             = model.axo_code
+    ao_bucket_id     = ""
+    axo_key          = dto.axo_alias
+    
+    
+    # For now keep the dict but when we have more time we create a DTO
+    # to handle this metadata
+    L.debug({
+        "event": "API.ACTIVE_OBJECT.CREATING",
+        **dto.model_dump()
+    })
+    attrs = {
+        "_acx_metadata": MetadataX(
+            axo_is_read_only     = False,
+            # This is the hack to related the source code with the attrs
+            axo_key              = dto.axo_alias,
+            
+            axo_bucket_id        = dto.axo_bucket_id,
+            axo_sink_bucket_id   = dto.axo_sink_bucket_id,
+            axo_source_bucket_id = dto.axo_source_bucket_id,
+            axo_alias            = dto.axo_alias,
+            axo_class_name       = dto.axo_class_name,
+            axo_dependencies     = dto.axo_dependencies,
+            axo_endpoint_id      = dto.axo_endpoint_id,
+            axo_module           = dto.axo_module,
+            axo_uri              = dto.axo_uri,
+            axo_version          = dto.axo_version
+        ),
+        "_acx_local":False,
+        "_acx_remote":True
+    }
+    # print("HERE")
+    blobs = AxoObjectBlob.from_code_and_attrs(
+        bucket_id = ao_bucket_id,
+        key       = axo_key,
+        code      = code,
+        attrs     = attrs,
+    )
+    res = await axo_storage.put_blobs(
+        bucket_id  = ao_bucket_id,
+        key        = axo_key,
+        blobs      = blobs,
+        class_name = dto.axo_class_name
+    )
+
+    L.debug({
+        "event": "AXO_BLOB.CREATED",
+        "ok":res.is_ok,
+        **dto.model_dump(),
+        "response_time": round(T.time() - t1, 4)
+    })
+
+
+
     created = await svc.create_active_object(model)
 
     elapsed = round(T.time() - t1, 4)
@@ -139,10 +230,10 @@ async def get_oa_schema(active_object_id: str,  svc: ActiveObjectsService = Depe
     if not oa.axo_code:
         raise HTTPException(status_code=400, detail="OA has no code to extract schema")
 
-    schema = ActiveObjectsService.extract_schema_from_code(oa.axo_code)
+    schema = Utils.extract_schema_from_code(code = oa.axo_code)
 
     
-    await svc.update_active_object(oa.active_object_id, {"axo_schema": schema})
+    await svc.update_active_object(oa.active_object_id, {"axo_schema": schema.model_dump()})
 
     return schema
 

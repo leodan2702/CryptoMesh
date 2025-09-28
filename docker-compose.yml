@@ -10,21 +10,23 @@ services:
     networks:
       - cryptomesh-net
 
-  crypto-mesh-broker:
-    image: rabbitmq:4.0-management
-    container_name: crypto-mesh-broker
-    ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
-    restart: unless-stopped
+  # This service is commented out for now. Uncomment if RabbitMQ is needed. 
+  # crypto-mesh-broker:
+  #   image: rabbitmq:4.0-management
+  #   container_name: crypto-mesh-broker
+  #   ports:
+  #     - "${RABBITMQ_PORT:-5672}:5672"
+  #     - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+  #   restart: unless-stopped
 
   crypto-mesh-api:
-    build: .
-    image: cryptomesh-api:latest
+    image: cryptomesh:api
+    # build: .
     container_name: crypto-mesh-api
     depends_on:
       - crypto-mesh-db
-      - crypto-mesh-broker
+      # - crypto-mesh-broker
+    command: ["uvicorn", "cryptomesh.server:app", "--host", "0.0.0.0", "--port", "19000"]
     ports:
       - "${CRYPTO_MESH_PORT:-19000}:19000"
     environment:
@@ -33,39 +35,17 @@ services:
       MONGO_DATABASE_NAME: ${MONGODB_DATABASE_NAME:-cryptomesh}
       MONGODB_URI: ${MONGODB_URI:-mongodb://crypto-mesh-db:27017/cryptomesh}
       MICTLANX_LOG_PATH: "/app/logs"
-    volumes:
-      - cryptomesh-vol:/app
+      MICTLANX_URI: "mictlanx://mictlanx-router-0@mictlanx-router-0:60666?/api_version=4&protocol=http"
+      AXO_LOG_PATH: "/app/logs"
+    # volumes:
+      # - cryptomesh-vol:/app
     restart: unless-stopped
     networks:
       - cryptomesh-net
 
-  mictlanx-summoner-0:
-    image: nachocode/mictlanx:summoner
-    container_name: mictlanx-summoner-0
-    hostname: mictlanx-summoner-0
-    privileged: true
-    ports:
-      - 15000:15000
-    environment:
-      - USER_ID=1001
-      - GROUP_ID=1002
-      - DOCKER_GID=1001
-      - BASE_PATH=${BASE_PATH-/app/mictlanx}
-      - BIN_NAME=summoner
-      - NODE_ID=mictlanx-summoner-0
-      - NODE_PORT=15000
-      - IP_ADDRESS=mictlanx-summoner-0
-      - SERVER_IP_ADDR=0.0.0.0
-      - LOG_PATH=${BASE_PATH-/app/mictlanx}/log
-      - LOCAL_PATH=${BASE_PATH-/app/mictlanx}/local
-      - DATA_PATH=${BASE_PATH-/app/mictlanx}/data
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      # - mictlanx-summoner-0:/mictlanx
-    networks:
-      - cryptomesh-net
 volumes:
   mongo-data:
-  cryptomesh-vol:
+  # cryptomesh-vol:
 networks:
   cryptomesh-net:
+    external: True

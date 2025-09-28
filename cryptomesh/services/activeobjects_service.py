@@ -1,5 +1,5 @@
 import time as T
-from typing import List
+from typing import List,Dict
 import ast
 from datetime import datetime, timezone
 
@@ -12,6 +12,9 @@ from cryptomesh.errors import (
     ValidationError,
     CreationError,
 )
+from cryptomesh.dtos import SchemaDTO
+from cryptomesh.utils import Utils
+
 
 L = get_logger(__name__)
 
@@ -57,8 +60,9 @@ class ActiveObjectsService:
         if active_object.axo_code:
             try:
                 # Generar axo_schema y functions
-                active_object.axo_schema = self.extract_schema_from_code(active_object.axo_code)
-                functions = self.extract_functions_from_code(active_object.axo_code)
+                active_object.axo_schema = Utils.extract_schema_from_code(active_object.axo_code).model_dump()
+                
+                functions = Utils.extract_functions_from_code(active_object.axo_code)
                 active_object.functions = [
                     f if isinstance(f, FunctionModel) else FunctionModel(**f)
                     for f in functions
@@ -116,9 +120,10 @@ class ActiveObjectsService:
 
         if "axo_code" in updates and updates["axo_code"]:
             try:
-                updates["axo_schema"] = self.extract_schema_from_code(updates["axo_code"])
-                functions = self.extract_functions_from_code(updates["axo_code"])
-                updates["functions"] = self.normalize_functions(functions)
+                updates["axo_schema"] = Utils.extract_schema_from_code(updates["axo_code"]).model_dump()
+                functions = Utils.extract_functions_from_code(updates["axo_code"])
+                functions_dicts = [ fo.model_dump() for fo in functions]
+                updates["functions"] = self.normalize_functions(functions_dicts)
             except Exception as e:
                 raise CryptoMeshError(f"Failed to update ActiveObject '{active_object_id}': {str(e)}")
 
@@ -137,126 +142,3 @@ class ActiveObjectsService:
 
     async def list_by_microservice(self, microservice_id: str) -> List[ActiveObjectModel]:
         return await self.repository.get_by_filter({"axo_microservice_id": microservice_id})
-
-    @staticmethod
-    def extract_schema_from_code(code: str) -> dict:
-        """
-        Extrae un esquema estructurado de parámetros desde el código.
-        Devuelve un dict con init y métodos (cada uno con lista de parámetros).
-        """
-        try:
-            tree = ast.parse(code)
-        except SyntaxError as e:
-            raise ValidationError(f"Invalid axo_code syntax: {e}")
-
-        schema = {"init": [], "methods": {}}
-
-        for node in tree.body:
-            if isinstance(node, ast.ClassDef):
-                for func in node.body:
-                    if isinstance(func, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        params = []
-                        total_args = func.args.args
-                        defaults = func.args.defaults
-                        num_required = len(total_args) - len(defaults)
-
-                        for i, arg in enumerate(total_args):
-                            if arg.arg == "self":
-                                continue
-
-                            # Tipo por annotation si existe
-                            param_type = "Any"
-                            if arg.annotation:
-                                param_type = getattr(arg.annotation, "id", None) or "Any"
-
-                            # Default y required
-                            default_value = None
-                            required = True
-                            if i >= num_required:
-                                default_index = i - num_required
-                                default_node = defaults[default_index]
-                                try:
-                                    default_value = ast.literal_eval(default_node)
-                                    required = False
-                                except Exception:
-                                    default_value = None
-
-                            params.append(ParameterSpec(
-                                name=arg.arg,
-                                type=param_type,
-                                description=None,  # luego puedes enriquecer con docstrings
-                                required=required,
-                                default=default_value
-                            ).model_dump())
-
-                        if func.name == "__init__":
-                            schema["init"] = params
-                        else:
-                            schema["methods"][func.name] = params
-
-        return schema
-
-
-    @staticmethod
-    def extract_functions_from_code(code: str) -> List[FunctionModel]:
-        """
-        Convierte funciones de un OA en FunctionModel con init_params + call_params.
-        """
-        try:
-            tree = ast.parse(code)
-        except SyntaxError as e:
-            raise ValidationError(f"Invalid axo_code syntax: {e}")
-
-        functions: List[FunctionModel] = []
-        init_params: List[ParameterSpec] = []
-
-        for node in tree.body:
-            if isinstance(node, ast.ClassDef):
-                for func in node.body:
-                    if isinstance(func, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        params: List[ParameterSpec] = []
-                        total_args = func.args.args
-                        defaults = func.args.defaults
-                        num_required = len(total_args) - len(defaults)
-
-                        for i, arg in enumerate(total_args):
-                            if arg.arg == "self":
-                                continue
-
-                            # Tipo por annotation
-                            param_type = "Any"
-                            if arg.annotation:
-                                param_type = getattr(arg.annotation, "id", None) or "Any"
-
-                            # Default y required
-                            default_value = None
-                            required = True
-                            if i >= num_required:
-                                default_index = i - num_required
-                                default_node = defaults[default_index]
-                                try:
-                                    default_value = ast.literal_eval(default_node)
-                                    required = False
-                                except Exception:
-                                    default_value = None
-
-                            params.append(ParameterSpec(
-                                name=arg.arg,
-                                type=param_type,
-                                description=None,
-                                required=required,
-                                default=default_value
-                            ))
-
-                        if func.name == "__init__":
-                            init_params = params
-                        else:
-                            functions.append(
-                                FunctionModel(
-                                    name=func.name,
-                                    init_params=init_params,
-                                    call_params=params
-                                )
-                            )
-
-        return functions

@@ -1,5 +1,4 @@
 import os
-
 # Base Configuration for CryptoMesh
 
 # MongoDB Settings

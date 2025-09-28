@@ -30,16 +30,12 @@ RUN poetry install --without dev --no-root
 
 # Copiar resto del servicio
 COPY . .
-
+# RUN poetry add ./axo-0.0.4a2.tar.gz
 # Crear carpeta de logs con permisos correctos
-RUN mkdir -p /app/logs && chown -R appuser:appuser /app/logs
+RUN mkdir -p /app/logs && chown -R appuser:appuser /app/logs && mkdir /log && chmod -R 755 /log
+
+# Crear carpeta de logs con permisos correctos para mictlanx
+RUN mkdir -p /mictlanx && chown -R appuser:appuser /mictlanx
 
 # Cambiar a usuario no root
 USER appuser
-
-# Exponer el puerto del servicio DE CryptoMesh
-EXPOSE 19000
-
-# Comando para iniciar el servicio
-CMD ["uvicorn", "cryptomesh.server:app", "--host", "0.0.0.0", "--port", "19000"]
-
