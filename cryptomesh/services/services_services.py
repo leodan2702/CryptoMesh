@@ -16,7 +16,7 @@ from cryptomesh.errors import (
 L = get_logger(__name__)
 
 class ServicesService:
-    def __init__(self, repository: ServicesRepository, security_policy_service: SecurityPolicyService):
+    def __init__(self, repository: ServicesRepository, security_policy_service: SecurityPolicyService = None):
         self.repository = repository
         self.security_policy_service = security_policy_service
 

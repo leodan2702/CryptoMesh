@@ -1,6 +1,6 @@
 services:
   mictlanx-router-0:
-    image: nachocode/mictlanx:router-0.1.0a0
+    image: nachocode/mictlanx:router-0.1.0a2
     container_name: mictlanx-router-0
     restart: unless-stopped
     env_file:
@@ -53,7 +53,7 @@ services:
       - cryptomesh-net
 
   mictlanx-rm-0:
-    image: ${MICTLANX_RM_IMAGE:-nachocode/mictlanx:rm-0.1.0a0}
+    image: ${MICTLANX_RM_IMAGE:-nachocode/mictlanx:rm-0.1.0a2}
     container_name: mictlanx-rm-0
     restart: unless-stopped
     networks: [cryptomesh-net]

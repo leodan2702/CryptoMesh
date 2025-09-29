@@ -7,7 +7,6 @@ async def test_create_microservice(client):
     dto = MicroserviceCreateDTO(
         service_id="s_test_create",
         name="Test Microservice Create",
-        functions=["fn1", "fn2"],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
     )
 
@@ -18,7 +17,6 @@ async def test_create_microservice(client):
     assert "microservice_id" in data
     assert data["service_id"] == dto.service_id
     assert data["name"] == dto.name
-    assert data["functions"] == dto.functions
     assert data["resources"] == dto.resources.model_dump()
 
 
@@ -27,7 +25,6 @@ async def test_get_microservice(client):
     dto = MicroserviceCreateDTO(
         service_id="s_test_get",
         name="Test Microservice Get",
-        functions=["fn1", "fn2"],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
     )
 
@@ -41,7 +38,6 @@ async def test_get_microservice(client):
     assert data["microservice_id"] == microservice_id
     assert data["service_id"] == dto.service_id
     assert data["name"] == dto.name
-    assert data["functions"] == dto.functions
     assert data["resources"] == dto.resources.model_dump()
 
 
@@ -50,7 +46,6 @@ async def test_update_microservice(client):
     dto = MicroserviceCreateDTO(
         service_id="s_test_update",
         name="Test Microservice Update",
-        functions=["fn1", "fn2"],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )
@@ -61,7 +56,6 @@ async def test_update_microservice(client):
     update_payload = {
         "service_id": "s_test_update",
         "name": "Updated Microservice",
-        "functions": ["fn3", "fn4"],
         "resources": {"cpu": 4, "ram": "4GB"},
     }
 
@@ -72,7 +66,6 @@ async def test_update_microservice(client):
     assert updated_data["microservice_id"] == microservice_id
     assert updated_data["service_id"] == update_payload["service_id"]
     assert updated_data["name"] == update_payload["name"]
-    assert updated_data["functions"] == update_payload["functions"]
     assert updated_data["resources"] == update_payload["resources"]
 
 
@@ -81,7 +74,6 @@ async def test_delete_microservice(client):
     dto = MicroserviceCreateDTO(
         service_id="s_test_delete",
         name="Test Microservice Delete",
-        functions=["fn1", "fn2"],
         resources=ResourcesDTO(cpu=2, ram="2GB"),
         policy_id="Leo_Policy"
     )

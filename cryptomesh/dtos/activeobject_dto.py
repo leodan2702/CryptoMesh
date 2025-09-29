@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
 import uuid
-from cryptomesh.models import ActiveObjectModel
+from cryptomesh.models import ActiveObjectModel, FunctionModel
+
 
 # -------------------------------
 # DTO para creación de ActiveObject
@@ -19,6 +20,7 @@ class ActiveObjectCreateDTO(BaseModel):
     axo_class_name: str
     axo_version: int = 0
     axo_endpoint_id: Optional[str] = None
+    axo_microservice_id: str
     axo_dependencies: Optional[List[str]] = []
     axo_uri: Optional[str] = None
     axo_alias: Optional[str] = None
@@ -26,7 +28,6 @@ class ActiveObjectCreateDTO(BaseModel):
     source_path: Optional[str] = "/axo/source"
     sink_path: Optional[str] = "/axo/sink"
     axo_code: Optional[str] = None
-    axo_schema: Optional[Dict[str, object]] = None
 
     def to_model(self, active_object_id: Optional[str] = None) -> ActiveObjectModel:
         """
@@ -43,14 +44,14 @@ class ActiveObjectCreateDTO(BaseModel):
             axo_class_name=self.axo_class_name,
             axo_version=self.axo_version,
             axo_endpoint_id=self.axo_endpoint_id,
+            axo_microservice_id=self.axo_microservice_id,
             axo_dependencies=self.axo_dependencies or [],
             axo_uri=self.axo_uri,
             axo_alias=self.axo_alias,
             path=self.path,
             source_path=self.source_path,
             sink_path=self.sink_path,
-            axo_code=self.axo_code,
-            axo_schema=self.axo_schema
+            axo_code=self.axo_code
         )
 
     @staticmethod
@@ -68,14 +69,14 @@ class ActiveObjectCreateDTO(BaseModel):
             axo_class_name=model.axo_class_name,
             axo_version=model.axo_version,
             axo_endpoint_id=model.axo_endpoint_id,
+            axo_microservice_id=model.axo_microservice_id,
             axo_dependencies=model.axo_dependencies,
             axo_uri=model.axo_uri,
             axo_alias=model.axo_alias,
             path=model.path,
             source_path=model.source_path,
             sink_path=model.sink_path,
-            axo_code=model.axo_code,
-            axo_schema=model.axo_schema
+            axo_code=model.axo_code
         )
 
 
@@ -97,6 +98,7 @@ class ActiveObjectResponseDTO(BaseModel):
     axo_class_name: str
     axo_version: int
     axo_endpoint_id: Optional[str]
+    axo_microservice_id: str
     axo_dependencies: List[str]
     axo_uri: Optional[str]
     axo_alias: Optional[str]
@@ -105,6 +107,7 @@ class ActiveObjectResponseDTO(BaseModel):
     sink_path: str
     axo_code: Optional[str]
     axo_schema: Optional[Dict[str, object]] = None
+    functions: List[FunctionModel] = []
 
     @staticmethod
     def from_model(model: ActiveObjectModel) -> "ActiveObjectResponseDTO":
@@ -119,6 +122,7 @@ class ActiveObjectResponseDTO(BaseModel):
             axo_class_name=model.axo_class_name,
             axo_version=model.axo_version,
             axo_endpoint_id=model.axo_endpoint_id,
+            axo_microservice_id=model.axo_microservice_id,
             axo_dependencies=model.axo_dependencies,
             axo_uri=model.axo_uri,
             axo_alias=model.axo_alias,
@@ -126,7 +130,11 @@ class ActiveObjectResponseDTO(BaseModel):
             source_path=model.source_path,
             sink_path=model.sink_path,
             axo_code=model.axo_code,
-            axo_schema=model.axo_schema
+            axo_schema=model.axo_schema,
+            functions=[
+                f if isinstance(f, FunctionModel) else FunctionModel(**f)
+                for f in (model.functions or [])
+            ]
         )
 
 
@@ -147,14 +155,13 @@ class ActiveObjectUpdateDTO(BaseModel):
     axo_class_name: Optional[str] = None
     axo_version: Optional[int] = None
     axo_endpoint_id: Optional[str] = None
+    axo_microservice_id: Optional[str] = None
     axo_dependencies: Optional[List[str]] = None
     axo_uri: Optional[str] = None
     axo_alias: Optional[str] = None
     path: Optional[str] = None
     source_path: Optional[str] = None
     sink_path: Optional[str] = None
-    axo_code: Optional[str] = None
-    axo_schema: Optional[Dict[str, object]] = None
 
     @staticmethod
     def apply_updates(dto: "ActiveObjectUpdateDTO", model: ActiveObjectModel) -> ActiveObjectModel:
@@ -178,12 +185,12 @@ class ActiveObjectUpdateDTO(BaseModel):
             axo_class_name=model.axo_class_name,
             axo_version=model.axo_version,
             axo_endpoint_id=model.axo_endpoint_id,
+            axo_microservice_id=model.axo_microservice_id,
             axo_dependencies=model.axo_dependencies,
             axo_uri=model.axo_uri,
             axo_alias=model.axo_alias,
             path=model.path,
             source_path=model.source_path,
             sink_path=model.sink_path,
-            axo_code=model.axo_code,
-            axo_schema=model.axo_schema
+            axo_code=model.axo_code
         )

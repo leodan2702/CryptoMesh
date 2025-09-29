@@ -1,6 +1,7 @@
 import pytest
 from cryptomesh.utils import Utils
 from cryptomesh.dtos import SchemaDTO
+from cryptomesh.models import ParameterSpec
 
 def test_extract_schema_with_valid_class():
     """
@@ -24,11 +25,12 @@ class DataProcessor:
 
     # Assert
     assert result.class_name == "DataProcessor"
-    assert result.init == ["source_bucket", "source_key"]
+    assert result.init == [ParameterSpec(name="source_bucket", type="str", default=None), ParameterSpec(name="source_key", type="str", default=None)]
     assert "run" in result.methods
-    assert result.methods["run"] == ["multiplier"]
+    assert result.methods["run"] == [ParameterSpec(name="multiplier", type="int", default=None)]
     assert "process_async" in result.methods
-    assert result.methods["process_async"] == ["item_id"]
+    process_sync = result.methods["process_async"]
+    assert process_sync == [ParameterSpec(name="item_id", type="Any", default=None)]
 
 
 def test_extract_schema_no_class_found():
@@ -84,7 +86,7 @@ class SecondClass:
     expected_class_name ="FirstClass"
     # Assert
     assert result.class_name == expected_class_name
-    assert result.init == ["name"]
+    assert result.init == [ParameterSpec(name="name", type="Any", default=None)]
     assert "process" not in result.methods
 
 
@@ -106,4 +108,4 @@ class Helper:
     # # Assert
     assert result.class_name == expected_class_name
     assert result.init == [] # Should be an empty list
-    assert result.methods["do_work"] == ["task_id"]
+    assert result.methods["do_work"] == [ParameterSpec(name="task_id", type="Any", default=None)]
