@@ -171,7 +171,7 @@ async def deploy_endpoint(
                 "detail": str(res.unwrap_err())
             })
             raise HTTPException(status_code=500, detail=f"Failed to deploy endpoint: {model.endpoint_id} - {res.unwrap_err()}")
-        # t1      = T.time()
+        t1      = T.time()
         elapsed = round(T.time() - t1, 4)
         L.info({
             "event": "API.ENDPOINT.DEPLOYED",
