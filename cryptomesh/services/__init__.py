@@ -7,3 +7,5 @@ from cryptomesh.services.microservices_services import MicroservicesService
 from cryptomesh.services.roles_service import RolesService
 from cryptomesh.services.security_policy_service import SecurityPolicyService
 from cryptomesh.services.services_services import ServicesService
+from cryptomesh.services.storage_service import StorageService
+from cryptomesh.services.activeobjects_service import ActiveObjectsService

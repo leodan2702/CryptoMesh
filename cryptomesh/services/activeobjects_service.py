@@ -121,9 +121,9 @@ class ActiveObjectsService:
         if "axo_code" in updates and updates["axo_code"]:
             try:
                 updates["axo_schema"] = Utils.extract_schema_from_code(updates["axo_code"]).model_dump()
-                functions = Utils.extract_functions_from_code(updates["axo_code"])
-                functions_dicts = [ fo.model_dump() for fo in functions]
-                updates["functions"] = self.normalize_functions(functions_dicts)
+                functions             = Utils.extract_functions_from_code(updates["axo_code"])
+                functions_dicts       = [ fo.model_dump() for fo in functions]
+                updates["functions"]  = self.normalize_functions(functions_dicts)
             except Exception as e:
                 raise CryptoMeshError(f"Failed to update ActiveObject '{active_object_id}': {str(e)}")
 
