@@ -1,4 +1,5 @@
 from typing import Optional
+from fastapi import HTTPException
 from pydantic import BaseModel, field_validator
 from cryptomesh.models import ResourcesModel
 
@@ -8,15 +9,23 @@ class ResourcesDTO(BaseModel):
 
     @field_validator("cpu")
     def cpu_must_be_positive(cls, v):
-        if v <= 0:
-            raise ValueError("CPU must be greater than 0")
+        if v is not None and not (1 <= v <= 4):
+            raise HTTPException(status_code=400, detail="CPU must be between 1 and 4")
         return v
 
     @field_validator("ram")
     def ram_format(cls, v):
+        if " " in v:
+            raise HTTPException(status_code=400, detail="RAM must not contain spaces, e.g., '4GB'")
         v_lower = v.lower()
-        if not (v_lower.endswith("gb") or v_lower.endswith("mb")):
-            raise ValueError("RAM must be specified in GB or MB, e.g., '4GB' or '512MB'")
+        if not v_lower.endswith("gb"):
+            raise HTTPException(status_code=400, detail="RAM must be specified in GB, e.g., '4GB'")
+        try:
+            num = int(v_lower.replace("gb", ""))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="RAM must be a number followed by GB, e.g., '4GB'")
+        if not (1 <= num <= 8):
+            raise HTTPException(status_code=400, detail="RAM must be between 1GB and 8GB")
         return v
 
     def to_model(self) -> ResourcesModel:
@@ -35,18 +44,25 @@ class ResourcesUpdateDTO(BaseModel):
 
     @field_validator("cpu")
     def cpu_must_be_positive(cls, v):
-        if v is not None and v <= 0:
-            raise ValueError("CPU must be greater than 0")
+        if v is not None and not (1 <= v <= 4):
+            raise HTTPException(status_code=400, detail="CPU must be between 1 and 4")
         return v
 
     @field_validator("ram")
     def ram_format(cls, v):
         if v is not None:
+            if " " in v:
+                raise HTTPException(status_code=400, detail="RAM must not contain spaces, e.g., '4GB'")
             v_lower = v.lower()
-            if not (v_lower.endswith("gb") or v_lower.endswith("mb")):
-                raise ValueError("RAM must be specified in GB or MB, e.g., '4GB' or '512MB'")
+            if not v_lower.endswith("gb"):
+                raise HTTPException(status_code=400, detail="RAM must be specified in GB, e.g., '4GB'")
+            try:
+                num = int(v_lower.replace("gb", ""))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="RAM must be a number followed by GB, e.g., '4GB'")
+            if not (1 <= num <= 8):
+                raise HTTPException(status_code=400, detail="RAM must be between 1GB and 8GB")
         return v
-
 
     @staticmethod
     def apply_updates(dto: "ResourcesUpdateDTO", model: ResourcesModel) -> ResourcesModel:
@@ -54,4 +70,3 @@ class ResourcesUpdateDTO(BaseModel):
         for field, value in update_data.items():
             setattr(model, field, value)
         return model
-
