@@ -282,7 +282,7 @@ async def test_delete_endpoint():
     create_dto = EndpointCreateDTO(
         name="endpoint-to-delete",
         image="test-image:latest",
-        resources=ResourcesDTO(cpu=1, ram="12GB"),
+        resources=ResourcesDTO(cpu=1, ram="2GB"),
         security_policy="sp1",
         policy_id="policy-123"
     )
