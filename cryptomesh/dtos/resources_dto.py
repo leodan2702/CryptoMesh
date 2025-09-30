@@ -17,11 +17,10 @@ class ResourcesDTO(BaseModel):
     def ram_format(cls, v):
         if " " in v:
             raise HTTPException(status_code=400, detail="RAM must not contain spaces, e.g., '4GB'")
-        v_lower = v.lower()
-        if not v_lower.endswith("gb"):
+        if not v.endswith("GB"):
             raise HTTPException(status_code=400, detail="RAM must be specified in GB, e.g., '4GB'")
         try:
-            num = int(v_lower.replace("gb", ""))
+            num = int(v.replace("GB", ""))
         except ValueError:
             raise HTTPException(status_code=400, detail="RAM must be a number followed by GB, e.g., '4GB'")
         if not (1 <= num <= 8):
@@ -53,11 +52,10 @@ class ResourcesUpdateDTO(BaseModel):
         if v is not None:
             if " " in v:
                 raise HTTPException(status_code=400, detail="RAM must not contain spaces, e.g., '4GB'")
-            v_lower = v.lower()
-            if not v_lower.endswith("gb"):
+            if not v.endswith("GB"):
                 raise HTTPException(status_code=400, detail="RAM must be specified in GB, e.g., '4GB'")
             try:
-                num = int(v_lower.replace("gb", ""))
+                num = int(v.replace("GB", ""))
             except ValueError:
                 raise HTTPException(status_code=400, detail="RAM must be a number followed by GB, e.g., '4GB'")
             if not (1 <= num <= 8):
