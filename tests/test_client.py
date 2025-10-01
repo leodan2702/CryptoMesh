@@ -75,7 +75,7 @@ async def test_update_service():
         security_policy="sp2",
         name="Test Service Updated",
         microservices=["m2","m3"],
-        resources=ResourcesUpdateDTO(cpu=2,ram="122MB")
+        resources=ResourcesUpdateDTO(cpu=2,ram="2GB")
     )
 
     result = await client.update_service(service_response.service_id, update_dto)
@@ -200,7 +200,7 @@ async def test_create_endpoint():
     create_dto = EndpointCreateDTO(
         name="endpoint_test",
         image="test-image:latest",
-        resources=ResourcesDTO(cpu=1, ram="512MB"),
+        resources=ResourcesDTO(cpu=1, ram="2GB"),
         security_policy="sp1",
         policy_id="policy-123"
     )
@@ -219,7 +219,7 @@ async def test_get_endpoint():
     create_dto = EndpointCreateDTO(
         name=expected_name,
         image="test-image:latest",
-        resources=ResourcesDTO(cpu=1, ram="512MB"),
+        resources=ResourcesDTO(cpu=1, ram="2GB"),
         security_policy="sp1",
         policy_id="policy-123"
     )    
@@ -244,7 +244,7 @@ async def test_update_endpoint():
     create_dto = EndpointCreateDTO(
         name="endpoint-test",
         image="test-image:latest",
-        resources=ResourcesDTO(cpu=1, ram="512MB"),
+        resources=ResourcesDTO(cpu=1, ram="2GB"),
         security_policy="sp1",
         policy_id="policy-123"
     )
@@ -282,7 +282,7 @@ async def test_delete_endpoint():
     create_dto = EndpointCreateDTO(
         name="endpoint-to-delete",
         image="test-image:latest",
-        resources=ResourcesDTO(cpu=1, ram="512MB"),
+        resources=ResourcesDTO(cpu=1, ram="2GB"),
         security_policy="sp1",
         policy_id="policy-123"
     )
