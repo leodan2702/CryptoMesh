@@ -51,8 +51,8 @@ class ResourcesDTO(BaseModel):
 
 
 class ResourcesUpdateDTO(BaseModel):
-    cpu: CPU
-    ram: RAM
+    cpu: Optional[CPU] = None
+    ram: Optional[RAM] = None
 
     @staticmethod
     def apply_updates(dto: "ResourcesUpdateDTO", model: ResourcesModel) -> ResourcesModel:
