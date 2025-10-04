@@ -2,6 +2,8 @@ from fastapi import HTTPException
 from typing import Any, Callable
 from functools import wraps
 from cryptomesh.log.logger import get_logger
+from pydantic import ValidationError as PydanticValidationError
+from fastapi.encoders import jsonable_encoder
 L = get_logger(__name__)
 
 
@@ -14,7 +16,8 @@ class CryptoMeshError(Exception):
     def to_dict(self):
         return {
             "message": self.message,
-            "code": self.code
+            "code": self.code,
+            "detail": getattr(self, "detail", None)
         }
 
     def to_http_exception(self):
@@ -63,12 +66,14 @@ class CreationError(CryptoMeshError):
         message = f"Error creating {entity_type} '{entity_id}': {str(original_exception)}"
         super().__init__(message=message, code=500)
 
+class BadRequest(CryptoMeshError):
+    def __init__(self, detail: str):
+        super().__init__("Bad request", code=400)
+        self.detail = detail
+
 
 # Decorator
 def handle_crypto_errors(func: Callable) -> Callable:
-    """
-    Decorator to handle CryptoMeshError exceptions in FastAPI endpoints
-    """
     @wraps(func)
     async def wrapper(*args, **kwargs) -> Any:
         try:
@@ -81,6 +86,16 @@ def handle_crypto_errors(func: Callable) -> Callable:
                 "exception": str(e)
             })
             raise e.to_http_exception()
+
+        except PydanticValidationError as e:
+            errors = e.errors()
+            detail_str = "; ".join([f"Field {'.'.join(map(str, err['loc']))}: {err['msg'].replace('Value error, ', '')}"for err in errors])
+            L.error({
+                "type": type(e).__name__,
+                "exception": errors
+            })
+            raise BadRequest(detail=detail_str).to_http_exception()
+
         except Exception as e:
             L.error({
                 "type": type(e).__name__,

@@ -145,7 +145,6 @@ async def delete_endpoint(endpoint_id: str, svc: EndpointsService = Depends(get_
 @router.post(
     "/deploy",
     response_model=EndpointResponseDTO,
-    # response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
     summary="Desplegar un nuevo endpoint",
     description="Desplegar un nuevo endpoint en la infraestructura."
@@ -156,39 +155,31 @@ async def deploy_endpoint(
     svc: EndpointsService = Depends(get_endpoints_service)
 ):
     t1 = T.time()
-    endpoint_id = None
-    try:
-        model   = dto.to_model()
-        created = await svc.create_endpoint(model)
-        endpoint_id = created.endpoint_id
-        res     = await svc.deploy(endpoint_id=endpoint_id)
-        if res.is_err:
-            del_res = await svc.delete_endpoint(endpoint_id=model.endpoint_id)
-            L.error({
-                "event": "API.ENDPOINT.DEPLOY_FAILED",
-                "endpoint_id": model.endpoint_id,
-                "delete": del_res.is_ok,
-                "detail": str(res.unwrap_err())
-            })
-            raise HTTPException(status_code=500, detail=f"Failed to deploy endpoint: {model.endpoint_id} - {res.unwrap_err()}")
-        t1      = T.time()
-        elapsed = round(T.time() - t1, 4)
-        L.info({
-            "event": "API.ENDPOINT.DEPLOYED",
-            "endpoint_id": created.endpoint_id,
-            "time": elapsed
-        })
-        return EndpointResponseDTO.from_model(created)
+    model = dto.to_model()
+    created = await svc.create_endpoint(model)
+    res = await svc.deploy(endpoint_id=created.endpoint_id)
     
-    except Exception as e:
+    if res.is_err:
+        del_res = await svc.delete_endpoint(endpoint_id=created.endpoint_id)
         L.error({
-            "event": "API.ENDPOINT.DEPLOY_EXCEPTION",
-            "endpoint_id": endpoint_id,
-            "detail": str(e)
+            "event": "API.ENDPOINT.DEPLOY_FAILED",
+            "endpoint_id": created.endpoint_id,
+            "delete": del_res.is_ok,
+            "detail": str(res.unwrap_err())
         })
-        if endpoint_id:
-            res = await svc.delete_endpoint(endpoint_id=endpoint_id)
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to deploy endpoint: {created.endpoint_id} - {res.unwrap_err()}"
+        )
+
+    elapsed = round(T.time() - t1, 4)
+    L.info({
+        "event": "API.ENDPOINT.DEPLOYED",
+        "endpoint_id": created.endpoint_id,
+        "time": elapsed
+    })
+    return EndpointResponseDTO.from_model(created)
+
     
     # res = await Sum
 
@@ -198,6 +189,7 @@ async def deploy_endpoint(
     summary="Eliminar un endpoint",
     description="Eliminar un endpoint de la infraestructura."
 )
+@handle_crypto_errors
 async def detach_endpoint(
     endpoint_id:str,
     svc: EndpointsService = Depends(get_endpoints_service)
