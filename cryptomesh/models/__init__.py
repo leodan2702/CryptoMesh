@@ -1,6 +1,16 @@
 from datetime import datetime,timezone
 from pydantic import BaseModel, Field, ConfigDict, validator, field_validator
 from typing import List, Dict, Optional,Any
+from cryptomesh.validators.validators import (
+    ServiceNameStr,
+    MicroserviceNameStr,
+    RoleNameStr,
+    EndpointNameStr,
+    SecurityPolicyNameStr,
+    paramNameStr,
+    FunctionNameStr,
+    AxoNameStr
+)
 import uuid
 
 class SummonerParams(BaseModel):
@@ -21,22 +31,25 @@ class StorageModel(BaseModel):
     sink_path: str
 
 class RoleModel(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
     role_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
+    name: RoleNameStr
     description: str
     permissions: List[str]
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class SecurityPolicyModel(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
     sp_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
+    name: SecurityPolicyNameStr
     roles: List[str]  # Referencias a RoleModel
     requires_authentication: bool
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class EndpointModel(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
     endpoint_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
+    name: EndpointNameStr
     image: str
     resources: ResourcesModel # resource_id
     security_policy: str  # sp_id
@@ -53,16 +66,18 @@ class EndpointStateModel(BaseModel):
     timestamp: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
 
 class ServiceModel(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
     service_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
+    name: ServiceNameStr
     security_policy: str # sp_id
     resources: ResourcesModel  # resource_id
     created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
     policy_id: Optional[str] = None
 
 class MicroserviceModel(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
     microservice_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
+    name: MicroserviceNameStr
     service_id: str
     resources: ResourcesModel  # resource_id
     created_at: datetime = Field(default_factory=lambda:datetime.now(timezone.utc))
@@ -71,15 +86,17 @@ class MicroserviceModel(BaseModel):
 
 class ParameterSpec(BaseModel):
     """Esquema de un parámetro de función"""
-    name: str                           # nombre del parámetro
+    model_config = ConfigDict(validate_assignment=True)
+    name: paramNameStr                       # nombre del parámetro
     type: str                           # tipo esperado (str, int, DiGraph, etc.)
     description: Optional[str] = None   # descripción opcional
     required: bool = True               # si es obligatorio
     default: Optional[Any] = None       # valor por defecto
 
 class FunctionModel(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
     function_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str                          # ej. "run"
+    name: FunctionNameStr                         # ej. "run"
     init_params: List[ParameterSpec] = Field(default_factory=list)  # kwargs de __init__
     call_params: List[ParameterSpec] = Field(default_factory=list)   # kwargs de la función
     
@@ -112,7 +129,7 @@ class ActiveObjectModel(BaseModel):
     axo_dependencies: List[str] = Field(default_factory=list)
     
     axo_uri: Optional[str] = None
-    axo_alias: Optional[str] = None
+    axo_alias: AxoNameStr
     axo_code: Optional[str] = None
     axo_schema: Optional[Dict[str, object]] = Field(
         default=None,
